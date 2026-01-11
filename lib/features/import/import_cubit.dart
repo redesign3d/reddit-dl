@@ -38,7 +38,7 @@ class ImportCubit extends Cubit<ImportState> {
           scope: 'import',
           level: 'info',
           message:
-              'ZIP import complete: ${result.inserted} new, ${result.updated} updated.',
+              'ZIP import complete: ${result.posts} posts, ${result.comments} comments, ${result.inserted} new, ${result.updated} updated, ${result.skipped} skipped.',
         ),
       );
     } catch (error) {
