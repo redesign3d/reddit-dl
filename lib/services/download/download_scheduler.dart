@@ -15,6 +15,10 @@ import '../ffmpeg_runtime_manager.dart';
 import '../path_template_engine.dart';
 import 'download_telemetry.dart';
 import 'external_media_downloader.dart';
+import '../export/export_result.dart';
+import '../export/saved_comment_markdown_exporter.dart';
+import '../export/text_post_markdown_exporter.dart';
+import '../export/thread_comments_markdown_exporter.dart';
 import 'ffmpeg_executor.dart';
 import 'http_media_downloader.dart';
 import 'overwrite_policy.dart';
@@ -38,6 +42,9 @@ class DownloadScheduler {
     ExternalMediaDownloader? externalDownloader,
     ToolDetector? toolDetector,
     ExternalToolRunner? toolRunner,
+    TextPostMarkdownExporter? textPostExporter,
+    SavedCommentMarkdownExporter? savedCommentExporter,
+    ThreadCommentsMarkdownExporter? threadCommentsExporter,
   })  : _queueRepository = queueRepository,
         _settingsRepository = settingsRepository,
         _logsRepository = logsRepository,
@@ -70,6 +77,11 @@ class DownloadScheduler {
           toolDetector: toolDetector ?? ToolDetector(),
           toolRunner: toolRunner ?? ExternalToolRunner(_logsRepository),
         );
+    _textPostExporter = textPostExporter ?? TextPostMarkdownExporter();
+    _savedCommentExporter =
+        savedCommentExporter ?? SavedCommentMarkdownExporter();
+    _threadCommentsExporter =
+        threadCommentsExporter ?? ThreadCommentsMarkdownExporter(_dio);
   }
 
   final QueueRepository _queueRepository;
@@ -83,6 +95,9 @@ class DownloadScheduler {
   late final HttpMediaDownloader _downloader;
   late final RedditVideoDownloader _videoDownloader;
   late final ExternalMediaDownloader _externalDownloader;
+  late final TextPostMarkdownExporter _textPostExporter;
+  late final SavedCommentMarkdownExporter _savedCommentExporter;
+  late final ThreadCommentsMarkdownExporter _threadCommentsExporter;
 
   late AppSettings _settings;
   StreamSubscription<AppSettings>? _settingsSubscription;
@@ -182,22 +197,38 @@ class DownloadScheduler {
       return;
     }
 
+    final engine = PathTemplateEngine(_settings);
     final assets = await _queueRepository.fetchMediaAssets(item.id);
-    if (assets.isEmpty) {
+    final exportText = _settings.exportTextPosts && item.kind == 'post';
+    final exportSavedComment =
+        _settings.exportSavedComments && item.kind == 'comment';
+    final exportThreadComments =
+        _settings.exportPostComments && item.kind == 'post';
+    final totalTasks = assets.length +
+        (exportText ? 1 : 0) +
+        (exportSavedComment ? 1 : 0) +
+        (exportThreadComments ? 1 : 0);
+
+    if (totalTasks == 0) {
       await _queueRepository.markJobSkipped(
         jobId,
-        'No media assets available.',
+        'No media assets or exports enabled.',
       );
-      await _log(jobId, 'download', 'warn', 'No media assets for job.');
+      await _log(jobId, 'download', 'warn', 'No media assets or exports.');
       _running.remove(jobId);
       return;
     }
 
-    final engine = PathTemplateEngine(_settings);
     var completed = 0;
     var skipped = 0;
     var failed = 0;
+    var finished = 0;
     String outputPath = '';
+
+    Future<void> updateOverall(double taskProgress) async {
+      final overall = (finished + taskProgress) / totalTasks;
+      await _queueRepository.updateJobProgress(jobId, overall.clamp(0, 1));
+    }
 
     for (var i = 0; i < assets.length; i++) {
       if (token.isCancelled) {
@@ -231,6 +262,7 @@ class DownloadScheduler {
 
       try {
         final result = await _downloadWithRetry(
+          targetPath: targetFile.path,
           action: () {
             final hint = asset.toolHint.toLowerCase();
             final isExternal = asset.type == 'external' ||
@@ -244,10 +276,7 @@ class DownloadScheduler {
                 settings: _settings,
                 policy: _policyFromSnapshot(record.job.policySnapshot),
                 cancelToken: token,
-                onProgress: (progress) async {
-                  final overall = (completed + progress) / assets.length;
-                  await _queueRepository.updateJobProgress(jobId, overall);
-                },
+                onProgress: updateOverall,
                 log: (level, message) => _log(
                   jobId,
                   'download',
@@ -263,10 +292,7 @@ class DownloadScheduler {
                 policy: _policyFromSnapshot(record.job.policySnapshot),
                 cancelToken: token,
                 onHeaders: _telemetry.updateFromHeaders,
-                onProgress: (progress) async {
-                  final overall = (completed + progress) / assets.length;
-                  await _queueRepository.updateJobProgress(jobId, overall);
-                },
+                onProgress: updateOverall,
                 log: (level, message) => _log(
                   jobId,
                   'download',
@@ -281,15 +307,15 @@ class DownloadScheduler {
               policy: _policyFromSnapshot(record.job.policySnapshot),
               cancelToken: token,
               onHeaders: _telemetry.updateFromHeaders,
-              onProgress: (progress) async {
-                final overall = (completed + progress) / assets.length;
-                await _queueRepository.updateJobProgress(jobId, overall);
-              },
+              onProgress: updateOverall,
             );
           },
         );
         if (result.isCompleted) {
           completed += 1;
+          outputPath = result.outputPath.isNotEmpty
+              ? result.outputPath
+              : outputPath;
         } else if (result.isSkipped) {
           skipped += 1;
           await _log(jobId, 'download', 'info', result.message ?? 'Skipped.');
@@ -309,21 +335,139 @@ class DownloadScheduler {
         await _log(jobId, 'download', 'error', error.toString());
       }
 
-      final overall = (completed + skipped + failed) / assets.length;
-      await _queueRepository.updateJobProgress(jobId, overall.clamp(0, 1));
+      finished += 1;
+      await updateOverall(0);
       await _respectRateLimit();
+    }
+
+    if (exportText) {
+      if (token.isCancelled) {
+        _running.remove(jobId);
+        return;
+      }
+      try {
+        final result = await _exportWithRetry(
+          jobId: jobId,
+          action: () => _textPostExporter.export(
+            item: item,
+            engine: engine,
+            policy: _policyFromSnapshot(record.job.policySnapshot),
+          ),
+        );
+        if (result.isCompleted) {
+          completed += 1;
+          outputPath = result.outputPath.isNotEmpty
+              ? result.outputPath
+              : outputPath;
+        } else if (result.isSkipped) {
+          skipped += 1;
+          await _log(jobId, 'download', 'info', result.message ?? 'Skipped.');
+        } else {
+          failed += 1;
+          await _log(jobId, 'download', 'error', result.message ?? 'Failed.');
+        }
+      } on DioException catch (error) {
+        if (CancelToken.isCancel(error)) {
+          _running.remove(jobId);
+          return;
+        }
+        failed += 1;
+        await _log(jobId, 'download', 'error', error.toString());
+      }
+      finished += 1;
+      await updateOverall(0);
+    }
+
+    if (exportSavedComment) {
+      if (token.isCancelled) {
+        _running.remove(jobId);
+        return;
+      }
+      try {
+        final result = await _exportWithRetry(
+          jobId: jobId,
+          action: () => _savedCommentExporter.export(
+            item: item,
+            engine: engine,
+            policy: _policyFromSnapshot(record.job.policySnapshot),
+          ),
+        );
+        if (result.isCompleted) {
+          completed += 1;
+          outputPath = result.outputPath.isNotEmpty
+              ? result.outputPath
+              : outputPath;
+        } else if (result.isSkipped) {
+          skipped += 1;
+          await _log(jobId, 'download', 'info', result.message ?? 'Skipped.');
+        } else {
+          failed += 1;
+          await _log(jobId, 'download', 'error', result.message ?? 'Failed.');
+        }
+      } on DioException catch (error) {
+        if (CancelToken.isCancel(error)) {
+          _running.remove(jobId);
+          return;
+        }
+        failed += 1;
+        await _log(jobId, 'download', 'error', error.toString());
+      }
+      finished += 1;
+      await updateOverall(0);
+    }
+
+    if (exportThreadComments) {
+      if (token.isCancelled) {
+        _running.remove(jobId);
+        return;
+      }
+      try {
+        final result = await _exportWithRetry(
+          jobId: jobId,
+          action: () => _threadCommentsExporter.export(
+            item: item,
+            engine: engine,
+            policy: _policyFromSnapshot(record.job.policySnapshot),
+            sort: _settings.postCommentsSort,
+            maxCount: _settings.postCommentsMaxCount,
+            timeframeDays: _settings.postCommentsTimeframeDays,
+            cancelToken: token,
+          ),
+        );
+        if (result.isCompleted) {
+          completed += 1;
+          outputPath = result.outputPath.isNotEmpty
+              ? result.outputPath
+              : outputPath;
+        } else if (result.isSkipped) {
+          skipped += 1;
+          await _log(jobId, 'download', 'info', result.message ?? 'Skipped.');
+        } else {
+          failed += 1;
+          await _log(jobId, 'download', 'error', result.message ?? 'Failed.');
+        }
+      } on DioException catch (error) {
+        if (CancelToken.isCancel(error)) {
+          _running.remove(jobId);
+          return;
+        }
+        failed += 1;
+        await _log(jobId, 'download', 'error', error.toString());
+      }
+      finished += 1;
+      await updateOverall(0);
     }
 
     if (failed > 0) {
       await _queueRepository.markJobFailed(
         jobId,
-        '$failed asset(s) failed.',
+        '$failed task(s) failed.',
       );
       await _log(jobId, 'download', 'error', 'Job failed for ${item.permalink}.');
     } else if (completed == 0) {
       await _queueRepository.markJobSkipped(
         jobId,
-        skipped > 0 ? 'All assets skipped.' : 'No assets downloaded.',
+        skipped > 0 ? 'All tasks skipped.' : 'No outputs produced.',
       );
       await _log(jobId, 'download', 'info', 'Job skipped for ${item.permalink}.');
     } else {
@@ -335,6 +479,7 @@ class DownloadScheduler {
   }
 
   Future<MediaDownloadResult> _downloadWithRetry({
+    required String targetPath,
     required Future<MediaDownloadResult> Function() action,
   }) async {
     var attempt = 0;
@@ -348,7 +493,7 @@ class DownloadScheduler {
         if (attempt >= maxRetries) {
           return MediaDownloadResult.failed(
             'HTTP ${error.statusCode} after retries.',
-            targetFile.path,
+            targetPath,
           );
         }
         await _backoffDelay(attempt);
@@ -360,11 +505,40 @@ class DownloadScheduler {
         if (attempt >= maxRetries) {
           return MediaDownloadResult.failed(
             'Network error after retries.',
-            targetFile.path,
+            targetPath,
           );
         }
         await _backoffDelay(attempt);
         attempt += 1;
+      }
+    }
+  }
+
+  Future<ExportResult> _exportWithRetry({
+    required int jobId,
+    required Future<ExportResult> Function() action,
+  }) async {
+    var attempt = 0;
+    const maxRetries = 2;
+    while (true) {
+      try {
+        return await action();
+      } on DownloadRateLimitException catch (error) {
+        await _handleRateLimit(error);
+      } on DioException catch (error) {
+        if (CancelToken.isCancel(error)) {
+          rethrow;
+        }
+        if (attempt >= maxRetries) {
+          return ExportResult.failed(
+            'Network error after retries.',
+            '',
+          );
+        }
+        await _backoffDelay(attempt);
+        attempt += 1;
+      } catch (error) {
+        return ExportResult.failed(error.toString(), '');
       }
     }
   }

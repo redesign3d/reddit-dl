@@ -7,6 +7,7 @@ import '../../data/app_database.dart';
 import '../../data/settings_repository.dart';
 import '../../features/sync/permalink_utils.dart';
 import '../path_template_engine.dart';
+import '../download/overwrite_policy.dart';
 import 'export_result.dart';
 
 class ThreadCommentsMarkdownExporter {
@@ -82,6 +83,14 @@ class ThreadCommentsMarkdownExporter {
     final url = _commentsUrl(permalink, sort, maxCount);
     final response = await _dio.get<dynamic>(url, cancelToken: cancelToken);
     final status = response.statusCode ?? 0;
+    if (status == 429) {
+      final retryAfter =
+          response.headers.value(HttpHeaders.retryAfterHeader);
+      throw DownloadRateLimitException(
+        retryAfterSeconds:
+            retryAfter == null ? null : int.tryParse(retryAfter),
+      );
+    }
     if (status >= 400) {
       return const [];
     }
