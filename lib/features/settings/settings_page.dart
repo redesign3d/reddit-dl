@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -6,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../data/settings_repository.dart';
 import '../../services/path_template_engine.dart';
+import '../../services/tools/tool_detector.dart';
 import '../../ui/components/app_button.dart';
 import '../../ui/components/app_card.dart';
 import '../../ui/components/app_select.dart';
@@ -16,6 +19,7 @@ import '../../ui/tokens.dart';
 import '../../utils/reveal_in_file_manager.dart';
 import '../library/library_cubit.dart';
 import '../sync/sync_cubit.dart';
+import '../tools/tools_cubit.dart';
 import 'settings_cubit.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -23,6 +27,66 @@ class SettingsPage extends StatefulWidget {
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _ToolStatusTile extends StatelessWidget {
+  const _ToolStatusTile({
+    required this.label,
+    required this.info,
+  });
+
+  final String label;
+  final ToolInfo? info;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    final status = info == null
+        ? 'Scanning...'
+        : info!.isAvailable
+            ? '${info!.path}${info!.version == null ? '' : ' • ${info!.version}'}'
+            : info!.errorMessage ?? 'Not detected';
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: Theme.of(context).textTheme.titleLarge),
+          SizedBox(height: AppTokens.space.s6),
+          Text(
+            status,
+            style: Theme.of(context)
+                .textTheme
+                .bodySmall
+                ?.copyWith(color: colors.mutedForeground),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _installCommandsForPlatform() {
+  if (Platform.isMacOS) {
+    return [
+      'brew install gallery-dl yt-dlp',
+      'pipx install gallery-dl',
+      'pipx install yt-dlp',
+    ].join('\n');
+  }
+  if (Platform.isWindows) {
+    return [
+      'winget install -e --id=yt-dlp.yt-dlp',
+      'choco install yt-dlp',
+      'pipx install gallery-dl',
+      'pipx install yt-dlp',
+    ].join('\n');
+  }
+  return [
+    'sudo apt install yt-dlp',
+    'sudo pacman -S yt-dlp',
+    'pipx install gallery-dl',
+    'pipx install yt-dlp',
+  ].join('\n');
 }
 
 class _SettingsPageState extends State<SettingsPage> {
@@ -451,54 +515,101 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               ),
               SizedBox(height: AppTokens.space.s16),
-              AppCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('External tools',
-                        style: Theme.of(context).textTheme.titleLarge),
-                    SizedBox(height: AppTokens.space.s6),
-                    Text(
-                      'Set manual overrides for gallery-dl and yt-dlp. Auto-detection lands next.',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(color: colors.mutedForeground),
-                    ),
-                    SizedBox(height: AppTokens.space.s12),
-                    AppTextField(
-                      label: 'gallery-dl path override',
-                      hint: '/usr/local/bin/gallery-dl',
-                      controller: _galleryDlController,
-                      onChanged: (value) => context
-                          .read<SettingsCubit>()
-                          .updateGalleryDlPathOverride(value),
-                    ),
-                    SizedBox(height: AppTokens.space.s12),
-                    AppTextField(
-                      label: 'yt-dlp path override',
-                      hint: '/usr/local/bin/yt-dlp',
-                      controller: _ytDlpController,
-                      onChanged: (value) =>
-                          context.read<SettingsCubit>().updateYtDlpPathOverride(
-                                value,
+              BlocBuilder<ToolsCubit, ToolsState>(
+                builder: (context, toolState) {
+                  return AppCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text('External tools',
+                                style: Theme.of(context).textTheme.titleLarge),
+                            const Spacer(),
+                            if (toolState.isLoading)
+                              const SizedBox(
+                                height: 16,
+                                width: 16,
+                                child: CircularProgressIndicator(strokeWidth: 2),
                               ),
-                    ),
-                    SizedBox(height: AppTokens.space.s12),
-                    AppButton(
-                      label: 'Copy install commands',
-                      variant: AppButtonVariant.secondary,
-                      onPressed: () {
-                        Clipboard.setData(
-                          const ClipboardData(
-                            text: 'brew install gallery-dl yt-dlp',
+                          ],
+                        ),
+                        SizedBox(height: AppTokens.space.s6),
+                        Text(
+                          'Detect gallery-dl and yt-dlp on PATH or set overrides.',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(color: colors.mutedForeground),
+                        ),
+                        SizedBox(height: AppTokens.space.s12),
+                        _ToolStatusTile(
+                          label: 'gallery-dl',
+                          info: toolState.galleryDl,
+                        ),
+                        SizedBox(height: AppTokens.space.s12),
+                        _ToolStatusTile(
+                          label: 'yt-dlp',
+                          info: toolState.ytDlp,
+                        ),
+                        SizedBox(height: AppTokens.space.s12),
+                        AppTextField(
+                          label: 'gallery-dl path override',
+                          hint: '/usr/local/bin/gallery-dl',
+                          controller: _galleryDlController,
+                          onChanged: (value) => context
+                              .read<SettingsCubit>()
+                              .updateGalleryDlPathOverride(value),
+                        ),
+                        SizedBox(height: AppTokens.space.s12),
+                        AppTextField(
+                          label: 'yt-dlp path override',
+                          hint: '/usr/local/bin/yt-dlp',
+                          controller: _ytDlpController,
+                          onChanged: (value) => context
+                              .read<SettingsCubit>()
+                              .updateYtDlpPathOverride(value),
+                        ),
+                        SizedBox(height: AppTokens.space.s12),
+                        Wrap(
+                          spacing: AppTokens.space.s8,
+                          runSpacing: AppTokens.space.s8,
+                          children: [
+                            AppButton(
+                              label: 'Rescan tools',
+                              variant: AppButtonVariant.secondary,
+                              onPressed: () =>
+                                  context.read<ToolsCubit>().refresh(),
+                            ),
+                            AppButton(
+                              label: 'Copy install commands',
+                              onPressed: () {
+                                final commands = _installCommandsForPlatform();
+                                Clipboard.setData(
+                                  ClipboardData(text: commands),
+                                );
+                                AppToast.show(
+                                  context,
+                                  'Install commands copied.',
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                        if (toolState.errorMessage != null) ...[
+                          SizedBox(height: AppTokens.space.s12),
+                          Text(
+                            toolState.errorMessage!,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(color: colors.destructive),
                           ),
-                        );
-                        AppToast.show(context, 'Install commands copied.');
-                      },
+                        ],
+                      ],
                     ),
-                  ],
-                ),
+                  );
+                },
               ),
             ],
           );

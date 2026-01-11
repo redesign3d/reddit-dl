@@ -23,6 +23,7 @@ import 'features/settings/settings_cubit.dart';
 import 'features/settings/settings_page.dart';
 import 'features/sync/sync_cubit.dart';
 import 'features/sync/sync_page.dart';
+import 'features/tools/tools_cubit.dart';
 import 'navigation/app_section.dart';
 import 'navigation/navigation_cubit.dart';
 import 'ui/app_theme.dart';
@@ -30,6 +31,8 @@ import 'ui/components/app_button.dart';
 import 'ui/components/app_scaffold.dart';
 import 'services/download/download_scheduler.dart';
 import 'services/download/download_telemetry.dart';
+import 'services/tools/external_tool_runner.dart';
+import 'services/tools/tool_detector.dart';
 
 class App extends StatefulWidget {
   const App({super.key, this.database});
@@ -82,6 +85,11 @@ class _AppState extends State<App> {
         RepositoryProvider(
           create: (context) => SyncRepository(context.read<AppDatabase>()),
         ),
+        RepositoryProvider(create: (_) => ToolDetector()),
+        RepositoryProvider(
+          create: (context) =>
+              ExternalToolRunner(context.read<LogsRepository>()),
+        ),
         RepositoryProvider(create: (_) => DownloadTelemetry()),
         RepositoryProvider(
           lazy: false,
@@ -130,6 +138,13 @@ class _AppState extends State<App> {
               context.read<SessionRepository>(),
               context.read<SyncRepository>(),
               context.read<LogsRepository>(),
+            ),
+          ),
+          BlocProvider(
+            create: (context) => ToolsCubit(
+              context.read<SettingsRepository>(),
+              context.read<LogsRepository>(),
+              context.read<ToolDetector>(),
             ),
           ),
         ],
