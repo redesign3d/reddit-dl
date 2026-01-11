@@ -31,10 +31,7 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _ToolStatusTile extends StatelessWidget {
-  const _ToolStatusTile({
-    required this.label,
-    required this.info,
-  });
+  const _ToolStatusTile({required this.label, required this.info});
 
   final String label;
   final ToolInfo? info;
@@ -42,9 +39,10 @@ class _ToolStatusTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
-    final status = info == null
-        ? 'Scanning...'
-        : info!.isAvailable
+    final status =
+        info == null
+            ? 'Scanning...'
+            : info!.isAvailable
             ? '${info!.path}${info!.version == null ? '' : ' • ${info!.version}'}'
             : info!.errorMessage ?? 'Not detected';
     return AppCard(
@@ -55,10 +53,9 @@ class _ToolStatusTile extends StatelessWidget {
           SizedBox(height: AppTokens.space.s6),
           Text(
             status,
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(color: colors.mutedForeground),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: colors.mutedForeground),
           ),
         ],
       ),
@@ -212,33 +209,41 @@ class _SettingsPageState extends State<SettingsPage> {
           if (_previewItemId == null && previewItems.isNotEmpty) {
             _previewItemId = previewItems.first.id;
           }
-          final previewItem = _previewItemId == null
-              ? null
-              : previewItems
-                  .firstWhere((item) => item.id == _previewItemId);
-          final preview = previewItem == null
-              ? null
-              : PathTemplateEngine(settings).previewForItem(previewItem);
+          final previewItem =
+              _previewItemId == null
+                  ? null
+                  : previewItems.firstWhere(
+                    (item) => item.id == _previewItemId,
+                  );
+          final preview =
+              previewItem == null
+                  ? null
+                  : PathTemplateEngine(settings).previewForItem(previewItem);
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Preferences',
-                  style: Theme.of(context).textTheme.titleLarge),
+              Text(
+                'Preferences',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
               SizedBox(height: AppTokens.space.s16),
               AppCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Appearance',
-                        style: Theme.of(context).textTheme.titleLarge),
+                    Text(
+                      'Appearance',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
                     SizedBox(height: AppTokens.space.s12),
                     AppSwitch(
                       label: 'Dark mode',
                       description: 'Match Claude-style dark palette.',
                       value: settings.themeMode == AppThemeMode.dark,
-                      onChanged: (value) =>
-                          context.read<SettingsCubit>().updateThemeMode(
+                      onChanged:
+                          (value) =>
+                              context.read<SettingsCubit>().updateThemeMode(
                                 value ? AppThemeMode.dark : AppThemeMode.light,
                               ),
                     ),
@@ -250,34 +255,40 @@ class _SettingsPageState extends State<SettingsPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Markdown exports',
-                        style: Theme.of(context).textTheme.titleLarge),
+                    Text(
+                      'Markdown exports',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
                     SizedBox(height: AppTokens.space.s12),
                     AppSwitch(
                       label: 'Export text posts to Markdown',
                       description: 'Save post selftext into the text tree.',
                       value: settings.exportTextPosts,
-                      onChanged: (value) => context
-                          .read<SettingsCubit>()
-                          .updateExportTextPosts(value),
+                      onChanged:
+                          (value) => context
+                              .read<SettingsCubit>()
+                              .updateExportTextPosts(value),
                     ),
                     SizedBox(height: AppTokens.space.s12),
                     AppSwitch(
                       label: 'Export saved comments to Markdown',
-                      description: 'Save saved comments into the comments tree.',
+                      description:
+                          'Save saved comments into the comments tree.',
                       value: settings.exportSavedComments,
-                      onChanged: (value) => context
-                          .read<SettingsCubit>()
-                          .updateExportSavedComments(value),
+                      onChanged:
+                          (value) => context
+                              .read<SettingsCubit>()
+                              .updateExportSavedComments(value),
                     ),
                     SizedBox(height: AppTokens.space.s12),
                     AppSwitch(
                       label: 'Export comments under saved posts',
                       description: 'Write a comments.md beside post media.',
                       value: settings.exportPostComments,
-                      onChanged: (value) => context
-                          .read<SettingsCubit>()
-                          .updateExportPostComments(value),
+                      onChanged:
+                          (value) => context
+                              .read<SettingsCubit>()
+                              .updateExportPostComments(value),
                     ),
                     if (settings.exportPostComments) ...[
                       SizedBox(height: AppTokens.space.s12),
@@ -289,13 +300,14 @@ class _SettingsPageState extends State<SettingsPage> {
                               hint: 'Leave blank for all',
                               controller: _postCommentsMaxController,
                               keyboardType: TextInputType.number,
-                              onChanged: (_) => context
-                                  .read<SettingsCubit>()
-                                  .updatePostCommentsMaxCount(
-                                    _parseOptionalInt(
-                                      _postCommentsMaxController,
-                                    ),
-                                  ),
+                              onChanged:
+                                  (_) => context
+                                      .read<SettingsCubit>()
+                                      .updatePostCommentsMaxCount(
+                                        _parseOptionalInt(
+                                          _postCommentsMaxController,
+                                        ),
+                                      ),
                             ),
                           ),
                           SizedBox(width: AppTokens.space.s12),
@@ -310,7 +322,7 @@ class _SettingsPageState extends State<SettingsPage> {
                                 ),
                                 AppSelectOption(
                                   label: 'New',
-                                  value: CommentSort.new,
+                                  value: CommentSort.newest,
                                 ),
                                 AppSelectOption(
                                   label: 'Top',
@@ -339,11 +351,14 @@ class _SettingsPageState extends State<SettingsPage> {
                         hint: 'Leave blank for all',
                         controller: _postCommentsTimeframeController,
                         keyboardType: TextInputType.number,
-                        onChanged: (_) => context
-                            .read<SettingsCubit>()
-                            .updatePostCommentsTimeframeDays(
-                              _parseOptionalInt(_postCommentsTimeframeController),
-                            ),
+                        onChanged:
+                            (_) => context
+                                .read<SettingsCubit>()
+                                .updatePostCommentsTimeframeDays(
+                                  _parseOptionalInt(
+                                    _postCommentsTimeframeController,
+                                  ),
+                                ),
                       ),
                     ],
                   ],
@@ -354,15 +369,19 @@ class _SettingsPageState extends State<SettingsPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Downloads',
-                        style: Theme.of(context).textTheme.titleLarge),
+                    Text(
+                      'Downloads',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
                     SizedBox(height: AppTokens.space.s12),
                     AppTextField(
                       label: 'Download root',
                       hint: 'Select a folder',
                       controller: _downloadRootController,
-                      onChanged: (value) =>
-                          context.read<SettingsCubit>().updateDownloadRoot(value),
+                      onChanged:
+                          (value) => context
+                              .read<SettingsCubit>()
+                              .updateDownloadRoot(value),
                       suffixIcon: IconButton(
                         icon: const Icon(Icons.folder_open_outlined),
                         onPressed: () => _pickDownloadRoot(context),
@@ -382,9 +401,9 @@ class _SettingsPageState extends State<SettingsPage> {
                                 _concurrencyController,
                                 settings.concurrency,
                               );
-                              context
-                                  .read<SettingsCubit>()
-                                  .updateConcurrency(value);
+                              context.read<SettingsCubit>().updateConcurrency(
+                                value,
+                              );
                             },
                           ),
                         ),
@@ -400,7 +419,9 @@ class _SettingsPageState extends State<SettingsPage> {
                                 _rateLimitController,
                                 settings.rateLimitPerMinute,
                               );
-                              context.read<SettingsCubit>().updateRateLimit(value);
+                              context.read<SettingsCubit>().updateRateLimit(
+                                value,
+                              );
                             },
                           ),
                         ),
@@ -417,9 +438,9 @@ class _SettingsPageState extends State<SettingsPage> {
                           _attemptsController,
                           settings.maxDownloadAttempts,
                         );
-                        context
-                            .read<SettingsCubit>()
-                            .updateMaxDownloadAttempts(value);
+                        context.read<SettingsCubit>().updateMaxDownloadAttempts(
+                          value,
+                        );
                       },
                     ),
                     SizedBox(height: AppTokens.space.s12),
@@ -440,7 +461,9 @@ class _SettingsPageState extends State<SettingsPage> {
                         if (value == null) {
                           return;
                         }
-                        context.read<SettingsCubit>().updateOverwritePolicy(value);
+                        context.read<SettingsCubit>().updateOverwritePolicy(
+                          value,
+                        );
                       },
                     ),
                     SizedBox(height: AppTokens.space.s12),
@@ -448,8 +471,10 @@ class _SettingsPageState extends State<SettingsPage> {
                       label: 'Download NSFW',
                       description: 'Enabled only when explicitly allowed.',
                       value: settings.downloadNsfw,
-                      onChanged: (value) =>
-                          context.read<SettingsCubit>().updateDownloadNsfw(value),
+                      onChanged:
+                          (value) => context
+                              .read<SettingsCubit>()
+                              .updateDownloadNsfw(value),
                     ),
                   ],
                 ),
@@ -459,8 +484,10 @@ class _SettingsPageState extends State<SettingsPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Organization',
-                        style: Theme.of(context).textTheme.titleLarge),
+                    Text(
+                      'Organization',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
                     SizedBox(height: AppTokens.space.s12),
                     AppSelect<MediaLayoutMode>(
                       label: 'Media layout',
@@ -479,9 +506,9 @@ class _SettingsPageState extends State<SettingsPage> {
                         if (value == null) {
                           return;
                         }
-                        context
-                            .read<SettingsCubit>()
-                            .updateMediaLayoutMode(value);
+                        context.read<SettingsCubit>().updateMediaLayoutMode(
+                          value,
+                        );
                       },
                     ),
                     SizedBox(height: AppTokens.space.s12),
@@ -489,9 +516,10 @@ class _SettingsPageState extends State<SettingsPage> {
                       label: 'Media path template',
                       hint: '{type}/{subreddit}/{yyyy}/{mm}/{title_slug}-{id}',
                       controller: _templateController,
-                      onChanged: (value) => context
-                          .read<SettingsCubit>()
-                          .updateMediaPathTemplate(value),
+                      onChanged:
+                          (value) => context
+                              .read<SettingsCubit>()
+                              .updateMediaPathTemplate(value),
                     ),
                     SizedBox(height: AppTokens.space.s12),
                     Row(
@@ -501,9 +529,10 @@ class _SettingsPageState extends State<SettingsPage> {
                             label: 'Text root (relative to download root)',
                             hint: 'text',
                             controller: _textRootController,
-                            onChanged: (value) => context
-                                .read<SettingsCubit>()
-                                .updateTextRoot(value),
+                            onChanged:
+                                (value) => context
+                                    .read<SettingsCubit>()
+                                    .updateTextRoot(value),
                           ),
                         ),
                         SizedBox(width: AppTokens.space.s12),
@@ -512,9 +541,10 @@ class _SettingsPageState extends State<SettingsPage> {
                             label: 'Comments root (relative to download root)',
                             hint: 'comments',
                             controller: _commentsRootController,
-                            onChanged: (value) => context
-                                .read<SettingsCubit>()
-                                .updateCommentsRoot(value),
+                            onChanged:
+                                (value) => context
+                                    .read<SettingsCubit>()
+                                    .updateCommentsRoot(value),
                           ),
                         ),
                       ],
@@ -523,24 +553,24 @@ class _SettingsPageState extends State<SettingsPage> {
                     if (previewItem == null)
                       Text(
                         'Import ZIP or Sync to preview templates.',
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodySmall
-                            ?.copyWith(color: colors.mutedForeground),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: colors.mutedForeground,
+                        ),
                       )
                     else ...[
                       AppSelect<int>(
                         label: 'Preview item',
                         value: previewItem.id,
-                        options: previewItems
-                            .map(
-                              (item) => AppSelectOption(
-                                label:
-                                    '${item.title.isEmpty ? 'Untitled' : item.title} • r/${item.subreddit}',
-                                value: item.id,
-                              ),
-                            )
-                            .toList(),
+                        options:
+                            previewItems
+                                .map(
+                                  (item) => AppSelectOption(
+                                    label:
+                                        '${item.title.isEmpty ? 'Untitled' : item.title} • r/${item.subreddit}',
+                                    value: item.id,
+                                  ),
+                                )
+                                .toList(),
                         onChanged: (value) {
                           setState(() {
                             _previewItemId = value;
@@ -553,17 +583,16 @@ class _SettingsPageState extends State<SettingsPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Preview',
-                                  style:
-                                      Theme.of(context).textTheme.titleLarge),
+                              Text(
+                                'Preview',
+                                style: Theme.of(context).textTheme.titleLarge,
+                              ),
                               SizedBox(height: AppTokens.space.s6),
                               Text(
                                 preview.directoryPath.isEmpty
                                     ? 'Directory: not available'
                                     : 'Directory: ${preview.directoryPath}',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
+                                style: Theme.of(context).textTheme.bodySmall
                                     ?.copyWith(color: colors.mutedForeground),
                               ),
                               SizedBox(height: AppTokens.space.s6),
@@ -571,18 +600,14 @@ class _SettingsPageState extends State<SettingsPage> {
                                 preview.filePath.isEmpty
                                     ? 'File: not available'
                                     : 'File: ${preview.filePath}',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
+                                style: Theme.of(context).textTheme.bodySmall
                                     ?.copyWith(color: colors.mutedForeground),
                               ),
                               if (preview.warnings.isNotEmpty) ...[
                                 SizedBox(height: AppTokens.space.s8),
                                 Text(
                                   preview.warnings.join(' • '),
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall
+                                  style: Theme.of(context).textTheme.bodySmall
                                       ?.copyWith(color: colors.destructive),
                                 ),
                               ],
@@ -599,16 +624,19 @@ class _SettingsPageState extends State<SettingsPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Sessions',
-                        style: Theme.of(context).textTheme.titleLarge),
+                    Text(
+                      'Sessions',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
                     SizedBox(height: AppTokens.space.s12),
                     AppSwitch(
                       label: 'Remember login session',
                       description: 'Persist cookies in app data (optional).',
                       value: settings.rememberSession,
-                      onChanged: (value) => context
-                          .read<SettingsCubit>()
-                          .updateRememberSession(value),
+                      onChanged:
+                          (value) => context
+                              .read<SettingsCubit>()
+                              .updateRememberSession(value),
                     ),
                     SizedBox(height: AppTokens.space.s12),
                     Row(
@@ -618,8 +646,8 @@ class _SettingsPageState extends State<SettingsPage> {
                           variant: AppButtonVariant.secondary,
                           onPressed: () async {
                             await context.read<SyncCubit>().clearSession(
-                                  rememberSession: settings.rememberSession,
-                                );
+                              rememberSession: settings.rememberSession,
+                            );
                             if (!context.mounted) {
                               return;
                             }
@@ -646,23 +674,25 @@ class _SettingsPageState extends State<SettingsPage> {
                       children: [
                         Row(
                           children: [
-                            Text('External tools',
-                                style: Theme.of(context).textTheme.titleLarge),
+                            Text(
+                              'External tools',
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
                             const Spacer(),
                             if (toolState.isLoading)
                               const SizedBox(
                                 height: 16,
                                 width: 16,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               ),
                           ],
                         ),
                         SizedBox(height: AppTokens.space.s6),
                         Text(
                           'Detect gallery-dl and yt-dlp on PATH or set overrides.',
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
+                          style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: colors.mutedForeground),
                         ),
                         SizedBox(height: AppTokens.space.s12),
@@ -671,27 +701,26 @@ class _SettingsPageState extends State<SettingsPage> {
                           info: toolState.galleryDl,
                         ),
                         SizedBox(height: AppTokens.space.s12),
-                        _ToolStatusTile(
-                          label: 'yt-dlp',
-                          info: toolState.ytDlp,
-                        ),
+                        _ToolStatusTile(label: 'yt-dlp', info: toolState.ytDlp),
                         SizedBox(height: AppTokens.space.s12),
                         AppTextField(
                           label: 'gallery-dl path override',
                           hint: '/usr/local/bin/gallery-dl',
                           controller: _galleryDlController,
-                          onChanged: (value) => context
-                              .read<SettingsCubit>()
-                              .updateGalleryDlPathOverride(value),
+                          onChanged:
+                              (value) => context
+                                  .read<SettingsCubit>()
+                                  .updateGalleryDlPathOverride(value),
                         ),
                         SizedBox(height: AppTokens.space.s12),
                         AppTextField(
                           label: 'yt-dlp path override',
                           hint: '/usr/local/bin/yt-dlp',
                           controller: _ytDlpController,
-                          onChanged: (value) => context
-                              .read<SettingsCubit>()
-                              .updateYtDlpPathOverride(value),
+                          onChanged:
+                              (value) => context
+                                  .read<SettingsCubit>()
+                                  .updateYtDlpPathOverride(value),
                         ),
                         SizedBox(height: AppTokens.space.s12),
                         Wrap(
@@ -701,38 +730,40 @@ class _SettingsPageState extends State<SettingsPage> {
                             AppButton(
                               label: 'Rescan tools',
                               variant: AppButtonVariant.secondary,
-                              onPressed: () =>
-                                  context.read<ToolsCubit>().refresh(),
+                              onPressed:
+                                  () => context.read<ToolsCubit>().refresh(),
                             ),
                             AppButton(
                               label: 'Test gallery-dl',
                               variant: AppButtonVariant.secondary,
-                              onPressed: toolState.galleryDl?.isAvailable == true
-                                  ? () async {
-                                      final message = await context
-                                          .read<ToolsCubit>()
-                                          .testTool(toolState.galleryDl);
-                                      if (!context.mounted) {
-                                        return;
+                              onPressed:
+                                  toolState.galleryDl?.isAvailable == true
+                                      ? () async {
+                                        final message = await context
+                                            .read<ToolsCubit>()
+                                            .testTool(toolState.galleryDl);
+                                        if (!context.mounted) {
+                                          return;
+                                        }
+                                        AppToast.show(context, message);
                                       }
-                                      AppToast.show(context, message);
-                                    }
-                                  : null,
+                                      : null,
                             ),
                             AppButton(
                               label: 'Test yt-dlp',
                               variant: AppButtonVariant.secondary,
-                              onPressed: toolState.ytDlp?.isAvailable == true
-                                  ? () async {
-                                      final message = await context
-                                          .read<ToolsCubit>()
-                                          .testTool(toolState.ytDlp);
-                                      if (!context.mounted) {
-                                        return;
+                              onPressed:
+                                  toolState.ytDlp?.isAvailable == true
+                                      ? () async {
+                                        final message = await context
+                                            .read<ToolsCubit>()
+                                            .testTool(toolState.ytDlp);
+                                        if (!context.mounted) {
+                                          return;
+                                        }
+                                        AppToast.show(context, message);
                                       }
-                                      AppToast.show(context, message);
-                                    }
-                                  : null,
+                                      : null,
                             ),
                             AppButton(
                               label: 'Copy install commands',
@@ -753,9 +784,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           SizedBox(height: AppTokens.space.s12),
                           Text(
                             toolState.errorMessage!,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
+                            style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(color: colors.destructive),
                           ),
                         ],
@@ -767,9 +796,10 @@ class _SettingsPageState extends State<SettingsPage> {
               SizedBox(height: AppTokens.space.s16),
               BlocBuilder<FfmpegCubit, FfmpegState>(
                 builder: (context, ffmpegState) {
-                  final statusText = ffmpegState.isInstalled
-                      ? 'Installed'
-                      : ffmpegState.isInstalling
+                  final statusText =
+                      ffmpegState.isInstalled
+                          ? 'Installed'
+                          : ffmpegState.isInstalling
                           ? 'Installing...'
                           : 'Not installed';
                   return AppCard(
@@ -778,32 +808,32 @@ class _SettingsPageState extends State<SettingsPage> {
                       children: [
                         Row(
                           children: [
-                            Text('ffmpeg runtime',
-                                style: Theme.of(context).textTheme.titleLarge),
+                            Text(
+                              'ffmpeg runtime',
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
                             const Spacer(),
                             if (ffmpegState.isInstalling)
                               const SizedBox(
                                 height: 16,
                                 width: 16,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               ),
                           ],
                         ),
                         SizedBox(height: AppTokens.space.s6),
                         Text(
                           statusText,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
+                          style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: colors.mutedForeground),
                         ),
                         if (ffmpegState.ffmpegPath != null) ...[
                           SizedBox(height: AppTokens.space.s6),
                           Text(
                             'ffmpeg: ${ffmpegState.ffmpegPath}',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
+                            style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(color: colors.mutedForeground),
                           ),
                         ],
@@ -811,9 +841,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           SizedBox(height: AppTokens.space.s6),
                           Text(
                             'ffprobe: ${ffmpegState.ffprobePath}',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
+                            style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(color: colors.mutedForeground),
                           ),
                         ],
@@ -821,9 +849,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           SizedBox(height: AppTokens.space.s8),
                           Text(
                             ffmpegState.errorMessage!,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
+                            style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(color: colors.destructive),
                           ),
                         ],
@@ -833,18 +859,21 @@ class _SettingsPageState extends State<SettingsPage> {
                           runSpacing: AppTokens.space.s8,
                           children: [
                             AppButton(
-                              label: ffmpegState.isInstalling
-                                  ? 'Installing...'
-                                  : 'Install ffmpeg runtime',
-                              onPressed: ffmpegState.isInstalling
-                                  ? null
-                                  : () => context.read<FfmpegCubit>().install(),
+                              label:
+                                  ffmpegState.isInstalling
+                                      ? 'Installing...'
+                                      : 'Install ffmpeg runtime',
+                              onPressed:
+                                  ffmpegState.isInstalling
+                                      ? null
+                                      : () =>
+                                          context.read<FfmpegCubit>().install(),
                             ),
                             AppButton(
                               label: 'Refresh status',
                               variant: AppButtonVariant.secondary,
-                              onPressed: () =>
-                                  context.read<FfmpegCubit>().refresh(),
+                              onPressed:
+                                  () => context.read<FfmpegCubit>().refresh(),
                             ),
                           ],
                         ),

@@ -11,9 +11,10 @@ class SettingsRepository {
   final AppDatabase _db;
 
   Future<AppSettings> load() async {
-    final row = await (_db.select(_db.settings)
-          ..where((tbl) => tbl.id.equals(AppSettings.storageId)))
-        .getSingleOrNull();
+    final row =
+        await (_db.select(_db.settings)..where(
+          (tbl) => tbl.id.equals(AppSettings.storageId),
+        )).getSingleOrNull();
     if (row == null) {
       final defaults = AppSettings.defaults();
       await save(defaults);
@@ -25,7 +26,9 @@ class SettingsRepository {
 
   Future<void> save(AppSettings settings) async {
     final data = jsonEncode(settings.toJson());
-    await _db.into(_db.settings).insertOnConflictUpdate(
+    await _db
+        .into(_db.settings)
+        .insertOnConflictUpdate(
           SettingsCompanion(
             id: const Value(AppSettings.storageId),
             dataJson: Value(data),
@@ -35,9 +38,10 @@ class SettingsRepository {
   }
 
   Stream<AppSettings> watch() {
-    final query = (_db.select(_db.settings)
-          ..where((tbl) => tbl.id.equals(AppSettings.storageId)))
-        .watchSingleOrNull();
+    final query =
+        (_db.select(_db.settings)..where(
+          (tbl) => tbl.id.equals(AppSettings.storageId),
+        )).watchSingleOrNull();
     return query.map((row) {
       if (row == null) {
         return AppSettings.defaults();
@@ -54,7 +58,7 @@ enum OverwritePolicy { skipIfExists, overwriteIfNewer }
 
 enum MediaLayoutMode { flat, folderPerMedia }
 
-enum CommentSort { best, new, top, controversial }
+enum CommentSort { best, newest, top, controversial }
 
 class AppSettings {
   const AppSettings({
@@ -106,8 +110,7 @@ class AppSettings {
   static AppSettings defaults() {
     return const AppSettings(
       downloadRoot: '',
-      mediaPathTemplate:
-          '{type}/{subreddit}/{yyyy}/{mm}/{title_slug}-{id}',
+      mediaPathTemplate: '{type}/{subreddit}/{yyyy}/{mm}/{title_slug}-{id}',
       mediaLayoutMode: MediaLayoutMode.flat,
       textRoot: 'text',
       commentsRoot: 'comments',
@@ -164,7 +167,8 @@ class AppSettings {
       concurrency: concurrency ?? this.concurrency,
       rateLimitPerMinute: rateLimitPerMinute ?? this.rateLimitPerMinute,
       maxDownloadAttempts: maxDownloadAttempts ?? this.maxDownloadAttempts,
-      galleryDlPathOverride: galleryDlPathOverride ?? this.galleryDlPathOverride,
+      galleryDlPathOverride:
+          galleryDlPathOverride ?? this.galleryDlPathOverride,
       ytDlpPathOverride: ytDlpPathOverride ?? this.ytDlpPathOverride,
       exportTextPosts: exportTextPosts ?? this.exportTextPosts,
       exportSavedComments: exportSavedComments ?? this.exportSavedComments,
@@ -196,7 +200,7 @@ class AppSettings {
       'exportSavedComments': exportSavedComments,
       'exportPostComments': exportPostComments,
       'postCommentsMaxCount': postCommentsMaxCount,
-      'postCommentsSort': postCommentsSort.name,
+      'postCommentsSort': _commentSortValue(postCommentsSort),
       'postCommentsTimeframeDays': postCommentsTimeframeDays,
     };
   }
@@ -204,7 +208,8 @@ class AppSettings {
   factory AppSettings.fromJson(Map<String, dynamic> json) {
     return AppSettings(
       downloadRoot: json['downloadRoot'] as String? ?? '',
-      mediaPathTemplate: json['mediaPathTemplate'] as String? ??
+      mediaPathTemplate:
+          json['mediaPathTemplate'] as String? ??
           '{type}/{subreddit}/{yyyy}/{mm}/{title_slug}-{id}',
       mediaLayoutMode: _parseMediaLayoutMode(
         json['mediaLayoutMode'] as String?,
@@ -226,9 +231,7 @@ class AppSettings {
       exportSavedComments: json['exportSavedComments'] as bool? ?? false,
       exportPostComments: json['exportPostComments'] as bool? ?? false,
       postCommentsMaxCount: json['postCommentsMaxCount'] as int?,
-      postCommentsSort: _parseCommentSort(
-        json['postCommentsSort'] as String?,
-      ),
+      postCommentsSort: _parseCommentSort(json['postCommentsSort'] as String?),
       postCommentsTimeframeDays: json['postCommentsTimeframeDays'] as int?,
     );
   }
@@ -276,7 +279,8 @@ MediaLayoutMode _parseMediaLayoutMode(String? value) {
 CommentSort _parseCommentSort(String? value) {
   switch (value) {
     case 'new':
-      return CommentSort.new;
+    case 'newest':
+      return CommentSort.newest;
     case 'top':
       return CommentSort.top;
     case 'controversial':
@@ -284,5 +288,19 @@ CommentSort _parseCommentSort(String? value) {
     case 'best':
     default:
       return CommentSort.best;
+  }
+}
+
+String _commentSortValue(CommentSort sort) {
+  switch (sort) {
+    case CommentSort.newest:
+      return 'new';
+    case CommentSort.top:
+      return 'top';
+    case CommentSort.controversial:
+      return 'controversial';
+    case CommentSort.best:
+    default:
+      return 'best';
   }
 }

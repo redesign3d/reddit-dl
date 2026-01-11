@@ -61,14 +61,23 @@ class ThreadCommentsMarkdownExporter {
       if (policy == OverwritePolicy.skipIfExists) {
         return ExportResult.skipped('File exists.', targetFile.path);
       }
-      return ExportResult.skipped('Unable to determine newer export.', targetFile.path);
+      return ExportResult.skipped(
+        'Unable to determine newer export.',
+        targetFile.path,
+      );
     }
 
     if (!await commentsDir.exists()) {
       await commentsDir.create(recursive: true);
     }
 
-    final content = _buildMarkdown(item, comments, sort, maxCount, timeframeDays);
+    final content = _buildMarkdown(
+      item,
+      comments,
+      sort,
+      maxCount,
+      timeframeDays,
+    );
     await targetFile.writeAsString(content);
     return ExportResult.completed(targetFile.path);
   }
@@ -84,11 +93,9 @@ class ThreadCommentsMarkdownExporter {
     final response = await _dio.get<dynamic>(url, cancelToken: cancelToken);
     final status = response.statusCode ?? 0;
     if (status == 429) {
-      final retryAfter =
-          response.headers.value(HttpHeaders.retryAfterHeader);
+      final retryAfter = response.headers.value(HttpHeaders.retryAfterHeader);
       throw DownloadRateLimitException(
-        retryAfterSeconds:
-            retryAfter == null ? null : int.tryParse(retryAfter),
+        retryAfterSeconds: retryAfter == null ? null : int.tryParse(retryAfter),
       );
     }
     if (status >= 400) {
@@ -97,16 +104,18 @@ class ThreadCommentsMarkdownExporter {
     final comments = _extractComments(response.data);
     var filtered = comments;
     if (timeframeDays != null && timeframeDays > 0) {
-      final cutoff = DateTime.now()
-          .toUtc()
-          .subtract(Duration(days: timeframeDays));
-      filtered = comments
-          .where(
-            (comment) =>
-                DateTime.fromMillisecondsSinceEpoch(comment.createdUtc * 1000, isUtc: true)
-                    .isAfter(cutoff),
-          )
-          .toList();
+      final cutoff = DateTime.now().toUtc().subtract(
+        Duration(days: timeframeDays),
+      );
+      filtered =
+          comments
+              .where(
+                (comment) => DateTime.fromMillisecondsSinceEpoch(
+                  comment.createdUtc * 1000,
+                  isUtc: true,
+                ).isAfter(cutoff),
+              )
+              .toList();
     }
     if (maxCount != null && maxCount > 0 && filtered.length > maxCount) {
       filtered = filtered.take(maxCount).toList();
@@ -114,18 +123,11 @@ class ThreadCommentsMarkdownExporter {
     return filtered;
   }
 
-  String _commentsUrl(
-    String permalink,
-    CommentSort sort,
-    int? maxCount,
-  ) {
+  String _commentsUrl(String permalink, CommentSort sort, int? maxCount) {
     final normalized = normalizePermalink(permalink);
     final base = normalized.endsWith('.json') ? normalized : '$normalized.json';
     final uri = Uri.parse(base);
-    final params = <String, String>{
-      'sort': sort.name,
-      'raw_json': '1',
-    };
+    final params = <String, String>{'sort': _sortValue(sort), 'raw_json': '1'};
     if (maxCount != null && maxCount > 0) {
       params['limit'] = maxCount.toString();
     }
@@ -178,7 +180,8 @@ class ThreadCommentsMarkdownExporter {
         final replies = data['replies'];
         if (replies is Map<String, dynamic>) {
           final replyData = replies['data'];
-          final replyListing = replyData is Map<String, dynamic> ? replyData : null;
+          final replyListing =
+              replyData is Map<String, dynamic> ? replyData : null;
           final replyChildren = replyListing?['children'];
           if (replyChildren is List) {
             _walkComments(replyChildren, depth + 1, results);
@@ -196,35 +199,58 @@ class ThreadCommentsMarkdownExporter {
     int? timeframeDays,
   ) {
     final buffer = StringBuffer();
-    buffer.writeln('# Comments for ${item.title.isEmpty ? 'Untitled post' : item.title}');
+    buffer.writeln(
+      '# Comments for ${item.title.isEmpty ? 'Untitled post' : item.title}',
+    );
     buffer.writeln();
     buffer.writeln('- Subreddit: r/${item.subreddit}');
     buffer.writeln('- Permalink: ${item.permalink}');
-    buffer.writeln('- Sort: ${sort.name}');
+    buffer.writeln('- Sort: ${_sortValue(sort)}');
     buffer.writeln('- Max count: ${maxCount ?? 'all'}');
-    buffer.writeln('- Timeframe: ${timeframeDays == null ? 'all' : 'last $timeframeDays days'}');
+    buffer.writeln(
+      '- Timeframe: ${timeframeDays == null ? 'all' : 'last $timeframeDays days'}',
+    );
     buffer.writeln();
     for (final comment in comments) {
       final indent = '  ' * comment.depth;
-      final created = comment.createdUtc > 0
-          ? DateTime.fromMillisecondsSinceEpoch(
-              comment.createdUtc * 1000,
-              isUtc: true,
-            ).toLocal()
-          : null;
-      final createdText = created == null
-          ? 'Unknown'
-          : '${created.year}-${created.month.toString().padLeft(2, '0')}-${created.day.toString().padLeft(2, '0')}';
-      buffer.writeln('${indent}- **u/${comment.author}** • $createdText • score ${comment.score}');
-      final lines = comment.body.trim().isEmpty
-          ? const ['_No text body provided._']
-          : comment.body.trim().split('\n');
+      final created =
+          comment.createdUtc > 0
+              ? DateTime.fromMillisecondsSinceEpoch(
+                comment.createdUtc * 1000,
+                isUtc: true,
+              ).toLocal()
+              : null;
+      final createdText =
+          created == null
+              ? 'Unknown'
+              : '${created.year}-${created.month.toString().padLeft(2, '0')}-${created.day.toString().padLeft(2, '0')}';
+      buffer.writeln(
+        '${indent}- **u/${comment.author}** • $createdText • score ${comment.score}',
+      );
+      final lines =
+          comment.body.trim().isEmpty
+              ? const ['_No text body provided._']
+              : comment.body.trim().split('\n');
       for (final line in lines) {
         buffer.writeln('${indent}  > $line');
       }
       buffer.writeln();
     }
     return buffer.toString().replaceAll('\r\n', '\n');
+  }
+
+  String _sortValue(CommentSort sort) {
+    switch (sort) {
+      case CommentSort.newest:
+        return 'new';
+      case CommentSort.top:
+        return 'top';
+      case CommentSort.controversial:
+        return 'controversial';
+      case CommentSort.best:
+      default:
+        return 'best';
+    }
   }
 }
 
