@@ -3,9 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'data/app_database.dart';
+import 'data/import_repository.dart';
 import 'data/logs_repository.dart';
 import 'data/settings_repository.dart';
+import 'features/import/import_cubit.dart';
 import 'features/import/import_page.dart';
+import 'features/import/zip_import_parser.dart';
 import 'features/library/library_cubit.dart';
 import 'features/library/library_page.dart';
 import 'features/logs/logs_cubit.dart';
@@ -57,12 +60,20 @@ class _AppState extends State<App> {
         RepositoryProvider(
           create: (context) => LogsRepository(context.read<AppDatabase>()),
         ),
+        RepositoryProvider(
+          create: (context) =>
+              ImportRepository(context.read<AppDatabase>(), ZipImportParser()),
+        ),
       ],
       child: MultiBlocProvider(
         providers: [
           BlocProvider(create: (_) => NavigationCubit()),
           BlocProvider(create: (_) => LibraryCubit()),
           BlocProvider(create: (_) => QueueCubit()),
+          BlocProvider(
+            create: (context) =>
+                ImportCubit(context.read<ImportRepository>(), context.read<LogsRepository>()),
+          ),
           BlocProvider(
             create: (context) =>
                 SettingsCubit(context.read<SettingsRepository>()),
