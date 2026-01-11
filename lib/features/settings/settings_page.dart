@@ -100,6 +100,8 @@ class _SettingsPageState extends State<SettingsPage> {
   late final TextEditingController _attemptsController;
   late final TextEditingController _galleryDlController;
   late final TextEditingController _ytDlpController;
+  late final TextEditingController _postCommentsMaxController;
+  late final TextEditingController _postCommentsTimeframeController;
 
   int? _previewItemId;
 
@@ -115,6 +117,8 @@ class _SettingsPageState extends State<SettingsPage> {
     _attemptsController = TextEditingController();
     _galleryDlController = TextEditingController();
     _ytDlpController = TextEditingController();
+    _postCommentsMaxController = TextEditingController();
+    _postCommentsTimeframeController = TextEditingController();
   }
 
   @override
@@ -128,6 +132,8 @@ class _SettingsPageState extends State<SettingsPage> {
     _attemptsController.dispose();
     _galleryDlController.dispose();
     _ytDlpController.dispose();
+    _postCommentsMaxController.dispose();
+    _postCommentsTimeframeController.dispose();
     super.dispose();
   }
 
@@ -162,6 +168,14 @@ class _SettingsPageState extends State<SettingsPage> {
     return value;
   }
 
+  int? _parseOptionalInt(TextEditingController controller) {
+    final value = int.tryParse(controller.text.trim());
+    if (value == null || value <= 0) {
+      return null;
+    }
+    return value;
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
@@ -178,6 +192,10 @@ class _SettingsPageState extends State<SettingsPage> {
         _attemptsController.text = settings.maxDownloadAttempts.toString();
         _galleryDlController.text = settings.galleryDlPathOverride;
         _ytDlpController.text = settings.ytDlpPathOverride;
+        _postCommentsMaxController.text =
+            settings.postCommentsMaxCount?.toString() ?? '';
+        _postCommentsTimeframeController.text =
+            settings.postCommentsTimeframeDays?.toString() ?? '';
       },
       child: BlocBuilder<SettingsCubit, SettingsState>(
         builder: (context, state) {
@@ -224,6 +242,110 @@ class _SettingsPageState extends State<SettingsPage> {
                                 value ? AppThemeMode.dark : AppThemeMode.light,
                               ),
                     ),
+                  ],
+                ),
+              ),
+              SizedBox(height: AppTokens.space.s16),
+              AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Markdown exports',
+                        style: Theme.of(context).textTheme.titleLarge),
+                    SizedBox(height: AppTokens.space.s12),
+                    AppSwitch(
+                      label: 'Export text posts to Markdown',
+                      description: 'Save post selftext into the text tree.',
+                      value: settings.exportTextPosts,
+                      onChanged: (value) => context
+                          .read<SettingsCubit>()
+                          .updateExportTextPosts(value),
+                    ),
+                    SizedBox(height: AppTokens.space.s12),
+                    AppSwitch(
+                      label: 'Export saved comments to Markdown',
+                      description: 'Save saved comments into the comments tree.',
+                      value: settings.exportSavedComments,
+                      onChanged: (value) => context
+                          .read<SettingsCubit>()
+                          .updateExportSavedComments(value),
+                    ),
+                    SizedBox(height: AppTokens.space.s12),
+                    AppSwitch(
+                      label: 'Export comments under saved posts',
+                      description: 'Write a comments.md beside post media.',
+                      value: settings.exportPostComments,
+                      onChanged: (value) => context
+                          .read<SettingsCubit>()
+                          .updateExportPostComments(value),
+                    ),
+                    if (settings.exportPostComments) ...[
+                      SizedBox(height: AppTokens.space.s12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: AppTextField(
+                              label: 'Max comments (optional)',
+                              hint: 'Leave blank for all',
+                              controller: _postCommentsMaxController,
+                              keyboardType: TextInputType.number,
+                              onChanged: (_) => context
+                                  .read<SettingsCubit>()
+                                  .updatePostCommentsMaxCount(
+                                    _parseOptionalInt(
+                                      _postCommentsMaxController,
+                                    ),
+                                  ),
+                            ),
+                          ),
+                          SizedBox(width: AppTokens.space.s12),
+                          Expanded(
+                            child: AppSelect<CommentSort>(
+                              label: 'Sort order',
+                              value: settings.postCommentsSort,
+                              options: const [
+                                AppSelectOption(
+                                  label: 'Best',
+                                  value: CommentSort.best,
+                                ),
+                                AppSelectOption(
+                                  label: 'New',
+                                  value: CommentSort.new,
+                                ),
+                                AppSelectOption(
+                                  label: 'Top',
+                                  value: CommentSort.top,
+                                ),
+                                AppSelectOption(
+                                  label: 'Controversial',
+                                  value: CommentSort.controversial,
+                                ),
+                              ],
+                              onChanged: (value) {
+                                if (value == null) {
+                                  return;
+                                }
+                                context
+                                    .read<SettingsCubit>()
+                                    .updatePostCommentsSort(value);
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: AppTokens.space.s12),
+                      AppTextField(
+                        label: 'Timeframe (days, optional)',
+                        hint: 'Leave blank for all',
+                        controller: _postCommentsTimeframeController,
+                        keyboardType: TextInputType.number,
+                        onChanged: (_) => context
+                            .read<SettingsCubit>()
+                            .updatePostCommentsTimeframeDays(
+                              _parseOptionalInt(_postCommentsTimeframeController),
+                            ),
+                      ),
+                    ],
                   ],
                 ),
               ),

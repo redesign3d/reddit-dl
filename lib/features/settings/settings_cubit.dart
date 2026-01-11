@@ -73,6 +73,30 @@ class SettingsCubit extends Cubit<SettingsState> {
     updateSettings(state.settings.copyWith(rememberSession: value));
   }
 
+  void updateExportTextPosts(bool value) {
+    updateSettings(state.settings.copyWith(exportTextPosts: value));
+  }
+
+  void updateExportSavedComments(bool value) {
+    updateSettings(state.settings.copyWith(exportSavedComments: value));
+  }
+
+  void updateExportPostComments(bool value) {
+    updateSettings(state.settings.copyWith(exportPostComments: value));
+  }
+
+  void updatePostCommentsMaxCount(int? value) {
+    updateSettings(state.settings.copyWith(postCommentsMaxCount: value));
+  }
+
+  void updatePostCommentsSort(CommentSort value) {
+    updateSettings(state.settings.copyWith(postCommentsSort: value));
+  }
+
+  void updatePostCommentsTimeframeDays(int? value) {
+    updateSettings(state.settings.copyWith(postCommentsTimeframeDays: value));
+  }
+
   void updateThemeMode(AppThemeMode mode) {
     updateSettings(state.settings.copyWith(themeMode: mode));
   }
