@@ -141,6 +141,7 @@ class DownloadScheduler {
   Future<void> _runJob(QueueRecord record, CancelToken token) async {
     final jobId = record.job.id;
     final item = record.item;
+    await _log(jobId, 'download', 'info', 'Download started for ${item.permalink}.');
 
     if (item.over18 && !_settings.downloadNsfw) {
       await _queueRepository.markJobSkipped(
@@ -241,13 +242,16 @@ class DownloadScheduler {
         jobId,
         '$failed asset(s) failed.',
       );
+      await _log(jobId, 'download', 'error', 'Job failed for ${item.permalink}.');
     } else if (completed == 0) {
       await _queueRepository.markJobSkipped(
         jobId,
         skipped > 0 ? 'All assets skipped.' : 'No assets downloaded.',
       );
+      await _log(jobId, 'download', 'info', 'Job skipped for ${item.permalink}.');
     } else {
       await _queueRepository.markJobCompleted(jobId, outputPath);
+      await _log(jobId, 'download', 'info', 'Job completed for ${item.permalink}.');
     }
     _running.remove(jobId);
     _schedule();
