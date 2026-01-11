@@ -65,12 +65,13 @@ class WebViewCookieBridge {
   Future<void> _applyCookies(Uri url) async {
     final cookies = await _sessionRepository.loadCookies(url);
     for (final cookie in cookies) {
+      final domain = cookie.domain;
       await inapp.CookieManager.instance().setCookie(
         url: inapp.WebUri(url.toString()),
         name: cookie.name,
         value: cookie.value,
-        domain: cookie.domain.isNotEmpty ? cookie.domain : null,
-        path: cookie.path,
+        domain: domain != null && domain.isNotEmpty ? domain : null,
+        path: cookie.path ?? '/',
         expiresDate: cookie.expires?.millisecondsSinceEpoch,
         isSecure: cookie.secure,
         isHttpOnly: cookie.httpOnly,

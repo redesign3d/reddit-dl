@@ -59,13 +59,13 @@ class RedditSavedListingParser {
   String? parseUsername(String html) {
     final document = html_parser.parse(html);
     final headerAnchor =
-        document.querySelector('#header-bottom-right a[href*=\"/user/\"]');
+        document.querySelector('#header-bottom-right a[href*="/user/"]');
     final username = _usernameFromAnchor(headerAnchor);
     if (username != null) {
       return username;
     }
 
-    for (final anchor in document.querySelectorAll('a[href*=\"/user/\"]')) {
+    for (final anchor in document.querySelectorAll('a[href*="/user/"]')) {
       final candidate = _usernameFromAnchor(anchor);
       if (candidate != null) {
         return candidate;
@@ -90,7 +90,7 @@ class RedditSavedListingParser {
     return match?.group(1);
   }
 
-  ListingKindHint _inferKind(Map<String, String> attributes) {
+  ListingKindHint _inferKind(Map<Object?, String> attributes) {
     final fullname = attributes['data-fullname'];
     if (fullname != null) {
       if (fullname.startsWith('t1_')) {

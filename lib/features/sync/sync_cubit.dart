@@ -10,6 +10,7 @@ import '../../data/session_repository.dart';
 import '../../data/sync_repository.dart';
 import '../logs/log_record.dart';
 import '../../data/logs_repository.dart';
+import 'reddit_json_parser.dart';
 import 'reddit_saved_listing_parser.dart';
 import 'webview_cookie_bridge.dart';
 

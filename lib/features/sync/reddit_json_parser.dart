@@ -311,6 +311,6 @@ class RedditJsonParser {
   }
 
   String _decodeHtml(String value) {
-    return html_parser.parseFragment(value).text;
+    return html_parser.parseFragment(value).text ?? '';
   }
 }

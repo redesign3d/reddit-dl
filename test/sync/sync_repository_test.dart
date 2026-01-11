@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:drift/drift.dart';
+import 'package:drift/drift.dart' as drift;
 
 import 'package:reddit_dl/data/app_database.dart';
 import 'package:reddit_dl/data/sync_repository.dart';
@@ -18,7 +18,7 @@ void main() {
             author: 'zipper',
             createdUtc: 1600000000,
             title: 'Old title',
-            bodyMarkdown: const Value.absent(),
+            bodyMarkdown: const drift.Value.absent(),
             source: 'zip',
             resolutionStatus: 'partial',
           ),

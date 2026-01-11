@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
-import '../../data/settings_repository.dart';
 import '../../navigation/app_section.dart';
 import '../../navigation/navigation_cubit.dart';
 import '../../ui/components/app_button.dart';
@@ -56,7 +55,7 @@ class _SyncPageState extends State<SyncPage> {
             final maxItems = _parseMaxItems();
             final processed = progress.resolved + progress.failures;
             final progressValue = maxItems != null && maxItems > 0
-                ? (processed / maxItems).clamp(0, 1)
+                ? (processed / maxItems).clamp(0, 1).toDouble()
                 : 0.0;
 
             if (_usernameController.text.isEmpty &&
@@ -90,14 +89,11 @@ class _SyncPageState extends State<SyncPage> {
                         description:
                             'Persist cookies in app data for future syncs.',
                         value: rememberSession,
-                        onChanged: (value) async {
-                          await context
+                        onChanged: (value) {
+                          context
                               .read<SettingsCubit>()
                               .updateRememberSession(value);
-                          if (!context.mounted) {
-                            return;
-                          }
-                          await context
+                          context
                               .read<SyncCubit>()
                               .updateRememberSession(value);
                         },
