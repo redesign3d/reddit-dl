@@ -7,7 +7,9 @@ import 'data/import_repository.dart';
 import 'data/library_repository.dart';
 import 'data/logs_repository.dart';
 import 'data/queue_repository.dart';
+import 'data/session_repository.dart';
 import 'data/settings_repository.dart';
+import 'data/sync_repository.dart';
 import 'features/import/import_cubit.dart';
 import 'features/import/import_page.dart';
 import 'features/import/zip_import_parser.dart';
@@ -19,6 +21,7 @@ import 'features/queue/queue_cubit.dart';
 import 'features/queue/queue_page.dart';
 import 'features/settings/settings_cubit.dart';
 import 'features/settings/settings_page.dart';
+import 'features/sync/sync_cubit.dart';
 import 'features/sync/sync_page.dart';
 import 'navigation/app_section.dart';
 import 'navigation/navigation_cubit.dart';
@@ -73,6 +76,10 @@ class _AppState extends State<App> {
         RepositoryProvider(
           create: (context) => QueueRepository(context.read<AppDatabase>()),
         ),
+        RepositoryProvider(create: (_) => SessionRepository()),
+        RepositoryProvider(
+          create: (context) => SyncRepository(context.read<AppDatabase>()),
+        ),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -95,6 +102,13 @@ class _AppState extends State<App> {
           ),
           BlocProvider(
             create: (context) => LogsCubit(context.read<LogsRepository>()),
+          ),
+          BlocProvider(
+            create: (context) => SyncCubit(
+              context.read<SessionRepository>(),
+              context.read<SyncRepository>(),
+              context.read<LogsRepository>(),
+            ),
           ),
         ],
         child: BlocBuilder<SettingsCubit, SettingsState>(
