@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:dio/dio.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
@@ -199,12 +200,11 @@ class DownloadScheduler {
       }
 
       try {
-        final result = await _downloader.download(
+        final result = await _downloadWithRetry(
           asset: asset,
           targetFile: targetFile,
           policy: _policyFromSnapshot(record.job.policySnapshot),
           cancelToken: token,
-          onHeaders: _telemetry.updateFromHeaders,
           onProgress: (progress) async {
             final overall = (completed + progress) / assets.length;
             await _queueRepository.updateJobProgress(jobId, overall);
@@ -219,9 +219,6 @@ class DownloadScheduler {
           failed += 1;
           await _log(jobId, 'download', 'error', result.message ?? 'Failed.');
         }
-      } on DownloadRateLimitException catch (error) {
-        await _handleRateLimit(error);
-        i -= 1;
       } on DioException catch (error) {
         if (CancelToken.isCancel(error)) {
           _running.remove(jobId);
@@ -256,6 +253,52 @@ class DownloadScheduler {
     _schedule();
   }
 
+  Future<MediaDownloadResult> _downloadWithRetry({
+    required MediaAsset asset,
+    required File targetFile,
+    required OverwritePolicy policy,
+    required CancelToken cancelToken,
+    required void Function(double progress) onProgress,
+  }) async {
+    var attempt = 0;
+    const maxRetries = 3;
+    while (true) {
+      try {
+        return await _downloader.download(
+          asset: asset,
+          targetFile: targetFile,
+          policy: policy,
+          cancelToken: cancelToken,
+          onHeaders: _telemetry.updateFromHeaders,
+          onProgress: onProgress,
+        );
+      } on DownloadRateLimitException catch (error) {
+        await _handleRateLimit(error);
+      } on DownloadHttpException catch (error) {
+        if (attempt >= maxRetries) {
+          return MediaDownloadResult.failed(
+            'HTTP ${error.statusCode} after retries.',
+            targetFile.path,
+          );
+        }
+        await _backoffDelay(attempt);
+        attempt += 1;
+      } on DioException catch (error) {
+        if (CancelToken.isCancel(error)) {
+          rethrow;
+        }
+        if (attempt >= maxRetries) {
+          return MediaDownloadResult.failed(
+            'Network error after retries.',
+            targetFile.path,
+          );
+        }
+        await _backoffDelay(attempt);
+        attempt += 1;
+      }
+    }
+  }
+
   Future<void> _handleRateLimit(DownloadRateLimitException error) async {
     final delay = error.retryAfterSeconds ?? 10;
     await _log(
@@ -265,6 +308,12 @@ class DownloadScheduler {
       'Rate limited. Retrying after ${delay}s.',
     );
     await Future.delayed(Duration(seconds: delay));
+  }
+
+  Future<void> _backoffDelay(int attempt) async {
+    final base = 500 * pow(2, attempt);
+    final jitter = Random().nextInt(250);
+    await Future.delayed(Duration(milliseconds: base.toInt() + jitter));
   }
 
   Future<void> _respectRateLimit() async {

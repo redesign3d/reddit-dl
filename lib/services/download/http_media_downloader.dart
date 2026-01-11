@@ -56,6 +56,9 @@ class HttpMediaDownloader {
         retryAfterSeconds: int.tryParse(retryAfter ?? ''),
       );
     }
+    if (status >= 500) {
+      throw DownloadHttpException(statusCode: status);
+    }
     if (status >= 400) {
       return MediaDownloadResult.failed(
         'HTTP $status while downloading.',
@@ -181,3 +184,12 @@ class MediaDownloadResult {
 }
 
 enum MediaDownloadStatus { completed, skipped, failed }
+
+class DownloadHttpException implements Exception {
+  DownloadHttpException({required this.statusCode});
+
+  final int statusCode;
+
+  @override
+  String toString() => 'DownloadHttpException(statusCode: $statusCode)';
+}
