@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:drift/drift.dart';
 
 import '../features/import/zip_import_parser.dart';
