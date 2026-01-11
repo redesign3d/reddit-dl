@@ -168,6 +168,7 @@ class RedditJsonParser {
       String type,
       String? url, {
       Map<String, dynamic>? metadata,
+      String toolHint = 'none',
     }) {
       if (url == null || url.isEmpty) {
         return;
@@ -183,7 +184,7 @@ class RedditJsonParser {
           type: type,
           sourceUrl: decoded,
           normalizedUrl: normalized,
-          toolHint: 'none',
+          toolHint: toolHint,
           metadata: metadata,
         ),
       );
@@ -197,7 +198,11 @@ class RedditJsonParser {
       } else if (_isGif(urlOverride)) {
         addAsset('gif', urlOverride);
       } else if (postHint == 'link' && !_isRedditUrl(urlOverride)) {
-        addAsset('external', urlOverride);
+        addAsset(
+          'external',
+          urlOverride,
+          toolHint: _externalToolHint(urlOverride),
+        );
       }
     }
 
@@ -323,6 +328,14 @@ class RedditJsonParser {
     return lower.contains('reddit.com') || lower.contains('redd.it');
   }
 
+  String _externalToolHint(String url) {
+    final host = Uri.tryParse(url)?.host.toLowerCase() ?? '';
+    if (_videoDomains.any((domain) => host.contains(domain))) {
+      return 'ytdlp';
+    }
+    return 'gallerydl';
+  }
+
   String _normalizeMediaUrl(String url) {
     final parsed = Uri.tryParse(url);
     if (parsed == null) {
@@ -335,3 +348,12 @@ class RedditJsonParser {
     return html_parser.parseFragment(value).text ?? '';
   }
 }
+
+const _videoDomains = [
+  'youtube.com',
+  'youtu.be',
+  'vimeo.com',
+  'tiktok.com',
+  'twitch.tv',
+  'streamable.com',
+];
