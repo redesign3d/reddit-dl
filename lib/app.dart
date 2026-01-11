@@ -152,6 +152,7 @@ class _AppState extends State<App> {
               context.read<SettingsRepository>(),
               context.read<LogsRepository>(),
               context.read<ToolDetector>(),
+              context.read<ExternalToolRunner>(),
             ),
           ),
           BlocProvider(

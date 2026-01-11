@@ -69,7 +69,7 @@ class _ToolStatusTile extends StatelessWidget {
 String _installCommandsForPlatform() {
   if (Platform.isMacOS) {
     return [
-      'brew install gallery-dl yt-dlp',
+      'brew install yt-dlp',
       'pipx install gallery-dl',
       'pipx install yt-dlp',
     ].join('\n');
@@ -581,6 +581,36 @@ class _SettingsPageState extends State<SettingsPage> {
                               variant: AppButtonVariant.secondary,
                               onPressed: () =>
                                   context.read<ToolsCubit>().refresh(),
+                            ),
+                            AppButton(
+                              label: 'Test gallery-dl',
+                              variant: AppButtonVariant.secondary,
+                              onPressed: toolState.galleryDl?.isAvailable == true
+                                  ? () async {
+                                      final message = await context
+                                          .read<ToolsCubit>()
+                                          .testTool(toolState.galleryDl);
+                                      if (!context.mounted) {
+                                        return;
+                                      }
+                                      AppToast.show(context, message);
+                                    }
+                                  : null,
+                            ),
+                            AppButton(
+                              label: 'Test yt-dlp',
+                              variant: AppButtonVariant.secondary,
+                              onPressed: toolState.ytDlp?.isAvailable == true
+                                  ? () async {
+                                      final message = await context
+                                          .read<ToolsCubit>()
+                                          .testTool(toolState.ytDlp);
+                                      if (!context.mounted) {
+                                        return;
+                                      }
+                                      AppToast.show(context, message);
+                                    }
+                                  : null,
                             ),
                             AppButton(
                               label: 'Copy install commands',
