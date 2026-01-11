@@ -42,7 +42,9 @@ void main() {
         200,
         '',
         headers: {
-          HttpHeaders.lastModifiedHeader: HttpDate.format(DateTime(2024, 1, 1)),
+          HttpHeaders.lastModifiedHeader: [
+            HttpDate.format(DateTime(2024, 1, 1)),
+          ],
         },
       ),
     );

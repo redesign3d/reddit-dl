@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
@@ -107,7 +106,7 @@ void main() {
             bodyMarkdown: const Value.absent(),
             source: 'sync',
             resolutionStatus: 'ok',
-            over18: true,
+            over18: const Value(true),
           ),
         );
     await db.into(db.mediaAssets).insert(
