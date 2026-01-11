@@ -35,6 +35,7 @@ class QueueCubit extends Cubit<QueueState> {
   late final StreamSubscription<List<QueueRecord>> _subscription;
   late final StreamSubscription<AppSettings> _settingsSubscription;
   late final StreamSubscription<DownloadTelemetryState> _telemetrySubscription;
+  AppSettings _settings = AppSettings.defaults();
 
   void _handleItems(List<QueueRecord> items) {
     final hasActive = items.any(
@@ -45,6 +46,7 @@ class QueueCubit extends Cubit<QueueState> {
   }
 
   void _handleSettings(AppSettings settings) {
+    _settings = settings;
     emit(state.copyWith(
       concurrency: settings.concurrency,
       rateLimitPerMinute: settings.rateLimitPerMinute,
@@ -59,7 +61,13 @@ class QueueCubit extends Cubit<QueueState> {
   }
 
   Future<bool> enqueueSavedItem(SavedItem item) async {
-    final result = await _repository.enqueueForItem(item);
+    final policySnapshot = _settings.overwritePolicy == OverwritePolicy.skipIfExists
+        ? 'skip_if_exists'
+        : 'overwrite_if_newer';
+    final result = await _repository.enqueueForItem(
+      item,
+      policySnapshot: policySnapshot,
+    );
     await _logs.add(
       LogRecord(
         timestamp: DateTime.now(),

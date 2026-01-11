@@ -30,7 +30,10 @@ class QueueRepository {
         );
   }
 
-  Future<QueueEnqueueResult> enqueueForItem(SavedItem item) async {
+  Future<QueueEnqueueResult> enqueueForItem(
+    SavedItem item, {
+    required String policySnapshot,
+  }) async {
     final existing = await (_db.select(_db.downloadJobs)
           ..where(
             (tbl) => tbl.savedItemId.equals(item.id) &
@@ -45,7 +48,7 @@ class QueueRepository {
           DownloadJobsCompanion.insert(
             savedItemId: item.id,
             status: 'queued',
-            policySnapshot: 'skip_if_exists',
+            policySnapshot: policySnapshot,
             outputPath: 'pending',
           ),
         );
