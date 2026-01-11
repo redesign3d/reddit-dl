@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
-import 'package:persist_cookie_jar/persist_cookie_jar.dart';
 
 class SessionRepository {
   SessionRepository();
