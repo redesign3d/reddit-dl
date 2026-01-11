@@ -53,7 +53,8 @@ class HttpMediaDownloader {
       final retryAfter =
           response.headers.value(HttpHeaders.retryAfterHeader);
       throw DownloadRateLimitException(
-        retryAfterSeconds: int.tryParse(retryAfter ?? ''),
+        retryAfterSeconds:
+            retryAfter == null ? null : int.tryParse(retryAfter),
       );
     }
     if (status >= 500) {
@@ -85,7 +86,7 @@ class HttpMediaDownloader {
       return MediaDownloadResult.failed('Empty response body.', targetFile.path);
     }
 
-    final total = body.contentLength ?? -1;
+    final total = body.contentLength;
     var received = 0;
     var lastUpdate = DateTime.fromMillisecondsSinceEpoch(0);
 

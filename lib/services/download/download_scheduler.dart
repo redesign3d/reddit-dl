@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 
 import '../../data/logs_repository.dart';
+import '../../data/app_database.dart';
 import '../../data/queue_repository.dart';
 import '../../data/session_repository.dart';
 import '../../data/settings_repository.dart';
@@ -351,7 +352,6 @@ class DownloadScheduler {
         scope: scope,
         level: level,
         message: message,
-        relatedJobId: jobId,
       ),
     );
   }
