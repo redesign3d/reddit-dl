@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:window_manager/window_manager.dart';
 
 import 'data/app_database.dart';
 import 'data/import_repository.dart';
@@ -30,11 +33,13 @@ import 'navigation/navigation_cubit.dart';
 import 'ui/app_theme.dart';
 import 'ui/components/app_button.dart';
 import 'ui/components/app_scaffold.dart';
+import 'ui/components/app_toast.dart';
 import 'services/download/download_scheduler.dart';
 import 'services/download/download_telemetry.dart';
 import 'services/ffmpeg_runtime_manager.dart';
 import 'services/tools/external_tool_runner.dart';
 import 'services/tools/tool_detector.dart';
+import 'services/tray_controller.dart';
 
 class App extends StatefulWidget {
   const App({super.key, this.database});
@@ -174,8 +179,38 @@ class _AppState extends State<App> {
   }
 }
 
-class AppShell extends StatelessWidget {
+class AppShell extends StatefulWidget {
   const AppShell({super.key});
+
+  @override
+  State<AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends State<AppShell> {
+  TrayController? _trayController;
+
+  @override
+  void initState() {
+    super.initState();
+    _trayController = TrayController(
+      onPauseAll: () => context.read<QueueCubit>().pauseAll(),
+      onResumeAll: () => context.read<QueueCubit>().resumeAll(),
+      onQuit: () => windowManager.destroy(),
+      onFirstHide: () async {
+        if (!mounted) {
+          return;
+        }
+        AppToast.show(context, 'App is still running in the tray.');
+      },
+    );
+    unawaited(_trayController!.init());
+  }
+
+  @override
+  void dispose() {
+    _trayController?.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

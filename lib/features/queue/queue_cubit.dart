@@ -89,6 +89,14 @@ class QueueCubit extends Cubit<QueueState> {
     }
   }
 
+  Future<void> pauseAll() async {
+    await _repository.pauseAll();
+  }
+
+  Future<void> resumeAll() async {
+    await _repository.resumeAll();
+  }
+
   Future<void> pauseJob(int jobId) async {
     await _repository.pauseJob(jobId);
   }
