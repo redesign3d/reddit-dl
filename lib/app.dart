@@ -28,6 +28,8 @@ import 'navigation/navigation_cubit.dart';
 import 'ui/app_theme.dart';
 import 'ui/components/app_button.dart';
 import 'ui/components/app_scaffold.dart';
+import 'services/download/download_scheduler.dart';
+import 'services/download/download_telemetry.dart';
 
 class App extends StatefulWidget {
   const App({super.key, this.database});
@@ -80,6 +82,22 @@ class _AppState extends State<App> {
         RepositoryProvider(
           create: (context) => SyncRepository(context.read<AppDatabase>()),
         ),
+        RepositoryProvider(create: (_) => DownloadTelemetry()),
+        RepositoryProvider(
+          lazy: false,
+          create: (context) {
+            final scheduler = DownloadScheduler(
+              queueRepository: context.read<QueueRepository>(),
+              settingsRepository: context.read<SettingsRepository>(),
+              logsRepository: context.read<LogsRepository>(),
+              sessionRepository: context.read<SessionRepository>(),
+              telemetry: context.read<DownloadTelemetry>(),
+            );
+            scheduler.start();
+            return scheduler;
+          },
+          dispose: (_, scheduler) => scheduler.dispose(),
+        ),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -89,8 +107,12 @@ class _AppState extends State<App> {
                 LibraryCubit(context.read<LibraryRepository>()),
           ),
           BlocProvider(
-            create: (context) =>
-                QueueCubit(context.read<QueueRepository>(), context.read<LogsRepository>()),
+            create: (context) => QueueCubit(
+              context.read<QueueRepository>(),
+              context.read<LogsRepository>(),
+              context.read<SettingsRepository>(),
+              context.read<DownloadTelemetry>(),
+            ),
           ),
           BlocProvider(
             create: (context) =>
