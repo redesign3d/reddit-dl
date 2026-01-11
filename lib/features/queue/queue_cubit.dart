@@ -1,169 +1,93 @@
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../data/app_database.dart';
+import '../../data/logs_repository.dart';
+import '../../data/queue_repository.dart';
+import '../logs/log_record.dart';
+
 class QueueCubit extends Cubit<QueueState> {
-  QueueCubit()
-      : super(
-          QueueState(
-            paused: false,
-            items: _seedItems,
-          ),
-        );
-
-  void togglePauseAll() {
-    final paused = !state.paused;
-    final updated = state.items
-        .map(
-          (item) => item.status == QueueStatus.running && paused
-              ? item.copyWith(status: QueueStatus.paused)
-              : item.status == QueueStatus.paused && !paused
-                  ? item.copyWith(status: QueueStatus.queued)
-                  : item,
-        )
-        .toList();
-    emit(state.copyWith(paused: paused, items: updated));
+  QueueCubit(this._repository, this._logs)
+      : super(const QueueState(items: [], paused: false)) {
+    _subscription = _repository.watchQueue().listen(_handleItems);
   }
 
-  void retryItem(String id) {
-    emit(state.copyWith(
-      items: state.items
-          .map(
-            (item) => item.id == id
-                ? item.copyWith(
-                    status: QueueStatus.queued,
-                    progress: 0,
-                    error: null,
-                  )
-                : item,
-          )
-          .toList(),
-    ));
-  }
+  final QueueRepository _repository;
+  final LogsRepository _logs;
+  late final StreamSubscription<List<QueueRecord>> _subscription;
 
-  void cancelItem(String id) {
-    emit(state.copyWith(
-      items: state.items
-          .map(
-            (item) => item.id == id
-                ? item.copyWith(status: QueueStatus.skipped)
-                : item,
-          )
-          .toList(),
-    ));
-  }
-
-  void markComplete(String id) {
-    emit(state.copyWith(
-      items: state.items
-          .map(
-            (item) => item.id == id
-                ? item.copyWith(status: QueueStatus.completed, progress: 1)
-                : item,
-          )
-          .toList(),
-    ));
-  }
-
-  void clearCompleted() {
-    emit(state.copyWith(
-      items: state.items
-          .where(
-            (item) => item.status != QueueStatus.completed,
-          )
-          .toList(),
-    ));
-  }
-}
-
-enum QueueStatus { queued, running, paused, failed, completed, skipped }
-
-class QueueItem extends Equatable {
-  const QueueItem({
-    required this.id,
-    required this.title,
-    required this.subreddit,
-    required this.status,
-    required this.progress,
-    this.error,
-  });
-
-  final String id;
-  final String title;
-  final String subreddit;
-  final QueueStatus status;
-  final double progress;
-  final String? error;
-
-  QueueItem copyWith({
-    QueueStatus? status,
-    double? progress,
-    String? error,
-  }) {
-    return QueueItem(
-      id: id,
-      title: title,
-      subreddit: subreddit,
-      status: status ?? this.status,
-      progress: progress ?? this.progress,
-      error: error,
+  void _handleItems(List<QueueRecord> items) {
+    final hasActive = items.any(
+      (item) => item.job.status == 'queued' || item.job.status == 'running',
     );
+    final paused = !hasActive && items.any((item) => item.job.status == 'paused');
+    emit(state.copyWith(items: items, paused: paused));
+  }
+
+  Future<bool> enqueueSavedItem(SavedItem item) async {
+    final result = await _repository.enqueueForItem(item);
+    await _logs.add(
+      LogRecord(
+        timestamp: DateTime.now(),
+        scope: 'download',
+        level: 'info',
+        message: result.created
+            ? 'Enqueued download for ${item.permalink}.'
+            : 'Download already queued for ${item.permalink}.',
+      ),
+    );
+    return result.created;
+  }
+
+  Future<void> togglePauseAll() async {
+    if (state.paused) {
+      await _repository.resumeAll();
+    } else {
+      await _repository.pauseAll();
+    }
+  }
+
+  Future<void> pauseJob(int jobId) async {
+    await _repository.pauseJob(jobId);
+  }
+
+  Future<void> resumeJob(int jobId) async {
+    await _repository.resumeJob(jobId);
+  }
+
+  Future<void> retryJob(int jobId) async {
+    await _repository.retryJob(jobId);
+  }
+
+  Future<void> clearCompleted() async {
+    await _repository.clearCompleted();
   }
 
   @override
-  List<Object?> get props => [id, title, subreddit, status, progress, error];
+  Future<void> close() async {
+    await _subscription.cancel();
+    return super.close();
+  }
 }
 
 class QueueState extends Equatable {
-  const QueueState({
-    required this.paused,
-    required this.items,
-  });
+  const QueueState({required this.items, required this.paused});
 
+  final List<QueueRecord> items;
   final bool paused;
-  final List<QueueItem> items;
 
   QueueState copyWith({
+    List<QueueRecord>? items,
     bool? paused,
-    List<QueueItem>? items,
   }) {
     return QueueState(
-      paused: paused ?? this.paused,
       items: items ?? this.items,
+      paused: paused ?? this.paused,
     );
   }
 
   @override
-  List<Object?> get props => [paused, items];
+  List<Object?> get props => [items, paused];
 }
-
-const List<QueueItem> _seedItems = [
-  QueueItem(
-    id: 'job-1',
-    title: 'Hubble composite with real-time color grading notes',
-    subreddit: 'spaceporn',
-    status: QueueStatus.running,
-    progress: 0.62,
-  ),
-  QueueItem(
-    id: 'job-2',
-    title: 'City ambience mix for late-night renders',
-    subreddit: 'cyberpunk',
-    status: QueueStatus.queued,
-    progress: 0,
-  ),
-  QueueItem(
-    id: 'job-3',
-    title: 'Layered risograph palette breakdown',
-    subreddit: 'printmaking',
-    status: QueueStatus.failed,
-    progress: 0.2,
-    error: 'Remote server responded with 429.',
-  ),
-  QueueItem(
-    id: 'job-4',
-    title: 'Medium format scan workflow checklist',
-    subreddit: 'analog',
-    status: QueueStatus.completed,
-    progress: 1,
-  ),
-];

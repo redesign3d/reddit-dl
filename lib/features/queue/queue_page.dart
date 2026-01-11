@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../data/queue_repository.dart';
 import '../../ui/components/app_button.dart';
 import '../../ui/components/app_card.dart';
 import '../../ui/components/app_chip.dart';
@@ -22,10 +23,10 @@ class QueuePage extends StatelessWidget {
       builder: (context, state) {
         final colors = context.appColors;
         final running = state.items
-            .where((item) => item.status == QueueStatus.running)
+            .where((item) => item.job.status == 'running')
             .length;
         final failed = state.items
-            .where((item) => item.status == QueueStatus.failed)
+            .where((item) => item.job.status == 'failed')
             .length;
 
         return Column(
@@ -88,8 +89,8 @@ class QueuePage extends StatelessWidget {
                 AppButton(
                   label: 'Clear completed',
                   variant: AppButtonVariant.ghost,
-                  onPressed: state.items.any(
-                          (item) => item.status == QueueStatus.completed)
+                  onPressed: state.items
+                          .any((item) => item.job.status == 'completed')
                       ? () => context.read<QueueCubit>().clearCompleted()
                       : null,
                 ),
@@ -100,7 +101,7 @@ class QueuePage extends StatelessWidget {
                   onPressed: () {
                     final summary = state.items
                         .map((item) =>
-                            '${item.status.name.toUpperCase()} • ${item.title}')
+                            '${item.job.status.toUpperCase()} • ${item.item.title}')
                         .join('\n');
                     Clipboard.setData(ClipboardData(text: summary));
                     AppToast.show(context, 'Queue summary copied.');
@@ -109,16 +110,24 @@ class QueuePage extends StatelessWidget {
               ],
             ),
             SizedBox(height: AppTokens.space.s16),
-            Column(
-              children: state.items
-                  .map(
-                    (item) => Padding(
-                      padding: EdgeInsets.only(bottom: AppTokens.space.s12),
-                      child: _QueueItemCard(item: item),
-                    ),
-                  )
-                  .toList(),
-            ),
+            if (state.items.isEmpty)
+              AppCard(
+                child: Text(
+                  'No queued downloads yet. Enqueue items from the Library.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              )
+            else
+              Column(
+                children: state.items
+                    .map(
+                      (item) => Padding(
+                        padding: EdgeInsets.only(bottom: AppTokens.space.s12),
+                        child: _QueueItemCard(item: item),
+                      ),
+                    )
+                    .toList(),
+              ),
           ],
         );
       },
@@ -129,11 +138,16 @@ class QueuePage extends StatelessWidget {
 class _QueueItemCard extends StatelessWidget {
   const _QueueItemCard({required this.item});
 
-  final QueueItem item;
+  final QueueRecord item;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
+    final status = item.job.status;
+    final isQueued = status == 'queued';
+    final isPaused = status == 'paused';
+    final isFailed = status == 'failed';
+
     return GestureDetector(
       onSecondaryTapDown: (details) async {
         final selection = await showMenu<String>(
@@ -153,7 +167,7 @@ class _QueueItemCard extends StatelessWidget {
           return;
         }
         if (selection == 'retry') {
-          context.read<QueueCubit>().retryItem(item.id);
+          await context.read<QueueCubit>().retryJob(item.job.id);
           AppToast.show(context, 'Retry queued.');
         }
         if (selection == 'reveal') {
@@ -180,12 +194,12 @@ class _QueueItemCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        item.title,
+                        item.item.title,
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       SizedBox(height: AppTokens.space.s6),
                       Text(
-                        'r/${item.subreddit}',
+                        'r/${item.item.subreddit}',
                         style: Theme.of(context)
                             .textTheme
                             .bodySmall
@@ -194,20 +208,29 @@ class _QueueItemCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                if (item.status == QueueStatus.failed)
+                if (isFailed)
                   AppButton(
                     label: 'Retry',
                     variant: AppButtonVariant.secondary,
                     onPressed: () =>
-                        context.read<QueueCubit>().retryItem(item.id),
+                        context.read<QueueCubit>().retryJob(item.job.id),
                   )
-                else
+                else if (isPaused)
                   AppButton(
-                    label: 'Mark done',
+                    label: 'Resume',
+                    variant: AppButtonVariant.secondary,
+                    onPressed: () =>
+                        context.read<QueueCubit>().resumeJob(item.job.id),
+                  )
+                else if (isQueued)
+                  AppButton(
+                    label: 'Pause',
                     variant: AppButtonVariant.ghost,
                     onPressed: () =>
-                        context.read<QueueCubit>().markComplete(item.id),
-                  ),
+                        context.read<QueueCubit>().pauseJob(item.job.id),
+                  )
+                else
+                  const SizedBox.shrink(),
               ],
             ),
             SizedBox(height: AppTokens.space.s12),
@@ -216,13 +239,13 @@ class _QueueItemCard extends StatelessWidget {
               runSpacing: AppTokens.space.s6,
               children: [
                 AppChip(
-                  label: item.status.name.toUpperCase(),
-                  selected: item.status == QueueStatus.running,
+                  label: status.toUpperCase(),
+                  selected: status == 'running',
                   onSelected: (_) {},
                 ),
-                if (item.error != null)
+                if (item.job.lastError != null)
                   Text(
-                    item.error!,
+                    item.job.lastError!,
                     style: Theme.of(context)
                         .textTheme
                         .bodySmall
@@ -232,10 +255,12 @@ class _QueueItemCard extends StatelessWidget {
             ),
             SizedBox(height: AppTokens.space.s12),
             AppProgress(
-              progress: item.progress,
-              label: item.status == QueueStatus.failed
-                  ? 'Download stalled'
-                  : 'Download progress',
+              progress: item.job.progress,
+              label: isQueued
+                  ? 'Downloader not implemented yet'
+                  : isFailed
+                      ? 'Download stalled'
+                      : 'Download progress',
             ),
           ],
         ),

@@ -4,37 +4,40 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../data/app_database.dart';
 import '../../ui/components/app_button.dart';
 import '../../ui/components/app_card.dart';
 import '../../ui/components/app_chip.dart';
 import '../../ui/components/app_select.dart';
-import '../../ui/components/app_toast.dart';
+import '../../ui/components/app_switch.dart';
 import '../../ui/components/app_text_field.dart';
+import '../../ui/components/app_toast.dart';
 import '../../ui/tokens.dart';
 import '../../utils/reveal_in_file_manager.dart';
+import '../queue/queue_cubit.dart';
 import 'library_cubit.dart';
-import 'sample_data.dart';
 
-class LibraryPage extends StatefulWidget {
+class LibraryPage extends StatelessWidget {
   const LibraryPage({super.key});
-
-  @override
-  State<LibraryPage> createState() => _LibraryPageState();
-}
-
-class _LibraryPageState extends State<LibraryPage> {
-  String _includeSubreddit = 'All';
-  String _excludeSubreddit = 'None';
 
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<LibraryCubit, LibraryState>(
       builder: (context, state) {
         final colors = context.appColors;
-        final sortedSubreddits = state.subreddits.toList()..sort();
+        final canFilter = state.hasIndexed && state.subreddits.isNotEmpty;
+        final includeValue = state.includeSubreddit != null &&
+                state.subreddits.contains(state.includeSubreddit)
+            ? state.includeSubreddit!
+            : '_all';
+        final excludeValue = state.excludeSubreddit != null &&
+                state.subreddits.contains(state.excludeSubreddit)
+            ? state.excludeSubreddit!
+            : '_none';
+
         final subredditOptions = [
-          const AppSelectOption(label: 'All', value: 'All'),
-          ...sortedSubreddits.map(
+          const AppSelectOption(label: 'All', value: '_all'),
+          ...state.subreddits.map(
             (subreddit) => AppSelectOption(
               label: 'r/$subreddit',
               value: subreddit,
@@ -42,15 +45,14 @@ class _LibraryPageState extends State<LibraryPage> {
           ),
         ];
         final excludeOptions = [
-          const AppSelectOption(label: 'None', value: 'None'),
-          ...sortedSubreddits.map(
+          const AppSelectOption(label: 'None', value: '_none'),
+          ...state.subreddits.map(
             (subreddit) => AppSelectOption(
               label: 'r/$subreddit',
               value: subreddit,
             ),
           ),
         ];
-        final canFilter = state.hasIndexed && state.subreddits.isNotEmpty;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -60,8 +62,8 @@ class _LibraryPageState extends State<LibraryPage> {
                 Expanded(
                   child: AppTextField(
                     label: 'Search saved items',
-                    hint: 'Filter by title, author, or subreddit',
-                    onChanged: (_) {},
+                    hint: 'Filter by title, author, permalink, or subreddit',
+                    onChanged: context.read<LibraryCubit>().updateSearch,
                   ),
                 ),
                 SizedBox(width: AppTokens.space.s12),
@@ -89,7 +91,7 @@ class _LibraryPageState extends State<LibraryPage> {
                             style: Theme.of(context).textTheme.titleLarge),
                         SizedBox(height: AppTokens.space.s8),
                         Text(
-                          '${state.items.length} total • ${state.items.where((item) => item.isNsfw).length} NSFW',
+                          '${state.items.length} visible • ${state.items.where((item) => item.over18).length} NSFW',
                           style: Theme.of(context)
                               .textTheme
                               .bodySmall
@@ -109,8 +111,8 @@ class _LibraryPageState extends State<LibraryPage> {
                             style: Theme.of(context).textTheme.titleLarge),
                         SizedBox(height: AppTokens.space.s8),
                         Text(
-                          '${state.items.where((item) => item.source == LibrarySource.zip).length} ZIP • '
-                          '${state.items.where((item) => item.source == LibrarySource.sync).length} Sync',
+                          '${state.items.where((item) => item.source == 'zip').length} ZIP • '
+                          '${state.items.where((item) => item.source == 'sync').length} Sync',
                           style: Theme.of(context)
                               .textTheme
                               .bodySmall
@@ -127,17 +129,58 @@ class _LibraryPageState extends State<LibraryPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Subreddit filters',
+                  Text('Filters',
                       style: Theme.of(context).textTheme.titleLarge),
                   SizedBox(height: AppTokens.space.s6),
                   Text(
                     canFilter
-                        ? 'Filter using indexed subreddits only.'
-                        : 'Import or sync first to unlock filters.',
+                        ? 'Subreddit filters are populated from indexed items.'
+                        : 'Import ZIP or Sync to populate subreddit filters.',
                     style: Theme.of(context)
                         .textTheme
                         .bodySmall
                         ?.copyWith(color: colors.mutedForeground),
+                  ),
+                  SizedBox(height: AppTokens.space.s12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: AppSelect<LibraryKindFilter>(
+                          label: 'Type',
+                          value: state.kindFilter,
+                          options: const [
+                            AppSelectOption(
+                              label: 'All',
+                              value: LibraryKindFilter.all,
+                            ),
+                            AppSelectOption(
+                              label: 'Posts only',
+                              value: LibraryKindFilter.post,
+                            ),
+                            AppSelectOption(
+                              label: 'Comments only',
+                              value: LibraryKindFilter.comment,
+                            ),
+                          ],
+                          onChanged: (value) {
+                            if (value == null) {
+                              return;
+                            }
+                            context.read<LibraryCubit>().updateKindFilter(value);
+                          },
+                        ),
+                      ),
+                      SizedBox(width: AppTokens.space.s12),
+                      Expanded(
+                        child: AppSwitch(
+                          label: 'Show NSFW',
+                          description: 'Toggle visibility only (downloads are separate).',
+                          value: state.showNsfw,
+                          onChanged: (value) =>
+                              context.read<LibraryCubit>().toggleShowNsfw(value),
+                        ),
+                      ),
+                    ],
                   ),
                   SizedBox(height: AppTokens.space.s12),
                   Opacity(
@@ -149,12 +192,13 @@ class _LibraryPageState extends State<LibraryPage> {
                           Expanded(
                             child: AppSelect<String>(
                               label: 'Include subreddit',
-                              value: _includeSubreddit,
+                              value: includeValue,
                               options: subredditOptions,
                               onChanged: (value) {
-                                setState(() {
-                                  _includeSubreddit = value ?? 'All';
-                                });
+                                final selected = value == '_all' ? null : value;
+                                context
+                                    .read<LibraryCubit>()
+                                    .updateIncludeSubreddit(selected);
                               },
                             ),
                           ),
@@ -162,12 +206,13 @@ class _LibraryPageState extends State<LibraryPage> {
                           Expanded(
                             child: AppSelect<String>(
                               label: 'Exclude subreddit',
-                              value: _excludeSubreddit,
+                              value: excludeValue,
                               options: excludeOptions,
                               onChanged: (value) {
-                                setState(() {
-                                  _excludeSubreddit = value ?? 'None';
-                                });
+                                final selected = value == '_none' ? null : value;
+                                context
+                                    .read<LibraryCubit>()
+                                    .updateExcludeSubreddit(selected);
                               },
                             ),
                           ),
@@ -194,32 +239,6 @@ class _LibraryPageState extends State<LibraryPage> {
                           .bodySmall
                           ?.copyWith(color: colors.mutedForeground),
                     ),
-                    SizedBox(height: AppTokens.space.s12),
-                    Wrap(
-                      spacing: AppTokens.space.s8,
-                      runSpacing: AppTokens.space.s8,
-                      children: [
-                        AppButton(
-                          label: 'Load sample ZIP import',
-                          onPressed: () {
-                            context
-                                .read<LibraryCubit>()
-                                .addItems(sampleImportItems(DateTime.now()));
-                            AppToast.show(context, 'Sample ZIP import added.');
-                          },
-                        ),
-                        AppButton(
-                          label: 'Load sample sync',
-                          variant: AppButtonVariant.secondary,
-                          onPressed: () {
-                            context
-                                .read<LibraryCubit>()
-                                .addItems(sampleSyncItems(DateTime.now()));
-                            AppToast.show(context, 'Sample sync added.');
-                          },
-                        ),
-                      ],
-                    ),
                   ],
                 ),
               )
@@ -229,22 +248,7 @@ class _LibraryPageState extends State<LibraryPage> {
                     .map(
                       (item) => Padding(
                         padding: EdgeInsets.only(bottom: AppTokens.space.s12),
-                        child: _LibraryItemCard(
-                          item: item,
-                          onReveal: () async {
-                            final success =
-                                await revealInFileManager(Directory.systemTemp.path);
-                            if (!context.mounted) {
-                              return;
-                            }
-                            AppToast.show(
-                              context,
-                              success
-                                  ? 'Opened file manager (mock path).'
-                                  : 'Unable to reveal path.',
-                            );
-                          },
-                        ),
+                        child: _LibraryItemCard(item: item),
                       ),
                     )
                     .toList(),
@@ -257,17 +261,16 @@ class _LibraryPageState extends State<LibraryPage> {
 }
 
 class _LibraryItemCard extends StatelessWidget {
-  const _LibraryItemCard({
-    required this.item,
-    required this.onReveal,
-  });
+  const _LibraryItemCard({required this.item});
 
-  final LibraryItem item;
-  final VoidCallback onReveal;
+  final SavedItem item;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
+    final createdDate = _formatDate(item.createdUtc);
+    final importedDate = item.importedAt?.toLocal();
+
     return GestureDetector(
       onSecondaryTapDown: (details) async {
         final selection = await showMenu<String>(
@@ -290,7 +293,16 @@ class _LibraryItemCard extends StatelessWidget {
           }
         }
         if (selection == 'reveal') {
-          onReveal();
+          final success =
+              await revealInFileManager(Directory.systemTemp.path);
+          if (context.mounted) {
+            AppToast.show(
+              context,
+              success
+                  ? 'Opened file manager (mock path).'
+                  : 'Unable to reveal path.',
+            );
+          }
         }
       },
       child: AppCard(
@@ -305,7 +317,7 @@ class _LibraryItemCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        item.title,
+                        item.title.isEmpty ? 'Untitled' : item.title,
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       SizedBox(height: AppTokens.space.s6),
@@ -320,12 +332,20 @@ class _LibraryItemCard extends StatelessWidget {
                   ),
                 ),
                 AppButton(
-                  label: 'Queue download',
+                  label: 'Enqueue download',
                   variant: AppButtonVariant.secondary,
-                  onPressed: () => AppToast.show(
-                    context,
-                    'Queued download (mock).',
-                  ),
+                  onPressed: () async {
+                    final created = await context
+                        .read<QueueCubit>()
+                        .enqueueSavedItem(item);
+                    if (!context.mounted) {
+                      return;
+                    }
+                    AppToast.show(
+                      context,
+                      created ? 'Download queued.' : 'Download already queued.',
+                    );
+                  },
                 ),
               ],
             ),
@@ -335,16 +355,16 @@ class _LibraryItemCard extends StatelessWidget {
               runSpacing: AppTokens.space.s6,
               children: [
                 AppChip(
-                  label: item.kind == SavedKind.post ? 'POST' : 'COMMENT',
+                  label: item.kind.toUpperCase(),
                   selected: false,
                   onSelected: (_) {},
                 ),
                 AppChip(
-                  label: item.source == LibrarySource.zip ? 'ZIP' : 'SYNC',
+                  label: item.source.toUpperCase(),
                   selected: false,
                   onSelected: (_) {},
                 ),
-                if (item.isNsfw)
+                if (item.over18)
                   AppChip(
                     label: 'NSFW',
                     selected: true,
@@ -352,9 +372,41 @@ class _LibraryItemCard extends StatelessWidget {
                   ),
               ],
             ),
+            SizedBox(height: AppTokens.space.s12),
+            Text(
+              'Created: $createdDate • Imported: ${_formatOptionalDate(importedDate)}',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(color: colors.mutedForeground),
+            ),
+            SizedBox(height: AppTokens.space.s6),
+            Text(
+              item.permalink,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(color: colors.mutedForeground),
+            ),
           ],
         ),
       ),
     );
   }
+}
+
+String _formatDate(int createdUtc) {
+  if (createdUtc <= 0) {
+    return 'Unknown';
+  }
+  final date = DateTime.fromMillisecondsSinceEpoch(createdUtc * 1000, isUtc: true)
+      .toLocal();
+  return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+}
+
+String _formatOptionalDate(DateTime? date) {
+  if (date == null) {
+    return 'Unknown';
+  }
+  return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 }

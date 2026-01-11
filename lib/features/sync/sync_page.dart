@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../data/logs_repository.dart';
 import '../../ui/components/app_button.dart';
 import '../../ui/components/app_card.dart';
 import '../../ui/components/app_select.dart';
 import '../../ui/components/app_text_field.dart';
 import '../../ui/components/app_toast.dart';
 import '../../ui/tokens.dart';
-import '../library/library_cubit.dart';
-import '../library/sample_data.dart';
+import '../logs/log_record.dart';
 
 class SyncPage extends StatefulWidget {
   const SyncPage({super.key});
@@ -19,7 +19,7 @@ class SyncPage extends StatefulWidget {
 
 class _SyncPageState extends State<SyncPage> {
   bool _loggedIn = false;
-  int? _lastSynced;
+  DateTime? _lastSyncedAt;
   String _timeframe = 'All time';
   final TextEditingController _maxItemsController = TextEditingController();
 
@@ -29,13 +29,19 @@ class _SyncPageState extends State<SyncPage> {
     super.dispose();
   }
 
-  void _runMockSync(BuildContext context) {
-    final items = sampleSyncItems(DateTime.now());
-    context.read<LibraryCubit>().addItems(items);
+  Future<void> _runSyncStub(BuildContext context) async {
+    await context.read<LogsRepository>().add(
+          LogRecord(
+            timestamp: DateTime.now(),
+            scope: 'sync',
+            level: 'warn',
+            message: 'Sync flow not implemented yet.',
+          ),
+        );
     setState(() {
-      _lastSynced = items.length;
+      _lastSyncedAt = DateTime.now();
     });
-    AppToast.show(context, 'Synced ${items.length} items from Reddit.');
+    AppToast.show(context, 'Sync not implemented yet.');
   }
 
   @override
@@ -117,8 +123,10 @@ class _SyncPageState extends State<SyncPage> {
                       value: _timeframe,
                       options: const [
                         AppSelectOption(label: 'All time', value: 'All time'),
-                        AppSelectOption(label: 'Last 90 days', value: 'Last 90 days'),
-                        AppSelectOption(label: 'Last 30 days', value: 'Last 30 days'),
+                        AppSelectOption(
+                            label: 'Last 90 days', value: 'Last 90 days'),
+                        AppSelectOption(
+                            label: 'Last 30 days', value: 'Last 30 days'),
                         AppSelectOption(label: 'Last 7 days', value: 'Last 7 days'),
                       ],
                       onChanged: (value) {
@@ -141,12 +149,12 @@ class _SyncPageState extends State<SyncPage> {
               SizedBox(height: AppTokens.space.s12),
               AppButton(
                 label: 'Run sync',
-                onPressed: _loggedIn ? () => _runMockSync(context) : null,
+                onPressed: _loggedIn ? () => _runSyncStub(context) : null,
               ),
-              if (_lastSynced != null) ...[
+              if (_lastSyncedAt != null) ...[
                 SizedBox(height: AppTokens.space.s8),
                 Text(
-                  'Last sync: $_lastSynced items indexed.',
+                  'Last sync attempt: ${_lastSyncedAt!.toLocal()} (stub).',
                   style: Theme.of(context)
                       .textTheme
                       .bodySmall
