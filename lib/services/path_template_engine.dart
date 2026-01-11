@@ -69,6 +69,14 @@ class PathTemplateEngine {
     );
   }
 
+  String resolveTextRoot() {
+    return _resolveRoot(settings.textRoot);
+  }
+
+  String resolveCommentsRoot() {
+    return _resolveRoot(settings.commentsRoot);
+  }
+
   Map<String, String> _buildTokens(SavedItem item) {
     final created = _createdDate(item);
     final postId = _extractPostId(item.permalink);
@@ -217,6 +225,18 @@ class PathTemplateEngine {
 
   String _normalizeRoot(String root) {
     return p.normalize(root.trim());
+  }
+
+  String _resolveRoot(String root) {
+    final base = _normalizeRoot(settings.downloadRoot);
+    if (root.trim().isEmpty) {
+      return base;
+    }
+    final candidate = p.normalize(root.trim());
+    if (p.isAbsolute(candidate)) {
+      return candidate;
+    }
+    return p.normalize(p.join(base, candidate));
   }
 
   String? _safeJoin(
