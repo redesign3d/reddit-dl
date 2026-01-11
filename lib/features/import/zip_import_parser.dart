@@ -29,7 +29,10 @@ class ZipImportParser {
     for (final file in archive) {
       final name = file.name.toLowerCase();
       if (name.endsWith(targetName)) {
-        final content = file.content as List<int>;
+        final content = file.readBytes();
+        if (content == null) {
+          return null;
+        }
         return utf8.decode(content, allowMalformed: true);
       }
     }
@@ -40,6 +43,7 @@ class ZipImportParser {
     final converter = const CsvToListConverter(
       shouldParseNumbers: false,
       allowInvalid: true,
+      eol: '\n',
     );
     final rows = converter.convert(csvText);
     if (rows.isEmpty) {
@@ -62,7 +66,7 @@ class ZipImportParser {
     }
 
     return rows.skip(1).where((row) => row.isNotEmpty).map((row) {
-      final permalink = _cell(row, permalinkIndex);
+      final permalink = _cell(row, permalinkIndex) ?? '';
       final subreddit = _cell(row, _indexFor(indices, ['subreddit'])) ?? '';
       final author =
           _cell(row, _indexFor(indices, ['author', 'author_name'])) ?? 'unknown';

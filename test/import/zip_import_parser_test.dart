@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
@@ -15,7 +14,6 @@ void main() {
 
     final parser = ZipImportParser();
     final result = parser.parseBytes(zipBytes);
-
     expect(result.posts, hasLength(2));
     expect(result.comments, hasLength(1));
     expect(result.posts.first.permalink, contains('/r/test/'));
@@ -39,11 +37,10 @@ void main() {
 Uint8List _buildZip(Map<String, String> files) {
   final archive = Archive();
   files.forEach((path, content) {
-    final data = utf8.encode(content);
-    archive.addFile(ArchiveFile(path, data.length, data));
+    archive.addFile(ArchiveFile.string(path, content));
   });
   final encoded = ZipEncoder().encode(archive);
-  return Uint8List.fromList(encoded ?? []);
+  return Uint8List.fromList(encoded);
 }
 
 String _savedPostsCsv() {

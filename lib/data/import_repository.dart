@@ -46,40 +46,42 @@ class ImportRepository {
     var updated = 0;
     final now = DateTime.now();
 
-    await _db.batch((batch) {
-      for (final entry in uniqueMap.values) {
-        final exists = existingSet.contains(entry.permalink);
-        if (exists) {
-          updated++;
-        } else {
-          inserted++;
-        }
-
-        final subreddit = entry.subreddit.isNotEmpty
-            ? entry.subreddit
-            : _deriveSubreddit(entry.permalink);
-
-        batch.insertOnConflictUpdate(
-          _db.savedItems,
-          SavedItemsCompanion(
-            id: const Value.absent(),
-            permalink: Value(entry.permalink),
-            kind: Value(entry.kind.name),
-            subreddit: Value(subreddit),
-            author: Value(entry.author),
-            createdUtc: Value(entry.createdUtc ?? 0),
-            title: Value(entry.title),
-            bodyMarkdown: Value(entry.body.isEmpty ? null : entry.body),
-            over18: const Value(false),
-            source: const Value('zip'),
-            importedAt: Value(now),
-            syncedAt: const Value.absent(),
-            lastResolvedAt: const Value.absent(),
-            resolutionStatus: const Value('partial'),
-            rawJsonCache: const Value.absent(),
-          ),
-        );
+    final inserts = <SavedItemsCompanion>[];
+    for (final entry in uniqueMap.values) {
+      final exists = existingSet.contains(entry.permalink);
+      if (exists) {
+        updated++;
+      } else {
+        inserted++;
       }
+
+      final subreddit = entry.subreddit.isNotEmpty
+          ? entry.subreddit
+          : _deriveSubreddit(entry.permalink);
+
+      inserts.add(
+        SavedItemsCompanion(
+          id: const Value.absent(),
+          permalink: Value(entry.permalink),
+          kind: Value(entry.kind.name),
+          subreddit: Value(subreddit),
+          author: Value(entry.author),
+          createdUtc: Value(entry.createdUtc ?? 0),
+          title: Value(entry.title),
+          bodyMarkdown: Value(entry.body.isEmpty ? null : entry.body),
+          over18: const Value(false),
+          source: const Value('zip'),
+          importedAt: Value(now),
+          syncedAt: const Value.absent(),
+          lastResolvedAt: const Value.absent(),
+          resolutionStatus: const Value('partial'),
+          rawJsonCache: const Value.absent(),
+        ),
+      );
+    }
+
+    await _db.batch((batch) {
+      batch.insertAllOnConflictUpdate(_db.savedItems, inserts);
     });
 
     return ImportResult(
