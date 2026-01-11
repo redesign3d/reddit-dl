@@ -2,6 +2,8 @@ import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:drift/native.dart';
 
+import 'migrations.dart';
+
 part 'app_database.g.dart';
 
 @DriftDatabase(
@@ -21,6 +23,9 @@ class AppDatabase extends _$AppDatabase {
 
   @override
   int get schemaVersion => 1;
+
+  @override
+  MigrationStrategy get migration => buildMigrationStrategy(this);
 }
 
 @TableIndex(name: 'saved_items_permalink', columns: {#permalink}, unique: true)
