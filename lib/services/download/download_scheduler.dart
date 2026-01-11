@@ -202,7 +202,7 @@ class DownloadScheduler {
         final result = await _downloader.download(
           asset: asset,
           targetFile: targetFile,
-          policy: _settings.overwritePolicy,
+          policy: _policyFromSnapshot(record.job.policySnapshot),
           cancelToken: token,
           onHeaders: _telemetry.updateFromHeaders,
           onProgress: (progress) async {
@@ -274,6 +274,16 @@ class DownloadScheduler {
     }
     final delayMs = (60000 / rate).round();
     await Future.delayed(Duration(milliseconds: delayMs));
+  }
+
+  OverwritePolicy _policyFromSnapshot(String snapshot) {
+    switch (snapshot) {
+      case 'overwrite_if_newer':
+        return OverwritePolicy.overwriteIfNewer;
+      case 'skip_if_exists':
+      default:
+        return OverwritePolicy.skipIfExists;
+    }
   }
 
   Future<void> _log(
