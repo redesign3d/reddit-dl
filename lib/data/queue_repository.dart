@@ -199,6 +199,12 @@ class QueueRepository {
           ..where((tbl) => tbl.status.equals('paused')))
         .write(const DownloadJobsCompanion(status: Value('queued')));
   }
+
+  Future<void> resetRunningToQueued() async {
+    await (_db.update(_db.downloadJobs)
+          ..where((tbl) => tbl.status.equals('running')))
+        .write(const DownloadJobsCompanion(status: Value('queued')));
+  }
 }
 
 class QueueRecord {

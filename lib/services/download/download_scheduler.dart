@@ -65,6 +65,7 @@ class DownloadScheduler {
   bool _isDisposed = false;
 
   void start() {
+    _queueRepository.resetRunningToQueued();
     _settingsSubscription =
         _settingsRepository.watch().listen(_handleSettings);
     _queueSubscription =
