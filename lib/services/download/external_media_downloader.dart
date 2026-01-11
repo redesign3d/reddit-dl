@@ -29,6 +29,7 @@ class ExternalMediaDownloader {
     required void Function(double progress) onProgress,
     CancelToken? cancelToken,
     DownloadLog? log,
+    void Function(String phase)? onPhase,
   }) async {
     final outputDir = targetFile.parent;
     if (!await outputDir.exists()) {
@@ -71,6 +72,7 @@ class ExternalMediaDownloader {
       'info',
       'Running ${toolChoice.command} for ${asset.sourceUrl}.',
     );
+    onPhase?.call('running_tool');
     onProgress(0.1);
     final result = await _toolRunner.run(
       tool: toolInfo,

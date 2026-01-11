@@ -161,6 +161,10 @@ class _QueueItemCard extends StatelessWidget {
     final isFailed = status == 'failed';
     final isSkipped = status == 'skipped';
     final isCompleted = status == 'completed';
+    final isMerging = status == 'merging';
+    final isRunningTool = status == 'running_tool';
+    final isExporting = status == 'exporting';
+    final isActive = status == 'running' || isMerging || isRunningTool || isExporting;
 
     return GestureDetector(
       onSecondaryTapDown: (details) async {
@@ -259,7 +263,7 @@ class _QueueItemCard extends StatelessWidget {
               children: [
                 AppChip(
                   label: status.toUpperCase(),
-                  selected: status == 'running' || status == 'completed',
+                  selected: isActive || status == 'completed',
                   onSelected: (_) {},
                 ),
                 if (item.job.lastError != null)
@@ -281,6 +285,9 @@ class _QueueItemCard extends StatelessWidget {
                 isFailed: isFailed,
                 isSkipped: isSkipped,
                 isCompleted: isCompleted,
+                isMerging: isMerging,
+                isRunningTool: isRunningTool,
+                isExporting: isExporting,
               ),
             ),
           ],
@@ -296,6 +303,9 @@ String _statusLabel({
   required bool isFailed,
   required bool isSkipped,
   required bool isCompleted,
+  required bool isMerging,
+  required bool isRunningTool,
+  required bool isExporting,
 }) {
   if (isQueued) {
     return 'Queued';
@@ -311,6 +321,15 @@ String _statusLabel({
   }
   if (isCompleted) {
     return 'Completed';
+  }
+  if (isMerging) {
+    return 'Merging';
+  }
+  if (isRunningTool) {
+    return 'Running tool';
+  }
+  if (isExporting) {
+    return 'Exporting';
   }
   return 'Downloading';
 }

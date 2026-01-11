@@ -138,7 +138,7 @@ class DownloadScheduler {
         _running.remove(jobId);
         continue;
       }
-      if (record.job.status != 'running') {
+      if (!_activeStatuses.contains(record.job.status)) {
         entry.value.cancel('Job paused or stopped.');
         _running.remove(jobId);
       }
@@ -277,6 +277,8 @@ class DownloadScheduler {
                 policy: _policyFromSnapshot(record.job.policySnapshot),
                 cancelToken: token,
                 onProgress: updateOverall,
+                onPhase: (phase) =>
+                    _queueRepository.updateJobStatus(jobId, phase),
                 log: (level, message) => _log(
                   jobId,
                   'download',
@@ -293,6 +295,8 @@ class DownloadScheduler {
                 cancelToken: token,
                 onHeaders: _telemetry.updateFromHeaders,
                 onProgress: updateOverall,
+                onPhase: (phase) =>
+                    _queueRepository.updateJobStatus(jobId, phase),
                 log: (level, message) => _log(
                   jobId,
                   'download',
@@ -338,9 +342,13 @@ class DownloadScheduler {
       finished += 1;
       await updateOverall(0);
       await _respectRateLimit();
+      if (_running.containsKey(jobId)) {
+        await _queueRepository.updateJobStatus(jobId, 'running');
+      }
     }
 
     if (exportText) {
+      await _queueRepository.updateJobStatus(jobId, 'exporting');
       if (token.isCancelled) {
         _running.remove(jobId);
         return;
@@ -376,9 +384,13 @@ class DownloadScheduler {
       }
       finished += 1;
       await updateOverall(0);
+      if (_running.containsKey(jobId)) {
+        await _queueRepository.updateJobStatus(jobId, 'running');
+      }
     }
 
     if (exportSavedComment) {
+      await _queueRepository.updateJobStatus(jobId, 'exporting');
       if (token.isCancelled) {
         _running.remove(jobId);
         return;
@@ -414,9 +426,13 @@ class DownloadScheduler {
       }
       finished += 1;
       await updateOverall(0);
+      if (_running.containsKey(jobId)) {
+        await _queueRepository.updateJobStatus(jobId, 'running');
+      }
     }
 
     if (exportThreadComments) {
+      await _queueRepository.updateJobStatus(jobId, 'exporting');
       if (token.isCancelled) {
         _running.remove(jobId);
         return;
@@ -456,6 +472,9 @@ class DownloadScheduler {
       }
       finished += 1;
       await updateOverall(0);
+      if (_running.containsKey(jobId)) {
+        await _queueRepository.updateJobStatus(jobId, 'running');
+      }
     }
 
     if (failed > 0) {
@@ -600,3 +619,10 @@ class DownloadScheduler {
 extension on Iterable<QueueRecord> {
   QueueRecord? get firstOrNull => isEmpty ? null : first;
 }
+
+const _activeStatuses = {
+  'running',
+  'merging',
+  'running_tool',
+  'exporting',
+};

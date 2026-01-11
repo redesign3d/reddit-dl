@@ -40,6 +40,7 @@ class RedditVideoDownloader {
     void Function(Headers headers)? onHeaders,
     CancelToken? cancelToken,
     DownloadLog? log,
+    void Function(String phase)? onPhase,
   }) async {
     final metadata = _decodeMetadata(asset.metadataJson);
     final fallbackUrl = _fallbackUrl(asset, metadata);
@@ -68,6 +69,7 @@ class RedditVideoDownloader {
           cancelToken: cancelToken,
           onProgress: onProgress,
           log: log,
+          onPhase: onPhase,
         );
       }
 
@@ -95,6 +97,7 @@ class RedditVideoDownloader {
           onHeaders: onHeaders,
           onProgress: onProgress,
           log: log,
+          onPhase: onPhase,
         );
       }
 
@@ -117,6 +120,7 @@ class RedditVideoDownloader {
     required void Function(double progress) onProgress,
     CancelToken? cancelToken,
     DownloadLog? log,
+    void Function(String phase)? onPhase,
   }) async {
     await _ensureParent(targetFile);
 
@@ -127,6 +131,7 @@ class RedditVideoDownloader {
       await tempFile.delete();
     }
 
+    onPhase?.call('merging');
     await log?.call('info', 'Merging DASH streams with ffmpeg.');
     final args = buildDashArgs(dashUrl: dashUrl, outputPath: tempFile.path);
     final result = await _ffmpegExecutor.run(
@@ -159,6 +164,7 @@ class RedditVideoDownloader {
     void Function(Headers headers)? onHeaders,
     CancelToken? cancelToken,
     DownloadLog? log,
+    void Function(String phase)? onPhase,
   }) async {
     await _ensureParent(targetFile);
 
@@ -194,6 +200,7 @@ class RedditVideoDownloader {
       await tempFile.delete();
     }
 
+    onPhase?.call('merging');
     await log?.call('info', 'Merging video and audio.');
     final args = buildMergeArgs(
       videoPath: videoFile.path,

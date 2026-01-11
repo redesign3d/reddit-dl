@@ -102,6 +102,12 @@ class QueueRepository {
         );
   }
 
+  Future<void> updateJobStatus(int jobId, String status) async {
+    await (_db.update(_db.downloadJobs)
+          ..where((tbl) => tbl.id.equals(jobId)))
+        .write(DownloadJobsCompanion(status: Value(status)));
+  }
+
   Future<void> updateJobProgress(int jobId, double progress) async {
     await (_db.update(_db.downloadJobs)
           ..where((tbl) => tbl.id.equals(jobId)))
@@ -189,7 +195,13 @@ class QueueRepository {
   Future<void> pauseAll() async {
     await (_db.update(_db.downloadJobs)
           ..where(
-            (tbl) => tbl.status.isIn(['queued', 'running']),
+            (tbl) => tbl.status.isIn([
+              'queued',
+              'running',
+              'merging',
+              'running_tool',
+              'exporting',
+            ]),
           ))
         .write(const DownloadJobsCompanion(status: Value('paused')));
   }
@@ -202,7 +214,12 @@ class QueueRepository {
 
   Future<void> resetRunningToQueued() async {
     await (_db.update(_db.downloadJobs)
-          ..where((tbl) => tbl.status.equals('running')))
+          ..where((tbl) => tbl.status.isIn([
+                'running',
+                'merging',
+                'running_tool',
+                'exporting',
+              ])))
         .write(const DownloadJobsCompanion(status: Value('queued')));
   }
 }
