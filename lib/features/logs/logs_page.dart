@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../ui/components/app_card.dart';
 import '../../ui/components/log_viewer.dart';
 import '../../ui/tokens.dart';
+import 'logs_cubit.dart';
 
 class LogsPage extends StatelessWidget {
   const LogsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appColors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -19,38 +23,26 @@ class LogsPage extends StatelessWidget {
           style: Theme.of(context)
               .textTheme
               .bodySmall
-              ?.copyWith(color: context.appColors.mutedForeground),
+              ?.copyWith(color: colors.mutedForeground),
         ),
         SizedBox(height: AppTokens.space.s16),
-        LogViewer(entries: _seedLogs),
+        BlocBuilder<LogsCubit, LogsState>(
+          builder: (context, state) {
+            if (state.isLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (state.entries.isEmpty) {
+              return AppCard(
+                child: Text(
+                  'No logs yet. Start an import or sync to populate activity.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              );
+            }
+            return LogViewer(entries: state.entries);
+          },
+        ),
       ],
     );
   }
 }
-
-final List<LogEntry> _seedLogs = [
-  LogEntry(
-    timestamp: DateTime.now().subtract(const Duration(minutes: 3)),
-    scope: 'import',
-    level: 'info',
-    message: 'ZIP import parsed 152 saved items.',
-  ),
-  LogEntry(
-    timestamp: DateTime.now().subtract(const Duration(minutes: 2)),
-    scope: 'resolve',
-    level: 'warn',
-    message: '429 received. Backing off for 60 seconds.',
-  ),
-  LogEntry(
-    timestamp: DateTime.now().subtract(const Duration(minutes: 1)),
-    scope: 'download',
-    level: 'info',
-    message: 'Queued video merge for /r/analog/scan.',
-  ),
-  LogEntry(
-    timestamp: DateTime.now().subtract(const Duration(seconds: 20)),
-    scope: 'download',
-    level: 'error',
-    message: 'ffmpeg unavailable; will download on next run.',
-  ),
-];

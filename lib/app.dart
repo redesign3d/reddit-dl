@@ -2,13 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'app/theme_cubit.dart';
+import 'data/app_database.dart';
+import 'data/logs_repository.dart';
+import 'data/settings_repository.dart';
 import 'features/import/import_page.dart';
 import 'features/library/library_cubit.dart';
 import 'features/library/library_page.dart';
+import 'features/logs/logs_cubit.dart';
 import 'features/logs/logs_page.dart';
 import 'features/queue/queue_cubit.dart';
 import 'features/queue/queue_page.dart';
+import 'features/settings/settings_cubit.dart';
 import 'features/settings/settings_page.dart';
 import 'features/sync/sync_page.dart';
 import 'navigation/app_section.dart';
@@ -17,29 +21,68 @@ import 'ui/app_theme.dart';
 import 'ui/components/app_button.dart';
 import 'ui/components/app_scaffold.dart';
 
-class App extends StatelessWidget {
-  const App({super.key});
+class App extends StatefulWidget {
+  const App({super.key, this.database});
+
+  final AppDatabase? database;
+
+  @override
+  State<App> createState() => _AppState();
+}
+
+class _AppState extends State<App> {
+  late final AppDatabase _database;
+
+  @override
+  void initState() {
+    super.initState();
+    _database = widget.database ?? AppDatabase();
+  }
+
+  @override
+  void dispose() {
+    _database.close();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
+    return MultiRepositoryProvider(
       providers: [
-        BlocProvider(create: (_) => ThemeCubit()),
-        BlocProvider(create: (_) => NavigationCubit()),
-        BlocProvider(create: (_) => LibraryCubit()),
-        BlocProvider(create: (_) => QueueCubit()),
+        RepositoryProvider.value(value: _database),
+        RepositoryProvider(
+          create: (context) =>
+              SettingsRepository(context.read<AppDatabase>()),
+        ),
+        RepositoryProvider(
+          create: (context) => LogsRepository(context.read<AppDatabase>()),
+        ),
       ],
-      child: BlocBuilder<ThemeCubit, ThemeMode>(
-        builder: (context, mode) {
-          return MaterialApp(
-            title: 'reddit-dl',
-            theme: AppTheme.light(),
-            darkTheme: AppTheme.dark(),
-            themeMode: mode,
-            debugShowCheckedModeBanner: false,
-            home: const AppShell(),
-          );
-        },
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider(create: (_) => NavigationCubit()),
+          BlocProvider(create: (_) => LibraryCubit()),
+          BlocProvider(create: (_) => QueueCubit()),
+          BlocProvider(
+            create: (context) =>
+                SettingsCubit(context.read<SettingsRepository>()),
+          ),
+          BlocProvider(
+            create: (context) => LogsCubit(context.read<LogsRepository>()),
+          ),
+        ],
+        child: BlocBuilder<SettingsCubit, SettingsState>(
+          builder: (context, state) {
+            return MaterialApp(
+              title: 'reddit-dl',
+              theme: AppTheme.light(),
+              darkTheme: AppTheme.dark(),
+              themeMode: state.settings.themeModeValue,
+              debugShowCheckedModeBanner: false,
+              home: const AppShell(),
+            );
+          },
+        ),
       ),
     );
   }
@@ -91,8 +134,7 @@ class AppShell extends StatelessWidget {
                 section: section,
                 title: section.label,
                 actions: _buildActions(context, section),
-                onSectionSelected:
-                    context.read<NavigationCubit>().select,
+                onSectionSelected: context.read<NavigationCubit>().select,
                 child: _buildPage(section),
               ),
             ),

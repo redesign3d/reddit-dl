@@ -1,25 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../features/logs/log_record.dart';
 import '../tokens.dart';
 import 'app_button.dart';
 import 'app_card.dart';
 import 'app_chip.dart';
 import 'app_text_field.dart';
-
-class LogEntry {
-  const LogEntry({
-    required this.timestamp,
-    required this.scope,
-    required this.level,
-    required this.message,
-  });
-
-  final DateTime timestamp;
-  final String scope;
-  final String level;
-  final String message;
-}
 
 class LogViewer extends StatefulWidget {
   const LogViewer({
@@ -27,7 +14,7 @@ class LogViewer extends StatefulWidget {
     required this.entries,
   });
 
-  final List<LogEntry> entries;
+  final List<LogRecord> entries;
 
   @override
   State<LogViewer> createState() => _LogViewerState();
@@ -163,7 +150,7 @@ class _LogViewerState extends State<LogViewer> {
 class _LogRow extends StatelessWidget {
   const _LogRow({required this.entry});
 
-  final LogEntry entry;
+  final LogRecord entry;
 
   @override
   Widget build(BuildContext context) {
