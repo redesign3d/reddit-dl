@@ -225,9 +225,11 @@ class DownloadScheduler {
     var finished = 0;
     String outputPath = '';
 
-    Future<void> updateOverall(double taskProgress) async {
+    void updateOverall(double taskProgress) {
       final overall = (finished + taskProgress) / totalTasks;
-      await _queueRepository.updateJobProgress(jobId, overall.clamp(0, 1));
+      unawaited(
+        _queueRepository.updateJobProgress(jobId, overall.clamp(0, 1)),
+      );
     }
 
     for (var i = 0; i < assets.length; i++) {
@@ -340,7 +342,7 @@ class DownloadScheduler {
       }
 
       finished += 1;
-      await updateOverall(0);
+      updateOverall(0);
       await _respectRateLimit();
       if (_running.containsKey(jobId)) {
         await _queueRepository.updateJobStatus(jobId, 'running');
@@ -382,7 +384,7 @@ class DownloadScheduler {
         await _log(jobId, 'download', 'error', error.toString());
       }
       finished += 1;
-      await updateOverall(0);
+      updateOverall(0);
       if (_running.containsKey(jobId)) {
         await _queueRepository.updateJobStatus(jobId, 'running');
       }
@@ -423,7 +425,7 @@ class DownloadScheduler {
         await _log(jobId, 'download', 'error', error.toString());
       }
       finished += 1;
-      await updateOverall(0);
+      updateOverall(0);
       if (_running.containsKey(jobId)) {
         await _queueRepository.updateJobStatus(jobId, 'running');
       }
@@ -468,7 +470,7 @@ class DownloadScheduler {
         await _log(jobId, 'download', 'error', error.toString());
       }
       finished += 1;
-      await updateOverall(0);
+      updateOverall(0);
       if (_running.containsKey(jobId)) {
         await _queueRepository.updateJobStatus(jobId, 'running');
       }
