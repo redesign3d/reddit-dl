@@ -68,14 +68,16 @@ class LibraryPage extends StatelessWidget {
                 ),
                 SizedBox(width: AppTokens.space.s12),
                 AppButton(
-                  label: 'Export selection',
+                  label: 'Copy selection',
                   variant: AppButtonVariant.secondary,
                   onPressed: state.items.isEmpty
                       ? null
-                      : () => AppToast.show(
-                            context,
-                            'Export queued (mock).',
-                          ),
+                      : () {
+                          final text =
+                              state.items.map((item) => item.permalink).join('\n');
+                          Clipboard.setData(ClipboardData(text: text));
+                          AppToast.show(context, 'Selection copied.');
+                        },
                 ),
               ],
             ),

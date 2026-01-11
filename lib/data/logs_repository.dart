@@ -27,6 +27,24 @@ class LogsRepository {
         );
   }
 
+  Future<List<LogRecord>> fetchAll() async {
+    final query = _db.select(_db.logEntries)
+      ..orderBy([
+        (row) => OrderingTerm(expression: row.timestamp, mode: OrderingMode.desc),
+      ]);
+    final rows = await query.get();
+    return rows
+        .map(
+          (row) => LogRecord(
+            timestamp: row.timestamp,
+            scope: row.scope,
+            level: row.level,
+            message: row.message,
+          ),
+        )
+        .toList();
+  }
+
   Future<void> add(LogRecord entry) async {
     await _db.into(_db.logEntries).insert(
           LogEntriesCompanion.insert(

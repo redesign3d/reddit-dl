@@ -312,7 +312,15 @@ class _AppShellState extends State<AppShell> {
           AppButton(
             label: 'Copy logs',
             variant: AppButtonVariant.secondary,
-            onPressed: () {},
+            onPressed: () async {
+              final logs = await context.read<LogsRepository>().fetchAll();
+              final text = logs
+                  .map((entry) =>
+                      '${entry.timestamp.toIso8601String()} [${entry.level}] ${entry.scope}: ${entry.message}')
+                  .join('\n');
+              Clipboard.setData(ClipboardData(text: text));
+              AppToast.show(context, 'Logs copied.');
+            },
           ),
         ];
       case AppSection.settings:
@@ -320,7 +328,9 @@ class _AppShellState extends State<AppShell> {
           AppButton(
             label: 'Reset defaults',
             variant: AppButtonVariant.ghost,
-            onPressed: () {},
+            onPressed: () => context
+                .read<SettingsCubit>()
+                .updateSettings(AppSettings.defaults()),
           ),
         ];
     }
