@@ -344,7 +344,7 @@ class DownloadScheduler {
       finished += 1;
       updateOverall(0);
       await _respectRateLimit();
-      if (_running.containsKey(jobId)) {
+      if (!token.isCancelled && _running.containsKey(jobId)) {
         await _queueRepository.updateJobStatus(jobId, 'running');
       }
     }
@@ -385,7 +385,7 @@ class DownloadScheduler {
       }
       finished += 1;
       updateOverall(0);
-      if (_running.containsKey(jobId)) {
+      if (!token.isCancelled && _running.containsKey(jobId)) {
         await _queueRepository.updateJobStatus(jobId, 'running');
       }
     }
@@ -426,7 +426,7 @@ class DownloadScheduler {
       }
       finished += 1;
       updateOverall(0);
-      if (_running.containsKey(jobId)) {
+      if (!token.isCancelled && _running.containsKey(jobId)) {
         await _queueRepository.updateJobStatus(jobId, 'running');
       }
     }
@@ -471,7 +471,7 @@ class DownloadScheduler {
       }
       finished += 1;
       updateOverall(0);
-      if (_running.containsKey(jobId)) {
+      if (!token.isCancelled && _running.containsKey(jobId)) {
         await _queueRepository.updateJobStatus(jobId, 'running');
       }
     }
