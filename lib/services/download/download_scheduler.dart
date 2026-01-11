@@ -119,6 +119,13 @@ class DownloadScheduler {
     if (_running.containsKey(jobId)) {
       return;
     }
+    if (record.job.attempts >= _settings.maxDownloadAttempts) {
+      await _queueRepository.markJobFailed(
+        jobId,
+        'Max attempts reached (${_settings.maxDownloadAttempts}).',
+      );
+      return;
+    }
     await _queueRepository.markJobRunning(jobId);
     await _queueRepository.incrementAttempts(jobId);
     final token = CancelToken();
@@ -129,16 +136,6 @@ class DownloadScheduler {
   Future<void> _runJob(QueueRecord record, CancelToken token) async {
     final jobId = record.job.id;
     final item = record.item;
-
-    final attemptLimit = _settings.maxDownloadAttempts;
-    if (record.job.attempts >= attemptLimit) {
-      await _queueRepository.markJobFailed(
-        jobId,
-        'Max attempts reached ($attemptLimit).',
-      );
-      _running.remove(jobId);
-      return;
-    }
 
     if (item.over18 && !_settings.downloadNsfw) {
       await _queueRepository.markJobSkipped(
