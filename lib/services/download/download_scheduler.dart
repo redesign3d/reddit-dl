@@ -14,10 +14,13 @@ import '../../features/logs/log_record.dart';
 import '../ffmpeg_runtime_manager.dart';
 import '../path_template_engine.dart';
 import 'download_telemetry.dart';
+import 'external_media_downloader.dart';
 import 'ffmpeg_executor.dart';
 import 'http_media_downloader.dart';
 import 'overwrite_policy.dart';
 import 'reddit_video_downloader.dart';
+import '../tools/external_tool_runner.dart';
+import '../tools/tool_detector.dart';
 
 class DownloadScheduler {
   DownloadScheduler({
@@ -32,6 +35,9 @@ class DownloadScheduler {
     RedditVideoDownloader? videoDownloader,
     FfmpegRuntimeManager? ffmpegRuntimeManager,
     FfmpegExecutor? ffmpegExecutor,
+    ExternalMediaDownloader? externalDownloader,
+    ToolDetector? toolDetector,
+    ExternalToolRunner? toolRunner,
   })  : _queueRepository = queueRepository,
         _settingsRepository = settingsRepository,
         _logsRepository = logsRepository,
@@ -59,6 +65,11 @@ class DownloadScheduler {
           ffmpegRuntime: ffmpegRuntimeManager ?? FfmpegRuntimeManager(),
           ffmpegExecutor: ffmpegExecutor ?? ProcessFfmpegExecutor(),
         );
+    _externalDownloader = externalDownloader ??
+        ExternalMediaDownloader(
+          toolDetector: toolDetector ?? ToolDetector(),
+          toolRunner: toolRunner ?? ExternalToolRunner(_logsRepository),
+        );
   }
 
   final QueueRepository _queueRepository;
@@ -71,6 +82,7 @@ class DownloadScheduler {
   late final OverwritePolicyEvaluator _policyEvaluator;
   late final HttpMediaDownloader _downloader;
   late final RedditVideoDownloader _videoDownloader;
+  late final ExternalMediaDownloader _externalDownloader;
 
   late AppSettings _settings;
   StreamSubscription<AppSettings>? _settingsSubscription;
@@ -220,6 +232,30 @@ class DownloadScheduler {
       try {
         final result = await _downloadWithRetry(
           action: () {
+            final hint = asset.toolHint.toLowerCase();
+            final isExternal = asset.type == 'external' ||
+                hint.contains('gallery') ||
+                hint.contains('ytdlp') ||
+                hint.contains('yt-dlp');
+            if (isExternal) {
+              return _externalDownloader.download(
+                asset: asset,
+                targetFile: targetFile,
+                settings: _settings,
+                policy: _policyFromSnapshot(record.job.policySnapshot),
+                cancelToken: token,
+                onProgress: (progress) async {
+                  final overall = (completed + progress) / assets.length;
+                  await _queueRepository.updateJobProgress(jobId, overall);
+                },
+                log: (level, message) => _log(
+                  jobId,
+                  'download',
+                  level,
+                  message,
+                ),
+              );
+            }
             if (asset.type == 'video') {
               return _videoDownloader.download(
                 asset: asset,
