@@ -1,6 +1,6 @@
-import 'dart:io';
+import 'dart:io' as io;
 
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart' as inapp;
 
 import '../../data/session_repository.dart';
 
@@ -10,13 +10,13 @@ class WebViewCookieBridge {
   final SessionRepository _sessionRepository;
 
   Future<void> syncCookiesFromWebView() async {
-    final cookies = await CookieManager.instance().getCookies(
-      url: WebUri('https://old.reddit.com/'),
+    final cookies = await inapp.CookieManager.instance().getCookies(
+      url: inapp.WebUri('https://old.reddit.com/'),
     );
     await _storeWebViewCookies(Uri.parse('https://old.reddit.com/'), cookies);
 
-    final wwwCookies = await CookieManager.instance().getCookies(
-      url: WebUri('https://www.reddit.com/'),
+    final wwwCookies = await inapp.CookieManager.instance().getCookies(
+      url: inapp.WebUri('https://www.reddit.com/'),
     );
     await _storeWebViewCookies(Uri.parse('https://www.reddit.com/'), wwwCookies);
   }
@@ -27,12 +27,12 @@ class WebViewCookieBridge {
   }
 
   Future<void> clearWebViewCookies() async {
-    await CookieManager.instance().deleteAllCookies();
+    await inapp.CookieManager.instance().deleteAllCookies();
   }
 
   Future<void> _storeWebViewCookies(
     Uri url,
-    List<Cookie> cookies,
+    List<inapp.Cookie> cookies,
   ) async {
     if (cookies.isEmpty) {
       return;
@@ -41,8 +41,8 @@ class WebViewCookieBridge {
     await _sessionRepository.storeCookies(url, ioCookies);
   }
 
-  Cookie _toIoCookie(Cookie cookie) {
-    final ioCookie = Cookie(cookie.name, cookie.value);
+  io.Cookie _toIoCookie(inapp.Cookie cookie) {
+    final ioCookie = io.Cookie(cookie.name, cookie.value);
     if (cookie.domain != null) {
       ioCookie.domain = cookie.domain;
     }
@@ -65,8 +65,8 @@ class WebViewCookieBridge {
   Future<void> _applyCookies(Uri url) async {
     final cookies = await _sessionRepository.loadCookies(url);
     for (final cookie in cookies) {
-      await CookieManager.instance().setCookie(
-        url: WebUri(url.toString()),
+      await inapp.CookieManager.instance().setCookie(
+        url: inapp.WebUri(url.toString()),
         name: cookie.name,
         value: cookie.value,
         domain: cookie.domain.isNotEmpty ? cookie.domain : null,
