@@ -9,12 +9,12 @@ class LogsRepository {
   final AppDatabase _db;
 
   Stream<List<LogRecord>> watchAll() {
-    final query = _db.select(_db.logEntries)
-      ..orderBy([
-        (row) => OrderingTerm(expression: row.timestamp, mode: OrderingMode.desc),
-      ]);
+    final query = _db.select(_db.logEntries)..orderBy([
+      (row) => OrderingTerm(expression: row.timestamp, mode: OrderingMode.desc),
+    ]);
     return query.watch().map(
-          (rows) => rows
+      (rows) =>
+          rows
               .map(
                 (row) => LogRecord(
                   timestamp: row.timestamp,
@@ -24,14 +24,13 @@ class LogsRepository {
                 ),
               )
               .toList(),
-        );
+    );
   }
 
   Future<List<LogRecord>> fetchAll() async {
-    final query = _db.select(_db.logEntries)
-      ..orderBy([
-        (row) => OrderingTerm(expression: row.timestamp, mode: OrderingMode.desc),
-      ]);
+    final query = _db.select(_db.logEntries)..orderBy([
+      (row) => OrderingTerm(expression: row.timestamp, mode: OrderingMode.desc),
+    ]);
     final rows = await query.get();
     return rows
         .map(
@@ -46,7 +45,9 @@ class LogsRepository {
   }
 
   Future<void> add(LogRecord entry) async {
-    await _db.into(_db.logEntries).insert(
+    await _db
+        .into(_db.logEntries)
+        .insert(
           LogEntriesCompanion.insert(
             timestamp: entry.timestamp,
             scope: entry.scope,

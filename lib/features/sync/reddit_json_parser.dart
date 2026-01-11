@@ -67,12 +67,14 @@ class RedditJsonParser {
     final subreddit = data['subreddit'] as String? ?? '';
     final author = data['author'] as String? ?? 'unknown';
     final createdUtc = (data['created_utc'] as num?)?.toInt() ?? 0;
-    final title = kind == 'comment'
-        ? (data['link_title'] as String? ?? '')
-        : (data['title'] as String? ?? '');
-    final body = kind == 'comment'
-        ? (data['body'] as String? ?? '')
-        : (data['selftext'] as String? ?? '');
+    final title =
+        kind == 'comment'
+            ? (data['link_title'] as String? ?? '')
+            : (data['title'] as String? ?? '');
+    final body =
+        kind == 'comment'
+            ? (data['body'] as String? ?? '')
+            : (data['selftext'] as String? ?? '');
     final over18 = data['over_18'] as bool? ?? false;
 
     final media = kind == 'post' ? _extractMedia(data) : <ResolvedMediaAsset>[];
@@ -288,11 +290,7 @@ class RedditJsonParser {
       if (isGif != null) {
         metadata['is_gif'] = isGif;
       }
-      addAsset(
-        'video',
-        fallback,
-        metadata: metadata.isEmpty ? null : metadata,
-      );
+      addAsset('video', fallback, metadata: metadata.isEmpty ? null : metadata);
     }
 
     return assets;

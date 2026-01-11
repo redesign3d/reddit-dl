@@ -40,10 +40,13 @@ void main() {
       hint: ListingKindHint.post,
     );
     expect(result, isNotNull);
-    final assets = result!.media.where((asset) => asset.type == 'video').toList();
+    final assets =
+        result!.media.where((asset) => asset.type == 'video').toList();
     expect(assets.length, 1);
-    expect(assets.first.metadata?['fallback_url'],
-        'https://v.redd.it/video/DASH_720.mp4');
+    expect(
+      assets.first.metadata?['fallback_url'],
+      'https://v.redd.it/video/DASH_720.mp4',
+    );
     expect(assets.first.metadata?['dash_url'], isNull);
   });
 
@@ -55,12 +58,17 @@ void main() {
       hint: ListingKindHint.post,
     );
     expect(result, isNotNull);
-    final assets = result!.media.where((asset) => asset.type == 'video').toList();
+    final assets =
+        result!.media.where((asset) => asset.type == 'video').toList();
     expect(assets.length, 1);
-    expect(assets.first.metadata?['fallback_url'],
-        'https://v.redd.it/video/DASH_720.mp4');
-    expect(assets.first.metadata?['dash_url'],
-        'https://v.redd.it/video/DASHPlaylist.mpd');
+    expect(
+      assets.first.metadata?['fallback_url'],
+      'https://v.redd.it/video/DASH_720.mp4',
+    );
+    expect(
+      assets.first.metadata?['dash_url'],
+      'https://v.redd.it/video/DASHPlaylist.mpd',
+    );
   });
 }
 

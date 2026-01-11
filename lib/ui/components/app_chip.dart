@@ -24,8 +24,8 @@ class AppChip extends StatelessWidget {
       backgroundColor: colors.muted,
       selectedColor: colors.secondary,
       labelStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: selected ? colors.secondaryForeground : colors.foreground,
-          ),
+        color: selected ? colors.secondaryForeground : colors.foreground,
+      ),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppTokens.radii.lg),
         side: BorderSide(color: colors.border),

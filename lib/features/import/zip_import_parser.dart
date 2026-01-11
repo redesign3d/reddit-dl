@@ -12,15 +12,19 @@ class ZipImportParser {
     final commentsCsv = _readCsvFile(archive, 'saved_comments.csv');
 
     if (postsCsv == null && commentsCsv == null) {
-      throw const ZipImportException('ZIP missing saved_posts.csv and saved_comments.csv.');
+      throw const ZipImportException(
+        'ZIP missing saved_posts.csv and saved_comments.csv.',
+      );
     }
 
-    final posts = postsCsv == null
-        ? <ImportItem>[]
-        : _parseCsv(postsCsv, ImportKind.post);
-    final comments = commentsCsv == null
-        ? <ImportItem>[]
-        : _parseCsv(commentsCsv, ImportKind.comment);
+    final posts =
+        postsCsv == null
+            ? <ImportItem>[]
+            : _parseCsv(postsCsv, ImportKind.post);
+    final comments =
+        commentsCsv == null
+            ? <ImportItem>[]
+            : _parseCsv(commentsCsv, ImportKind.comment);
 
     return ImportArchive(posts: posts, comments: comments);
   }
@@ -50,11 +54,12 @@ class ZipImportParser {
       return [];
     }
 
-    final headers = rows.first
-        .map((value) => value.toString().trim())
-        .map((value) => value.replaceFirst('\uFEFF', ''))
-        .map((value) => value.toLowerCase())
-        .toList();
+    final headers =
+        rows.first
+            .map((value) => value.toString().trim())
+            .map((value) => value.replaceFirst('\uFEFF', ''))
+            .map((value) => value.toLowerCase())
+            .toList();
     final indices = <String, int>{};
     for (var i = 0; i < headers.length; i++) {
       indices[headers[i]] = i;
@@ -65,28 +70,35 @@ class ZipImportParser {
       throw const ZipImportException('CSV missing permalink column.');
     }
 
-    return rows.skip(1).where((row) => row.isNotEmpty).map((row) {
-      final permalink = _cell(row, permalinkIndex) ?? '';
-      final subreddit = _cell(row, _indexFor(indices, ['subreddit'])) ?? '';
-      final author =
-          _cell(row, _indexFor(indices, ['author', 'author_name'])) ?? 'unknown';
-      final title = _cell(row, _indexFor(indices, ['title'])) ?? '';
-      final body =
-          _cell(row, _indexFor(indices, ['body', 'comment', 'selftext'])) ?? '';
-      final createdUtc = _parseInt(
-        _cell(row, _indexFor(indices, ['created_utc', 'created'])),
-      );
+    return rows
+        .skip(1)
+        .where((row) => row.isNotEmpty)
+        .map((row) {
+          final permalink = _cell(row, permalinkIndex) ?? '';
+          final subreddit = _cell(row, _indexFor(indices, ['subreddit'])) ?? '';
+          final author =
+              _cell(row, _indexFor(indices, ['author', 'author_name'])) ??
+              'unknown';
+          final title = _cell(row, _indexFor(indices, ['title'])) ?? '';
+          final body =
+              _cell(row, _indexFor(indices, ['body', 'comment', 'selftext'])) ??
+              '';
+          final createdUtc = _parseInt(
+            _cell(row, _indexFor(indices, ['created_utc', 'created'])),
+          );
 
-      return ImportItem(
-        kind: kind,
-        permalink: permalink,
-        subreddit: subreddit,
-        author: author,
-        title: title,
-        body: body,
-        createdUtc: createdUtc,
-      );
-    }).where((item) => item.permalink.isNotEmpty).toList();
+          return ImportItem(
+            kind: kind,
+            permalink: permalink,
+            subreddit: subreddit,
+            author: author,
+            title: title,
+            body: body,
+            createdUtc: createdUtc,
+          );
+        })
+        .where((item) => item.permalink.isNotEmpty)
+        .toList();
   }
 
   int? _indexFor(Map<String, int> indices, List<String> keys) {
@@ -138,10 +150,7 @@ class ImportItem {
 }
 
 class ImportArchive {
-  const ImportArchive({
-    required this.posts,
-    required this.comments,
-  });
+  const ImportArchive({required this.posts, required this.comments});
 
   final List<ImportItem> posts;
   final List<ImportItem> comments;

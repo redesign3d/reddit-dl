@@ -8,7 +8,8 @@ import '../../data/library_repository.dart';
 
 class LibraryCubit extends Cubit<LibraryState> {
   LibraryCubit(this._repository)
-      : super(const LibraryState(
+    : super(
+        const LibraryState(
           items: [],
           subreddits: [],
           searchQuery: '',
@@ -17,7 +18,8 @@ class LibraryCubit extends Cubit<LibraryState> {
           kindFilter: LibraryKindFilter.all,
           showNsfw: true,
           hasIndexed: false,
-        )) {
+        ),
+      ) {
     _itemsSubscription = _repository.watchAll().listen((items) {
       _allItems = items;
       _applyFilters();
@@ -64,12 +66,13 @@ class LibraryCubit extends Cubit<LibraryState> {
     var items = List<SavedItem>.from(_allItems);
 
     if (query.isNotEmpty) {
-      items = items.where((item) {
-        return item.title.toLowerCase().contains(query) ||
-            item.permalink.toLowerCase().contains(query) ||
-            item.subreddit.toLowerCase().contains(query) ||
-            item.author.toLowerCase().contains(query);
-      }).toList();
+      items =
+          items.where((item) {
+            return item.title.toLowerCase().contains(query) ||
+                item.permalink.toLowerCase().contains(query) ||
+                item.subreddit.toLowerCase().contains(query) ||
+                item.author.toLowerCase().contains(query);
+          }).toList();
     }
 
     if (!state.showNsfw) {
@@ -82,22 +85,26 @@ class LibraryCubit extends Cubit<LibraryState> {
     }
 
     if (state.includeSubreddit != null) {
-      items = items
-          .where((item) => item.subreddit == state.includeSubreddit)
-          .toList();
+      items =
+          items
+              .where((item) => item.subreddit == state.includeSubreddit)
+              .toList();
     }
 
     if (state.excludeSubreddit != null) {
-      items = items
-          .where((item) => item.subreddit != state.excludeSubreddit)
-          .toList();
+      items =
+          items
+              .where((item) => item.subreddit != state.excludeSubreddit)
+              .toList();
     }
 
-    emit(state.copyWith(
-      items: items,
-      subreddits: _subreddits,
-      hasIndexed: _allItems.isNotEmpty,
-    ));
+    emit(
+      state.copyWith(
+        items: items,
+        subreddits: _subreddits,
+        hasIndexed: _allItems.isNotEmpty,
+      ),
+    );
   }
 
   @override
@@ -147,12 +154,14 @@ class LibraryState extends Equatable {
       items: items ?? this.items,
       subreddits: subreddits ?? this.subreddits,
       searchQuery: searchQuery ?? this.searchQuery,
-      includeSubreddit: includeSubreddit == _unset
-          ? this.includeSubreddit
-          : includeSubreddit as String?,
-      excludeSubreddit: excludeSubreddit == _unset
-          ? this.excludeSubreddit
-          : excludeSubreddit as String?,
+      includeSubreddit:
+          includeSubreddit == _unset
+              ? this.includeSubreddit
+              : includeSubreddit as String?,
+      excludeSubreddit:
+          excludeSubreddit == _unset
+              ? this.excludeSubreddit
+              : excludeSubreddit as String?,
       kindFilter: kindFilter ?? this.kindFilter,
       showNsfw: showNsfw ?? this.showNsfw,
       hasIndexed: hasIndexed ?? this.hasIndexed,
@@ -161,13 +170,13 @@ class LibraryState extends Equatable {
 
   @override
   List<Object?> get props => [
-        items,
-        subreddits,
-        searchQuery,
-        includeSubreddit,
-        excludeSubreddit,
-        kindFilter,
-        showNsfw,
-        hasIndexed,
-      ];
+    items,
+    subreddits,
+    searchQuery,
+    includeSubreddit,
+    excludeSubreddit,
+    kindFilter,
+    showNsfw,
+    hasIndexed,
+  ];
 }

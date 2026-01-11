@@ -14,18 +14,19 @@ class RedditJsonResolver {
     required CookieJar cookieJar,
     RedditJsonParser? parser,
     Dio? dio,
-  })  : _parser = parser ?? RedditJsonParser(),
-        _dio = dio ??
-            Dio(
-              BaseOptions(
-                headers: {
-                  HttpHeaders.userAgentHeader:
-                      'reddit-dl/0.1 (+https://github.com/redesign3d/reddit-dl)',
-                  HttpHeaders.acceptHeader: 'application/json',
-                },
-                validateStatus: (status) => status != null && status < 500,
-              ),
-            ) {
+  }) : _parser = parser ?? RedditJsonParser(),
+       _dio =
+           dio ??
+           Dio(
+             BaseOptions(
+               headers: {
+                 HttpHeaders.userAgentHeader:
+                     'reddit-dl/0.1 (+https://github.com/redesign3d/reddit-dl)',
+                 HttpHeaders.acceptHeader: 'application/json',
+               },
+               validateStatus: (status) => status != null && status < 500,
+             ),
+           ) {
     _dio.interceptors.add(CookieManager(cookieJar));
   }
 

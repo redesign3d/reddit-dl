@@ -45,17 +45,17 @@ class ProcessFfmpegExecutor implements FfmpegExecutor {
         .transform(utf8.decoder)
         .transform(const LineSplitter())
         .listen((line) {
-      stdoutLines.add(line);
-      onStdout?.call(line);
-    });
+          stdoutLines.add(line);
+          onStdout?.call(line);
+        });
 
     final stderrSub = process.stderr
         .transform(utf8.decoder)
         .transform(const LineSplitter())
         .listen((line) {
-      stderrLines.add(line);
-      onStderr?.call(line);
-    });
+          stderrLines.add(line);
+          onStderr?.call(line);
+        });
 
     final exitCode = await process.exitCode;
     await stdoutSub.cancel();

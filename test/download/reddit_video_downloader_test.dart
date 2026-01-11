@@ -27,7 +27,14 @@ void main() {
         dashUrl: 'https://v.redd.it/video/DASHPlaylist.mpd',
         outputPath: '/tmp/output.mp4',
       ),
-      ['-y', '-i', 'https://v.redd.it/video/DASHPlaylist.mpd', '-c', 'copy', '/tmp/output.mp4'],
+      [
+        '-y',
+        '-i',
+        'https://v.redd.it/video/DASHPlaylist.mpd',
+        '-c',
+        'copy',
+        '/tmp/output.mp4',
+      ],
     );
 
     expect(
@@ -36,7 +43,16 @@ void main() {
         audioPath: '/tmp/audio.m4a',
         outputPath: '/tmp/out.mp4',
       ),
-      ['-y', '-i', '/tmp/video.mp4', '-i', '/tmp/audio.m4a', '-c', 'copy', '/tmp/out.mp4'],
+      [
+        '-y',
+        '-i',
+        '/tmp/video.mp4',
+        '-i',
+        '/tmp/audio.m4a',
+        '-c',
+        'copy',
+        '/tmp/out.mp4',
+      ],
     );
   });
 
@@ -156,8 +172,7 @@ class FakeFfmpegExecutor implements FfmpegExecutor {
 }
 
 class FakeHttpMediaDownloader extends HttpMediaDownloader {
-  FakeHttpMediaDownloader()
-      : super(Dio(), OverwritePolicyEvaluator(Dio()));
+  FakeHttpMediaDownloader() : super(Dio(), OverwritePolicyEvaluator(Dio()));
 
   bool called = false;
 

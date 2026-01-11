@@ -45,26 +45,28 @@ class DownloadScheduler {
     TextPostMarkdownExporter? textPostExporter,
     SavedCommentMarkdownExporter? savedCommentExporter,
     ThreadCommentsMarkdownExporter? threadCommentsExporter,
-  })  : _queueRepository = queueRepository,
-        _settingsRepository = settingsRepository,
-        _logsRepository = logsRepository,
-        _sessionRepository = sessionRepository,
-        _telemetry = telemetry {
+  }) : _queueRepository = queueRepository,
+       _settingsRepository = settingsRepository,
+       _logsRepository = logsRepository,
+       _sessionRepository = sessionRepository,
+       _telemetry = telemetry {
     _settings = AppSettings.defaults();
-    _dio = dio ??
+    _dio =
+        dio ??
         Dio(
-      BaseOptions(
-        validateStatus: (status) => status != null && status < 500,
-        headers: {
-          HttpHeaders.userAgentHeader:
-              'reddit-dl/0.1 (+https://github.com/redesign3d/reddit-dl)',
-        },
-      ),
-    );
+          BaseOptions(
+            validateStatus: (status) => status != null && status < 500,
+            headers: {
+              HttpHeaders.userAgentHeader:
+                  'reddit-dl/0.1 (+https://github.com/redesign3d/reddit-dl)',
+            },
+          ),
+        );
     _dio.interceptors.add(CookieManager(_sessionRepository.cookieJar));
     _policyEvaluator = policyEvaluator ?? OverwritePolicyEvaluator(_dio);
     _downloader = downloader ?? HttpMediaDownloader(_dio, _policyEvaluator);
-    _videoDownloader = videoDownloader ??
+    _videoDownloader =
+        videoDownloader ??
         RedditVideoDownloader(
           dio: _dio,
           policyEvaluator: _policyEvaluator,
@@ -72,7 +74,8 @@ class DownloadScheduler {
           ffmpegRuntime: ffmpegRuntimeManager ?? FfmpegRuntimeManager(),
           ffmpegExecutor: ffmpegExecutor ?? ProcessFfmpegExecutor(),
         );
-    _externalDownloader = externalDownloader ??
+    _externalDownloader =
+        externalDownloader ??
         ExternalMediaDownloader(
           toolDetector: toolDetector ?? ToolDetector(),
           toolRunner: toolRunner ?? ExternalToolRunner(_logsRepository),
@@ -108,10 +111,8 @@ class DownloadScheduler {
 
   void start() {
     _queueRepository.resetRunningToQueued();
-    _settingsSubscription =
-        _settingsRepository.watch().listen(_handleSettings);
-    _queueSubscription =
-        _queueRepository.watchQueue().listen(_handleQueue);
+    _settingsSubscription = _settingsRepository.watch().listen(_handleSettings);
+    _queueSubscription = _queueRepository.watchQueue().listen(_handleQueue);
   }
 
   Future<void> dispose() async {
@@ -154,10 +155,11 @@ class DownloadScheduler {
     if (available <= 0) {
       return;
     }
-    final queued = _latestQueue
-        .where((record) => record.job.status == 'queued')
-        .take(available)
-        .toList();
+    final queued =
+        _latestQueue
+            .where((record) => record.job.status == 'queued')
+            .take(available)
+            .toList();
     for (final record in queued) {
       _startJob(record);
     }
@@ -185,7 +187,12 @@ class DownloadScheduler {
   Future<void> _runJob(QueueRecord record, CancelToken token) async {
     final jobId = record.job.id;
     final item = record.item;
-    await _log(jobId, 'download', 'info', 'Download started for ${item.permalink}.');
+    await _log(
+      jobId,
+      'download',
+      'info',
+      'Download started for ${item.permalink}.',
+    );
 
     if (item.over18 && !_settings.downloadNsfw) {
       await _queueRepository.markJobSkipped(
@@ -204,7 +211,8 @@ class DownloadScheduler {
         _settings.exportSavedComments && item.kind == 'comment';
     final exportThreadComments =
         _settings.exportPostComments && item.kind == 'post';
-    final totalTasks = assets.length +
+    final totalTasks =
+        assets.length +
         (exportText ? 1 : 0) +
         (exportSavedComment ? 1 : 0) +
         (exportThreadComments ? 1 : 0);
@@ -227,9 +235,7 @@ class DownloadScheduler {
 
     void updateOverall(double taskProgress) {
       final overall = (finished + taskProgress) / totalTasks;
-      unawaited(
-        _queueRepository.updateJobProgress(jobId, overall.clamp(0, 1)),
-      );
+      unawaited(_queueRepository.updateJobProgress(jobId, overall.clamp(0, 1)));
     }
 
     for (var i = 0; i < assets.length; i++) {
@@ -249,12 +255,7 @@ class DownloadScheduler {
         continue;
       }
       if (pathResult.warnings.isNotEmpty) {
-        await _log(
-          jobId,
-          'download',
-          'warn',
-          pathResult.warnings.join(' • '),
-        );
+        await _log(jobId, 'download', 'warn', pathResult.warnings.join(' • '));
       }
 
       final targetFile = File(pathResult.filePath);
@@ -267,7 +268,8 @@ class DownloadScheduler {
           targetPath: targetFile.path,
           action: () {
             final hint = asset.toolHint.toLowerCase();
-            final isExternal = asset.type == 'external' ||
+            final isExternal =
+                asset.type == 'external' ||
                 hint.contains('gallery') ||
                 hint.contains('ytdlp') ||
                 hint.contains('yt-dlp');
@@ -279,14 +281,10 @@ class DownloadScheduler {
                 policy: _policyFromSnapshot(record.job.policySnapshot),
                 cancelToken: token,
                 onProgress: updateOverall,
-                onPhase: (phase) =>
-                    _queueRepository.updateJobStatus(jobId, phase),
-                log: (level, message) => _log(
-                  jobId,
-                  'download',
-                  level,
-                  message,
-                ),
+                onPhase:
+                    (phase) => _queueRepository.updateJobStatus(jobId, phase),
+                log:
+                    (level, message) => _log(jobId, 'download', level, message),
               );
             }
             if (asset.type == 'video') {
@@ -297,14 +295,10 @@ class DownloadScheduler {
                 cancelToken: token,
                 onHeaders: _telemetry.updateFromHeaders,
                 onProgress: updateOverall,
-                onPhase: (phase) =>
-                    _queueRepository.updateJobStatus(jobId, phase),
-                log: (level, message) => _log(
-                  jobId,
-                  'download',
-                  level,
-                  message,
-                ),
+                onPhase:
+                    (phase) => _queueRepository.updateJobStatus(jobId, phase),
+                log:
+                    (level, message) => _log(jobId, 'download', level, message),
               );
             }
             return _downloader.download(
@@ -319,9 +313,8 @@ class DownloadScheduler {
         );
         if (result.isCompleted) {
           completed += 1;
-          outputPath = result.outputPath.isNotEmpty
-              ? result.outputPath
-              : outputPath;
+          outputPath =
+              result.outputPath.isNotEmpty ? result.outputPath : outputPath;
         } else if (result.isSkipped) {
           skipped += 1;
           await _log(jobId, 'download', 'info', result.message ?? 'Skipped.');
@@ -356,18 +349,18 @@ class DownloadScheduler {
         return;
       }
       try {
-      final result = await _exportWithRetry(
-        action: () => _textPostExporter.export(
-          item: item,
-          engine: engine,
-          policy: _policyFromSnapshot(record.job.policySnapshot),
-          ),
+        final result = await _exportWithRetry(
+          action:
+              () => _textPostExporter.export(
+                item: item,
+                engine: engine,
+                policy: _policyFromSnapshot(record.job.policySnapshot),
+              ),
         );
         if (result.isCompleted) {
           completed += 1;
-          outputPath = result.outputPath.isNotEmpty
-              ? result.outputPath
-              : outputPath;
+          outputPath =
+              result.outputPath.isNotEmpty ? result.outputPath : outputPath;
         } else if (result.isSkipped) {
           skipped += 1;
           await _log(jobId, 'download', 'info', result.message ?? 'Skipped.');
@@ -397,18 +390,18 @@ class DownloadScheduler {
         return;
       }
       try {
-      final result = await _exportWithRetry(
-        action: () => _savedCommentExporter.export(
-          item: item,
-          engine: engine,
-          policy: _policyFromSnapshot(record.job.policySnapshot),
-          ),
+        final result = await _exportWithRetry(
+          action:
+              () => _savedCommentExporter.export(
+                item: item,
+                engine: engine,
+                policy: _policyFromSnapshot(record.job.policySnapshot),
+              ),
         );
         if (result.isCompleted) {
           completed += 1;
-          outputPath = result.outputPath.isNotEmpty
-              ? result.outputPath
-              : outputPath;
+          outputPath =
+              result.outputPath.isNotEmpty ? result.outputPath : outputPath;
         } else if (result.isSkipped) {
           skipped += 1;
           await _log(jobId, 'download', 'info', result.message ?? 'Skipped.');
@@ -438,22 +431,22 @@ class DownloadScheduler {
         return;
       }
       try {
-      final result = await _exportWithRetry(
-        action: () => _threadCommentsExporter.export(
-          item: item,
-          engine: engine,
-          policy: _policyFromSnapshot(record.job.policySnapshot),
-            sort: _settings.postCommentsSort,
-            maxCount: _settings.postCommentsMaxCount,
-            timeframeDays: _settings.postCommentsTimeframeDays,
-            cancelToken: token,
-          ),
+        final result = await _exportWithRetry(
+          action:
+              () => _threadCommentsExporter.export(
+                item: item,
+                engine: engine,
+                policy: _policyFromSnapshot(record.job.policySnapshot),
+                sort: _settings.postCommentsSort,
+                maxCount: _settings.postCommentsMaxCount,
+                timeframeDays: _settings.postCommentsTimeframeDays,
+                cancelToken: token,
+              ),
         );
         if (result.isCompleted) {
           completed += 1;
-          outputPath = result.outputPath.isNotEmpty
-              ? result.outputPath
-              : outputPath;
+          outputPath =
+              result.outputPath.isNotEmpty ? result.outputPath : outputPath;
         } else if (result.isSkipped) {
           skipped += 1;
           await _log(jobId, 'download', 'info', result.message ?? 'Skipped.');
@@ -477,20 +470,32 @@ class DownloadScheduler {
     }
 
     if (failed > 0) {
-      await _queueRepository.markJobFailed(
+      await _queueRepository.markJobFailed(jobId, '$failed task(s) failed.');
+      await _log(
         jobId,
-        '$failed task(s) failed.',
+        'download',
+        'error',
+        'Job failed for ${item.permalink}.',
       );
-      await _log(jobId, 'download', 'error', 'Job failed for ${item.permalink}.');
     } else if (completed == 0) {
       await _queueRepository.markJobSkipped(
         jobId,
         skipped > 0 ? 'All tasks skipped.' : 'No outputs produced.',
       );
-      await _log(jobId, 'download', 'info', 'Job skipped for ${item.permalink}.');
+      await _log(
+        jobId,
+        'download',
+        'info',
+        'Job skipped for ${item.permalink}.',
+      );
     } else {
       await _queueRepository.markJobCompleted(jobId, outputPath);
-      await _log(jobId, 'download', 'info', 'Job completed for ${item.permalink}.');
+      await _log(
+        jobId,
+        'download',
+        'info',
+        'Job completed for ${item.permalink}.',
+      );
     }
     _running.remove(jobId);
     _schedule();
@@ -547,10 +552,7 @@ class DownloadScheduler {
           rethrow;
         }
         if (attempt >= maxRetries) {
-          return ExportResult.failed(
-            'Network error after retries.',
-            '',
-          );
+          return ExportResult.failed('Network error after retries.', '');
         }
         await _backoffDelay(attempt);
         attempt += 1;
@@ -618,9 +620,4 @@ extension on Iterable<QueueRecord> {
   QueueRecord? get firstOrNull => isEmpty ? null : first;
 }
 
-const _activeStatuses = {
-  'running',
-  'merging',
-  'running_tool',
-  'exporting',
-};
+const _activeStatuses = {'running', 'merging', 'running_tool', 'exporting'};

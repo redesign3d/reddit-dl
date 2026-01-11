@@ -10,7 +10,9 @@ void main() {
     final db = AppDatabase.inMemory();
     addTearDown(() async => db.close());
 
-    final savedId = await db.into(db.savedItems).insert(
+    final savedId = await db
+        .into(db.savedItems)
+        .insert(
           SavedItemsCompanion.insert(
             permalink: 'https://www.reddit.com/r/test/comments/abc/title',
             kind: 'post',
@@ -51,9 +53,9 @@ void main() {
     expect(result.updated, isTrue);
     expect(result.mediaInserted, 1);
 
-    final item = await (db.select(db.savedItems)
-          ..where((tbl) => tbl.id.equals(savedId)))
-        .getSingle();
+    final item =
+        await (db.select(db.savedItems)
+          ..where((tbl) => tbl.id.equals(savedId))).getSingle();
     expect(item.title, 'New title');
     expect(item.source, 'zip');
     expect(item.over18, isTrue);

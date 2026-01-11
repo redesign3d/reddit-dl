@@ -32,12 +32,7 @@ class AppTokens {
     s24: 24,
   );
 
-  static const AppRadii radii = AppRadii(
-    sm: 6,
-    md: 8,
-    lg: 10,
-    xl: 14,
-  );
+  static const AppRadii radii = AppRadii(sm: 6, md: 8, lg: 10, xl: 14);
 
   static const AppLayout layout = AppLayout(
     navWidth: 248,
@@ -100,7 +95,6 @@ class AppTokens {
     sidebarAccentForeground: Color(0xFF171717),
     sidebarBorder: Color(0xFFE5E5E5),
     sidebarRing: Color(0xFFA1A1A1),
-
   );
 
   static const AppColorScheme dark = AppColorScheme(
@@ -133,7 +127,6 @@ class AppTokens {
     sidebarAccentForeground: Color(0xFFFAFAFA),
     sidebarBorder: Color(0xFF262626),
     sidebarRing: Color(0xFF525252),
-
   );
 }
 
@@ -254,10 +247,7 @@ class AppTextScale {
 }
 
 class AppFontWeights {
-  const AppFontWeights({
-    required this.normal,
-    required this.medium,
-  });
+  const AppFontWeights({required this.normal, required this.medium});
 
   final FontWeight normal;
   final FontWeight medium;
@@ -288,12 +278,8 @@ class AppMotion {
 }
 
 class AppShadows {
-  const AppShadows({
-    required this.sm,
-    required this.md,
-  });
+  const AppShadows({required this.sm, required this.md});
 
   final List<BoxShadow> sm;
   final List<BoxShadow> md;
 }
-

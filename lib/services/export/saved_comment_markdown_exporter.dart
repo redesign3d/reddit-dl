@@ -31,7 +31,10 @@ class SavedCommentMarkdownExporter {
       if (policy == OverwritePolicy.skipIfExists) {
         return ExportResult.skipped('File exists.', targetFile.path);
       }
-      return ExportResult.skipped('Unable to determine newer export.', targetFile.path);
+      return ExportResult.skipped(
+        'Unable to determine newer export.',
+        targetFile.path,
+      );
     }
 
     if (!await targetFile.parent.exists()) {
@@ -44,13 +47,17 @@ class SavedCommentMarkdownExporter {
   }
 
   String _buildMarkdown(SavedItem item) {
-    final created = item.createdUtc > 0
-        ? DateTime.fromMillisecondsSinceEpoch(item.createdUtc * 1000, isUtc: true)
-            .toLocal()
-        : null;
-    final createdText = created == null
-        ? 'Unknown'
-        : '${created.year}-${created.month.toString().padLeft(2, '0')}-${created.day.toString().padLeft(2, '0')}';
+    final created =
+        item.createdUtc > 0
+            ? DateTime.fromMillisecondsSinceEpoch(
+              item.createdUtc * 1000,
+              isUtc: true,
+            ).toLocal()
+            : null;
+    final createdText =
+        created == null
+            ? 'Unknown'
+            : '${created.year}-${created.month.toString().padLeft(2, '0')}-${created.day.toString().padLeft(2, '0')}';
     final buffer = StringBuffer();
     buffer.writeln('# Comment by u/${item.author}');
     buffer.writeln();

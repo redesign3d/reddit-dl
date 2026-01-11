@@ -7,17 +7,11 @@ import 'migrations.dart';
 part 'app_database.g.dart';
 
 @DriftDatabase(
-  tables: [
-    SavedItems,
-    MediaAssets,
-    DownloadJobs,
-    LogEntries,
-    Settings,
-  ],
+  tables: [SavedItems, MediaAssets, DownloadJobs, LogEntries, Settings],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase({QueryExecutor? executor})
-      : super(executor ?? driftDatabase(name: 'reddit_dl'));
+    : super(executor ?? driftDatabase(name: 'reddit_dl'));
 
   AppDatabase.inMemory() : super(NativeDatabase.memory());
 

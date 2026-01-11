@@ -27,12 +27,12 @@ void main() {
     final tempDir = await Directory.systemTemp.createTemp('downloads');
     addTearDown(() async => tempDir.delete(recursive: true));
     await settingsRepository.save(
-      AppSettings.defaults().copyWith(
-        downloadRoot: tempDir.path,
-      ),
+      AppSettings.defaults().copyWith(downloadRoot: tempDir.path),
     );
 
-    final itemId = await db.into(db.savedItems).insert(
+    final itemId = await db
+        .into(db.savedItems)
+        .insert(
           SavedItemsCompanion.insert(
             permalink: 'https://www.reddit.com/r/test/comments/abc/title',
             kind: 'post',
@@ -45,7 +45,9 @@ void main() {
             resolutionStatus: 'ok',
           ),
         );
-    await db.into(db.mediaAssets).insert(
+    await db
+        .into(db.mediaAssets)
+        .insert(
           MediaAssetsCompanion.insert(
             savedItemId: itemId,
             type: 'image',
@@ -57,8 +59,7 @@ void main() {
 
     final jobResult = await queueRepository.enqueueForItem(
       (await (db.select(db.savedItems)
-            ..where((tbl) => tbl.id.equals(itemId)))
-          .getSingle()),
+        ..where((tbl) => tbl.id.equals(itemId))).getSingle()),
       policySnapshot: 'skip_if_exists',
     );
 
@@ -74,11 +75,7 @@ void main() {
     scheduler.start();
     addTearDown(() async => scheduler.dispose());
 
-    final job = await _waitForStatus(
-      db,
-      jobResult.job.id,
-      'completed',
-    );
+    final job = await _waitForStatus(db, jobResult.job.id, 'completed');
     expect(job.outputPath, isNotEmpty);
     final files = tempDir.listSync(recursive: true).whereType<File>().toList();
     expect(files, isNotEmpty);
@@ -95,7 +92,9 @@ void main() {
 
     await settingsRepository.save(AppSettings.defaults());
 
-    final itemId = await db.into(db.savedItems).insert(
+    final itemId = await db
+        .into(db.savedItems)
+        .insert(
           SavedItemsCompanion.insert(
             permalink: 'https://www.reddit.com/r/test/comments/abc/title',
             kind: 'post',
@@ -109,7 +108,9 @@ void main() {
             over18: const Value(true),
           ),
         );
-    await db.into(db.mediaAssets).insert(
+    await db
+        .into(db.mediaAssets)
+        .insert(
           MediaAssetsCompanion.insert(
             savedItemId: itemId,
             type: 'image',
@@ -121,8 +122,7 @@ void main() {
 
     final jobResult = await queueRepository.enqueueForItem(
       (await (db.select(db.savedItems)
-            ..where((tbl) => tbl.id.equals(itemId)))
-          .getSingle()),
+        ..where((tbl) => tbl.id.equals(itemId))).getSingle()),
       policySnapshot: 'skip_if_exists',
     );
 
@@ -157,7 +157,9 @@ void main() {
       AppSettings.defaults().copyWith(downloadRoot: tempDir.path),
     );
 
-    final itemId = await db.into(db.savedItems).insert(
+    final itemId = await db
+        .into(db.savedItems)
+        .insert(
           SavedItemsCompanion.insert(
             permalink: 'https://www.reddit.com/r/test/comments/abc/title',
             kind: 'post',
@@ -170,7 +172,9 @@ void main() {
             resolutionStatus: 'ok',
           ),
         );
-    await db.into(db.mediaAssets).insert(
+    await db
+        .into(db.mediaAssets)
+        .insert(
           MediaAssetsCompanion.insert(
             savedItemId: itemId,
             type: 'image',
@@ -182,8 +186,7 @@ void main() {
 
     final jobResult = await queueRepository.enqueueForItem(
       (await (db.select(db.savedItems)
-            ..where((tbl) => tbl.id.equals(itemId)))
-          .getSingle()),
+        ..where((tbl) => tbl.id.equals(itemId))).getSingle()),
       policySnapshot: 'skip_if_exists',
     );
 
@@ -217,9 +220,9 @@ Future<DownloadJob> _waitForStatus(
 }) async {
   final start = DateTime.now();
   while (true) {
-    final job = await (db.select(db.downloadJobs)
-          ..where((tbl) => tbl.id.equals(jobId)))
-        .getSingle();
+    final job =
+        await (db.select(db.downloadJobs)
+          ..where((tbl) => tbl.id.equals(jobId))).getSingle();
     if (job.status == status) {
       return job;
     }
@@ -232,7 +235,7 @@ Future<DownloadJob> _waitForStatus(
 
 class FakeDownloader extends HttpMediaDownloader {
   FakeDownloader({required this.shouldComplete})
-      : super(Dio(), OverwritePolicyEvaluator(Dio()));
+    : super(Dio(), OverwritePolicyEvaluator(Dio()));
 
   bool shouldComplete;
 

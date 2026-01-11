@@ -18,7 +18,10 @@ class WebViewCookieBridge {
     final wwwCookies = await inapp.CookieManager.instance().getCookies(
       url: inapp.WebUri('https://www.reddit.com/'),
     );
-    await _storeWebViewCookies(Uri.parse('https://www.reddit.com/'), wwwCookies);
+    await _storeWebViewCookies(
+      Uri.parse('https://www.reddit.com/'),
+      wwwCookies,
+    );
   }
 
   Future<void> syncCookiesToWebView() async {
@@ -30,10 +33,7 @@ class WebViewCookieBridge {
     await inapp.CookieManager.instance().deleteAllCookies();
   }
 
-  Future<void> _storeWebViewCookies(
-    Uri url,
-    List<inapp.Cookie> cookies,
-  ) async {
+  Future<void> _storeWebViewCookies(Uri url, List<inapp.Cookie> cookies) async {
     if (cookies.isEmpty) {
       return;
     }
@@ -50,8 +50,9 @@ class WebViewCookieBridge {
       ioCookie.path = cookie.path;
     }
     if (cookie.expiresDate != null) {
-      ioCookie.expires =
-          DateTime.fromMillisecondsSinceEpoch(cookie.expiresDate!);
+      ioCookie.expires = DateTime.fromMillisecondsSinceEpoch(
+        cookie.expiresDate!,
+      );
     }
     if (cookie.isHttpOnly != null) {
       ioCookie.httpOnly = cookie.isHttpOnly!;

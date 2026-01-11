@@ -9,7 +9,7 @@ import '../logs/log_record.dart';
 
 class ImportCubit extends Cubit<ImportState> {
   ImportCubit(this._repository, this._logs)
-      : super(const ImportState(status: ImportStatus.idle));
+    : super(const ImportState(status: ImportStatus.idle));
 
   final ImportRepository _repository;
   final LogsRepository _logs;
@@ -27,11 +27,13 @@ class ImportCubit extends Cubit<ImportState> {
 
     try {
       final result = await _repository.importZipBytes(bytes);
-      emit(state.copyWith(
-        status: ImportStatus.success,
-        result: result,
-        filename: filename,
-      ));
+      emit(
+        state.copyWith(
+          status: ImportStatus.success,
+          result: result,
+          filename: filename,
+        ),
+      );
       await _logs.add(
         LogRecord(
           timestamp: DateTime.now(),
@@ -42,11 +44,13 @@ class ImportCubit extends Cubit<ImportState> {
         ),
       );
     } catch (error) {
-      emit(state.copyWith(
-        status: ImportStatus.error,
-        errorMessage: error.toString(),
-        filename: filename,
-      ));
+      emit(
+        state.copyWith(
+          status: ImportStatus.error,
+          errorMessage: error.toString(),
+          filename: filename,
+        ),
+      );
       await _logs.add(
         LogRecord(
           timestamp: DateTime.now(),
@@ -113,5 +117,11 @@ class ImportState extends Equatable {
   }
 
   @override
-  List<Object?> get props => [status, result, filename, errorMessage, isDragging];
+  List<Object?> get props => [
+    status,
+    result,
+    filename,
+    errorMessage,
+    isDragging,
+  ];
 }

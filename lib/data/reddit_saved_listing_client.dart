@@ -11,18 +11,19 @@ class RedditSavedListingClient {
     required CookieJar cookieJar,
     RedditSavedListingParser? parser,
     Dio? dio,
-  })  : _parser = parser ?? RedditSavedListingParser(),
-        _dio = dio ??
-            Dio(
-              BaseOptions(
-                headers: {
-                  HttpHeaders.userAgentHeader:
-                      'reddit-dl/0.1 (+https://github.com/redesign3d/reddit-dl)',
-                  HttpHeaders.acceptHeader: 'text/html',
-                },
-                validateStatus: (status) => status != null && status < 500,
-              ),
-            ) {
+  }) : _parser = parser ?? RedditSavedListingParser(),
+       _dio =
+           dio ??
+           Dio(
+             BaseOptions(
+               headers: {
+                 HttpHeaders.userAgentHeader:
+                     'reddit-dl/0.1 (+https://github.com/redesign3d/reddit-dl)',
+                 HttpHeaders.acceptHeader: 'text/html',
+               },
+               validateStatus: (status) => status != null && status < 500,
+             ),
+           ) {
     _dio.interceptors.add(CookieManager(cookieJar));
   }
 
@@ -56,10 +57,7 @@ class RedditSavedListingClient {
     CancelToken? cancelToken,
   }) async {
     final target = url ?? 'https://old.reddit.com/user/$username/saved/';
-    final response = await _dio.get<String>(
-      target,
-      cancelToken: cancelToken,
-    );
+    final response = await _dio.get<String>(target, cancelToken: cancelToken);
     final status = response.statusCode ?? 0;
     if (status == 429) {
       final retryAfter = _retryAfter(response.headers);

@@ -1,13 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum AppSection {
-  library,
-  queue,
-  logs,
-  import,
-  sync,
-  settings,
-}
+enum AppSection { library, queue, logs, import, sync, settings }
 
 extension AppSectionMeta on AppSection {
   String get label {

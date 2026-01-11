@@ -26,31 +26,29 @@ class LibraryPage extends StatelessWidget {
       builder: (context, state) {
         final colors = context.appColors;
         final canFilter = state.hasIndexed && state.subreddits.isNotEmpty;
-        final includeValue = state.includeSubreddit != null &&
-                state.subreddits.contains(state.includeSubreddit)
-            ? state.includeSubreddit!
-            : '_all';
-        final excludeValue = state.excludeSubreddit != null &&
-                state.subreddits.contains(state.excludeSubreddit)
-            ? state.excludeSubreddit!
-            : '_none';
+        final includeValue =
+            state.includeSubreddit != null &&
+                    state.subreddits.contains(state.includeSubreddit)
+                ? state.includeSubreddit!
+                : '_all';
+        final excludeValue =
+            state.excludeSubreddit != null &&
+                    state.subreddits.contains(state.excludeSubreddit)
+                ? state.excludeSubreddit!
+                : '_none';
 
         final subredditOptions = [
           const AppSelectOption(label: 'All', value: '_all'),
           ...state.subreddits.map(
-            (subreddit) => AppSelectOption(
-              label: 'r/$subreddit',
-              value: subreddit,
-            ),
+            (subreddit) =>
+                AppSelectOption(label: 'r/$subreddit', value: subreddit),
           ),
         ];
         final excludeOptions = [
           const AppSelectOption(label: 'None', value: '_none'),
           ...state.subreddits.map(
-            (subreddit) => AppSelectOption(
-              label: 'r/$subreddit',
-              value: subreddit,
-            ),
+            (subreddit) =>
+                AppSelectOption(label: 'r/$subreddit', value: subreddit),
           ),
         ];
 
@@ -70,14 +68,16 @@ class LibraryPage extends StatelessWidget {
                 AppButton(
                   label: 'Copy selection',
                   variant: AppButtonVariant.secondary,
-                  onPressed: state.items.isEmpty
-                      ? null
-                      : () {
-                          final text =
-                              state.items.map((item) => item.permalink).join('\n');
-                          Clipboard.setData(ClipboardData(text: text));
-                          AppToast.show(context, 'Selection copied.');
-                        },
+                  onPressed:
+                      state.items.isEmpty
+                          ? null
+                          : () {
+                            final text = state.items
+                                .map((item) => item.permalink)
+                                .join('\n');
+                            Clipboard.setData(ClipboardData(text: text));
+                            AppToast.show(context, 'Selection copied.');
+                          },
                 ),
               ],
             ),
@@ -89,14 +89,14 @@ class LibraryPage extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Saved items',
-                            style: Theme.of(context).textTheme.titleLarge),
+                        Text(
+                          'Saved items',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
                         SizedBox(height: AppTokens.space.s8),
                         Text(
                           '${state.items.length} visible • ${state.items.where((item) => item.over18).length} NSFW',
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
+                          style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: colors.mutedForeground),
                         ),
                       ],
@@ -109,15 +109,15 @@ class LibraryPage extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Sources',
-                            style: Theme.of(context).textTheme.titleLarge),
+                        Text(
+                          'Sources',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
                         SizedBox(height: AppTokens.space.s8),
                         Text(
                           '${state.items.where((item) => item.source == 'zip').length} ZIP • '
                           '${state.items.where((item) => item.source == 'sync').length} Sync',
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
+                          style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: colors.mutedForeground),
                         ),
                       ],
@@ -131,17 +131,18 @@ class LibraryPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Filters',
-                      style: Theme.of(context).textTheme.titleLarge),
+                  Text(
+                    'Filters',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
                   SizedBox(height: AppTokens.space.s6),
                   Text(
                     canFilter
                         ? 'Subreddit filters are populated from indexed items.'
                         : 'Import ZIP or Sync to populate subreddit filters.',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(color: colors.mutedForeground),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: colors.mutedForeground,
+                    ),
                   ),
                   SizedBox(height: AppTokens.space.s12),
                   Row(
@@ -168,7 +169,9 @@ class LibraryPage extends StatelessWidget {
                             if (value == null) {
                               return;
                             }
-                            context.read<LibraryCubit>().updateKindFilter(value);
+                            context.read<LibraryCubit>().updateKindFilter(
+                              value,
+                            );
                           },
                         ),
                       ),
@@ -176,10 +179,13 @@ class LibraryPage extends StatelessWidget {
                       Expanded(
                         child: AppSwitch(
                           label: 'Show NSFW',
-                          description: 'Toggle visibility only (downloads are separate).',
+                          description:
+                              'Toggle visibility only (downloads are separate).',
                           value: state.showNsfw,
-                          onChanged: (value) =>
-                              context.read<LibraryCubit>().toggleShowNsfw(value),
+                          onChanged:
+                              (value) => context
+                                  .read<LibraryCubit>()
+                                  .toggleShowNsfw(value),
                         ),
                       ),
                     ],
@@ -211,7 +217,8 @@ class LibraryPage extends StatelessWidget {
                               value: excludeValue,
                               options: excludeOptions,
                               onChanged: (value) {
-                                final selected = value == '_none' ? null : value;
+                                final selected =
+                                    value == '_none' ? null : value;
                                 context
                                     .read<LibraryCubit>()
                                     .updateExcludeSubreddit(selected);
@@ -231,29 +238,33 @@ class LibraryPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('No items indexed yet',
-                        style: Theme.of(context).textTheme.titleLarge),
+                    Text(
+                      'No items indexed yet',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
                     SizedBox(height: AppTokens.space.s6),
                     Text(
                       'Run a ZIP import or sync to populate your library.',
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodySmall
-                          ?.copyWith(color: colors.mutedForeground),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colors.mutedForeground,
+                      ),
                     ),
                   ],
                 ),
               )
             else
               Column(
-                children: state.items
-                    .map(
-                      (item) => Padding(
-                        padding: EdgeInsets.only(bottom: AppTokens.space.s12),
-                        child: _LibraryItemCard(item: item),
-                      ),
-                    )
-                    .toList(),
+                children:
+                    state.items
+                        .map(
+                          (item) => Padding(
+                            padding: EdgeInsets.only(
+                              bottom: AppTokens.space.s12,
+                            ),
+                            child: _LibraryItemCard(item: item),
+                          ),
+                        )
+                        .toList(),
               ),
           ],
         );
@@ -285,7 +296,10 @@ class _LibraryItemCard extends StatelessWidget {
           ),
           items: const [
             PopupMenuItem(value: 'copy', child: Text('Copy permalink')),
-            PopupMenuItem(value: 'reveal', child: Text('Reveal in Finder/Explorer')),
+            PopupMenuItem(
+              value: 'reveal',
+              child: Text('Reveal in Finder/Explorer'),
+            ),
           ],
         );
         if (selection == 'copy') {
@@ -295,8 +309,7 @@ class _LibraryItemCard extends StatelessWidget {
           }
         }
         if (selection == 'reveal') {
-          final success =
-              await revealInFileManager(Directory.systemTemp.path);
+          final success = await revealInFileManager(Directory.systemTemp.path);
           if (context.mounted) {
             AppToast.show(
               context,
@@ -325,10 +338,9 @@ class _LibraryItemCard extends StatelessWidget {
                       SizedBox(height: AppTokens.space.s6),
                       Text(
                         'r/${item.subreddit} • u/${item.author}',
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodySmall
-                            ?.copyWith(color: colors.mutedForeground),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: colors.mutedForeground,
+                        ),
                       ),
                     ],
                   ),
@@ -367,28 +379,22 @@ class _LibraryItemCard extends StatelessWidget {
                   onSelected: (_) {},
                 ),
                 if (item.over18)
-                  AppChip(
-                    label: 'NSFW',
-                    selected: true,
-                    onSelected: (_) {},
-                  ),
+                  AppChip(label: 'NSFW', selected: true, onSelected: (_) {}),
               ],
             ),
             SizedBox(height: AppTokens.space.s12),
             Text(
               'Created: $createdDate • Imported: ${_formatOptionalDate(importedDate)}',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: colors.mutedForeground),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: colors.mutedForeground),
             ),
             SizedBox(height: AppTokens.space.s6),
             Text(
               item.permalink,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: colors.mutedForeground),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: colors.mutedForeground),
             ),
           ],
         ),
@@ -401,8 +407,11 @@ String _formatDate(int createdUtc) {
   if (createdUtc <= 0) {
     return 'Unknown';
   }
-  final date = DateTime.fromMillisecondsSinceEpoch(createdUtc * 1000, isUtc: true)
-      .toLocal();
+  final date =
+      DateTime.fromMillisecondsSinceEpoch(
+        createdUtc * 1000,
+        isUtc: true,
+      ).toLocal();
   return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 }
 

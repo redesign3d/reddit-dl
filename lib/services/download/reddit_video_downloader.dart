@@ -20,11 +20,11 @@ class RedditVideoDownloader {
     required HttpMediaDownloader httpDownloader,
     required FfmpegRuntimeManager ffmpegRuntime,
     required FfmpegExecutor ffmpegExecutor,
-  })  : _dio = dio,
-        _policyEvaluator = policyEvaluator,
-        _httpDownloader = httpDownloader,
-        _ffmpegRuntime = ffmpegRuntime,
-        _ffmpegExecutor = ffmpegExecutor;
+  }) : _dio = dio,
+       _policyEvaluator = policyEvaluator,
+       _httpDownloader = httpDownloader,
+       _ffmpegRuntime = ffmpegRuntime,
+       _ffmpegExecutor = ffmpegExecutor;
 
   final Dio _dio;
   final OverwritePolicyEvaluator _policyEvaluator;
@@ -253,11 +253,9 @@ class RedditVideoDownloader {
 
     final status = response.statusCode ?? 0;
     if (status == 429) {
-      final retryAfter =
-          response.headers.value(HttpHeaders.retryAfterHeader);
+      final retryAfter = response.headers.value(HttpHeaders.retryAfterHeader);
       throw DownloadRateLimitException(
-        retryAfterSeconds:
-            retryAfter == null ? null : int.tryParse(retryAfter),
+        retryAfterSeconds: retryAfter == null ? null : int.tryParse(retryAfter),
       );
     }
     if (status >= 500) {
@@ -420,10 +418,7 @@ class RedditVideoDownloader {
     ];
   }
 
-  Future<bool> _probeUrl(
-    Uri url, {
-    CancelToken? cancelToken,
-  }) async {
+  Future<bool> _probeUrl(Uri url, {CancelToken? cancelToken}) async {
     final response = await _dio.head<String>(
       url.toString(),
       options: Options(
@@ -433,11 +428,9 @@ class RedditVideoDownloader {
     );
     final status = response.statusCode ?? 0;
     if (status == 429) {
-      final retryAfter =
-          response.headers.value(HttpHeaders.retryAfterHeader);
+      final retryAfter = response.headers.value(HttpHeaders.retryAfterHeader);
       throw DownloadRateLimitException(
-        retryAfterSeconds:
-            retryAfter == null ? null : int.tryParse(retryAfter),
+        retryAfterSeconds: retryAfter == null ? null : int.tryParse(retryAfter),
       );
     }
     if (status >= 400) {
@@ -450,14 +443,7 @@ class RedditVideoDownloader {
     required String dashUrl,
     required String outputPath,
   }) {
-    return [
-      '-y',
-      '-i',
-      dashUrl,
-      '-c',
-      'copy',
-      outputPath,
-    ];
+    return ['-y', '-i', dashUrl, '-c', 'copy', outputPath];
   }
 
   List<String> buildMergeArgs({
@@ -465,16 +451,7 @@ class RedditVideoDownloader {
     required String audioPath,
     required String outputPath,
   }) {
-    return [
-      '-y',
-      '-i',
-      videoPath,
-      '-i',
-      audioPath,
-      '-c',
-      'copy',
-      outputPath,
-    ];
+    return ['-y', '-i', videoPath, '-i', audioPath, '-c', 'copy', outputPath];
   }
 }
 

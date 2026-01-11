@@ -47,31 +47,31 @@ class ExternalToolRunner {
         .transform(utf8.decoder)
         .transform(const LineSplitter())
         .listen((line) {
-      stdoutLines.add(line);
-      _logsRepository.add(
-        LogRecord(
-          timestamp: DateTime.now(),
-          scope: 'tools',
-          level: 'info',
-          message: line,
-        ),
-      );
-    });
+          stdoutLines.add(line);
+          _logsRepository.add(
+            LogRecord(
+              timestamp: DateTime.now(),
+              scope: 'tools',
+              level: 'info',
+              message: line,
+            ),
+          );
+        });
 
     final stderrSubscription = process.stderr
         .transform(utf8.decoder)
         .transform(const LineSplitter())
         .listen((line) {
-      stderrLines.add(line);
-      _logsRepository.add(
-        LogRecord(
-          timestamp: DateTime.now(),
-          scope: 'tools',
-          level: 'error',
-          message: line,
-        ),
-      );
-    });
+          stderrLines.add(line);
+          _logsRepository.add(
+            LogRecord(
+              timestamp: DateTime.now(),
+              scope: 'tools',
+              level: 'error',
+              message: line,
+            ),
+          );
+        });
 
     final exitCode = await process.exitCode;
     if (cancelToken?.isCancelled ?? false) {

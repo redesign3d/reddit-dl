@@ -6,8 +6,7 @@ import '../../features/logs/log_record.dart';
 import '../../services/ffmpeg_runtime_manager.dart';
 
 class FfmpegCubit extends Cubit<FfmpegState> {
-  FfmpegCubit(this._manager, this._logs)
-      : super(const FfmpegState.initial()) {
+  FfmpegCubit(this._manager, this._logs) : super(const FfmpegState.initial()) {
     refresh();
   }
 
@@ -16,12 +15,14 @@ class FfmpegCubit extends Cubit<FfmpegState> {
 
   Future<void> refresh() async {
     final status = await _manager.status();
-    emit(state.copyWith(
-      isInstalled: status.isInstalled,
-      ffmpegPath: status.ffmpegPath,
-      ffprobePath: status.ffprobePath,
-      errorMessage: null,
-    ));
+    emit(
+      state.copyWith(
+        isInstalled: status.isInstalled,
+        ffmpegPath: status.ffmpegPath,
+        ffprobePath: status.ffprobePath,
+        errorMessage: null,
+      ),
+    );
   }
 
   Future<void> install() async {
@@ -40,13 +41,15 @@ class FfmpegCubit extends Cubit<FfmpegState> {
           emit(state.copyWith(progress: progress));
         },
       );
-      emit(state.copyWith(
-        isInstalling: false,
-        isInstalled: info.isInstalled,
-        ffmpegPath: info.ffmpegPath,
-        ffprobePath: info.ffprobePath,
-        progress: 1,
-      ));
+      emit(
+        state.copyWith(
+          isInstalling: false,
+          isInstalled: info.isInstalled,
+          ffmpegPath: info.ffmpegPath,
+          ffprobePath: info.ffprobePath,
+          progress: 1,
+        ),
+      );
       await _logs.add(
         LogRecord(
           timestamp: DateTime.now(),
@@ -56,10 +59,7 @@ class FfmpegCubit extends Cubit<FfmpegState> {
         ),
       );
     } catch (error) {
-      emit(state.copyWith(
-        isInstalling: false,
-        errorMessage: error.toString(),
-      ));
+      emit(state.copyWith(isInstalling: false, errorMessage: error.toString()));
       await _logs.add(
         LogRecord(
           timestamp: DateTime.now(),
@@ -83,12 +83,12 @@ class FfmpegState extends Equatable {
   });
 
   const FfmpegState.initial()
-      : isInstalled = false,
-        isInstalling = false,
-        progress = 0,
-        ffmpegPath = null,
-        ffprobePath = null,
-        errorMessage = null;
+    : isInstalled = false,
+      isInstalling = false,
+      progress = 0,
+      ffmpegPath = null,
+      ffprobePath = null,
+      errorMessage = null;
 
   final bool isInstalled;
   final bool isInstalling;
@@ -117,11 +117,11 @@ class FfmpegState extends Equatable {
 
   @override
   List<Object?> get props => [
-        isInstalled,
-        isInstalling,
-        progress,
-        ffmpegPath,
-        ffprobePath,
-        errorMessage,
-      ];
+    isInstalled,
+    isInstalling,
+    progress,
+    ffmpegPath,
+    ffprobePath,
+    errorMessage,
+  ];
 }

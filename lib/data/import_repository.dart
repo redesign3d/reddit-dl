@@ -11,10 +11,7 @@ class ImportRepository {
 
   Future<ImportResult> importZipBytes(Uint8List bytes) async {
     final archive = _parser.parseBytes(bytes);
-    final allItems = <ImportItem>[
-      ...archive.posts,
-      ...archive.comments,
-    ];
+    final allItems = <ImportItem>[...archive.posts, ...archive.comments];
 
     if (allItems.isEmpty) {
       return ImportResult.empty();
@@ -35,9 +32,9 @@ class ImportRepository {
     }
 
     final permalinks = uniqueMap.keys.toList();
-    final existingRows = await (_db.select(_db.savedItems)
-          ..where((tbl) => tbl.permalink.isIn(permalinks)))
-        .get();
+    final existingRows =
+        await (_db.select(_db.savedItems)
+          ..where((tbl) => tbl.permalink.isIn(permalinks))).get();
     final existingSet = existingRows.map((row) => row.permalink).toSet();
 
     var inserted = 0;
@@ -53,9 +50,10 @@ class ImportRepository {
         inserted++;
       }
 
-      final subreddit = entry.subreddit.isNotEmpty
-          ? entry.subreddit
-          : _deriveSubreddit(entry.permalink);
+      final subreddit =
+          entry.subreddit.isNotEmpty
+              ? entry.subreddit
+              : _deriveSubreddit(entry.permalink);
 
       inserts.add(
         SavedItemsCompanion(
@@ -111,17 +109,20 @@ class ImportResult {
   final int failures;
 
   factory ImportResult.empty() => const ImportResult(
-        posts: 0,
-        comments: 0,
-        inserted: 0,
-        updated: 0,
-        skipped: 0,
-        failures: 0,
-      );
+    posts: 0,
+    comments: 0,
+    inserted: 0,
+    updated: 0,
+    skipped: 0,
+    failures: 0,
+  );
 }
 
 String _deriveSubreddit(String permalink) {
-  final match = RegExp(r'/r/([^/]+)/', caseSensitive: false).firstMatch(permalink);
+  final match = RegExp(
+    r'/r/([^/]+)/',
+    caseSensitive: false,
+  ).firstMatch(permalink);
   if (match == null) {
     return '';
   }

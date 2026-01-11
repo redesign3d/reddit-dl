@@ -325,46 +325,55 @@ class $SavedItemsTable extends SavedItems
   SavedItem map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return SavedItem(
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}id'],
-      )!,
-      permalink: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}permalink'],
-      )!,
-      kind: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}kind'],
-      )!,
-      subreddit: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}subreddit'],
-      )!,
-      author: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}author'],
-      )!,
-      createdUtc: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}created_utc'],
-      )!,
-      title: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}title'],
-      )!,
+      id:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}id'],
+          )!,
+      permalink:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}permalink'],
+          )!,
+      kind:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}kind'],
+          )!,
+      subreddit:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}subreddit'],
+          )!,
+      author:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}author'],
+          )!,
+      createdUtc:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}created_utc'],
+          )!,
+      title:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}title'],
+          )!,
       bodyMarkdown: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}body_markdown'],
       ),
-      over18: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}over18'],
-      )!,
-      source: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}source'],
-      )!,
+      over18:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.bool,
+            data['${effectivePrefix}over18'],
+          )!,
+      source:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}source'],
+          )!,
       importedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}imported_at'],
@@ -377,10 +386,11 @@ class $SavedItemsTable extends SavedItems
         DriftSqlType.dateTime,
         data['${effectivePrefix}last_resolved_at'],
       ),
-      resolutionStatus: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}resolution_status'],
-      )!,
+      resolutionStatus:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}resolution_status'],
+          )!,
       rawJsonCache: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}raw_json_cache'],
@@ -467,24 +477,29 @@ class SavedItem extends DataClass implements Insertable<SavedItem> {
       author: Value(author),
       createdUtc: Value(createdUtc),
       title: Value(title),
-      bodyMarkdown: bodyMarkdown == null && nullToAbsent
-          ? const Value.absent()
-          : Value(bodyMarkdown),
+      bodyMarkdown:
+          bodyMarkdown == null && nullToAbsent
+              ? const Value.absent()
+              : Value(bodyMarkdown),
       over18: Value(over18),
       source: Value(source),
-      importedAt: importedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(importedAt),
-      syncedAt: syncedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(syncedAt),
-      lastResolvedAt: lastResolvedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(lastResolvedAt),
+      importedAt:
+          importedAt == null && nullToAbsent
+              ? const Value.absent()
+              : Value(importedAt),
+      syncedAt:
+          syncedAt == null && nullToAbsent
+              ? const Value.absent()
+              : Value(syncedAt),
+      lastResolvedAt:
+          lastResolvedAt == null && nullToAbsent
+              ? const Value.absent()
+              : Value(lastResolvedAt),
       resolutionStatus: Value(resolutionStatus),
-      rawJsonCache: rawJsonCache == null && nullToAbsent
-          ? const Value.absent()
-          : Value(rawJsonCache),
+      rawJsonCache:
+          rawJsonCache == null && nullToAbsent
+              ? const Value.absent()
+              : Value(rawJsonCache),
     );
   }
 
@@ -562,9 +577,8 @@ class SavedItem extends DataClass implements Insertable<SavedItem> {
     source: source ?? this.source,
     importedAt: importedAt.present ? importedAt.value : this.importedAt,
     syncedAt: syncedAt.present ? syncedAt.value : this.syncedAt,
-    lastResolvedAt: lastResolvedAt.present
-        ? lastResolvedAt.value
-        : this.lastResolvedAt,
+    lastResolvedAt:
+        lastResolvedAt.present ? lastResolvedAt.value : this.lastResolvedAt,
     resolutionStatus: resolutionStatus ?? this.resolutionStatus,
     rawJsonCache: rawJsonCache.present ? rawJsonCache.value : this.rawJsonCache,
   );
@@ -575,28 +589,30 @@ class SavedItem extends DataClass implements Insertable<SavedItem> {
       kind: data.kind.present ? data.kind.value : this.kind,
       subreddit: data.subreddit.present ? data.subreddit.value : this.subreddit,
       author: data.author.present ? data.author.value : this.author,
-      createdUtc: data.createdUtc.present
-          ? data.createdUtc.value
-          : this.createdUtc,
+      createdUtc:
+          data.createdUtc.present ? data.createdUtc.value : this.createdUtc,
       title: data.title.present ? data.title.value : this.title,
-      bodyMarkdown: data.bodyMarkdown.present
-          ? data.bodyMarkdown.value
-          : this.bodyMarkdown,
+      bodyMarkdown:
+          data.bodyMarkdown.present
+              ? data.bodyMarkdown.value
+              : this.bodyMarkdown,
       over18: data.over18.present ? data.over18.value : this.over18,
       source: data.source.present ? data.source.value : this.source,
-      importedAt: data.importedAt.present
-          ? data.importedAt.value
-          : this.importedAt,
+      importedAt:
+          data.importedAt.present ? data.importedAt.value : this.importedAt,
       syncedAt: data.syncedAt.present ? data.syncedAt.value : this.syncedAt,
-      lastResolvedAt: data.lastResolvedAt.present
-          ? data.lastResolvedAt.value
-          : this.lastResolvedAt,
-      resolutionStatus: data.resolutionStatus.present
-          ? data.resolutionStatus.value
-          : this.resolutionStatus,
-      rawJsonCache: data.rawJsonCache.present
-          ? data.rawJsonCache.value
-          : this.rawJsonCache,
+      lastResolvedAt:
+          data.lastResolvedAt.present
+              ? data.lastResolvedAt.value
+              : this.lastResolvedAt,
+      resolutionStatus:
+          data.resolutionStatus.present
+              ? data.resolutionStatus.value
+              : this.resolutionStatus,
+      rawJsonCache:
+          data.rawJsonCache.present
+              ? data.rawJsonCache.value
+              : this.rawJsonCache,
     );
   }
 
@@ -1061,30 +1077,36 @@ class $MediaAssetsTable extends MediaAssets
   MediaAsset map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return MediaAsset(
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}id'],
-      )!,
-      savedItemId: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}saved_item_id'],
-      )!,
-      type: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}type'],
-      )!,
-      sourceUrl: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}source_url'],
-      )!,
-      normalizedUrl: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}normalized_url'],
-      )!,
-      toolHint: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}tool_hint'],
-      )!,
+      id:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}id'],
+          )!,
+      savedItemId:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}saved_item_id'],
+          )!,
+      type:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}type'],
+          )!,
+      sourceUrl:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}source_url'],
+          )!,
+      normalizedUrl:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}normalized_url'],
+          )!,
+      toolHint:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}tool_hint'],
+          )!,
       filenameSuggested: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}filename_suggested'],
@@ -1147,12 +1169,14 @@ class MediaAsset extends DataClass implements Insertable<MediaAsset> {
       sourceUrl: Value(sourceUrl),
       normalizedUrl: Value(normalizedUrl),
       toolHint: Value(toolHint),
-      filenameSuggested: filenameSuggested == null && nullToAbsent
-          ? const Value.absent()
-          : Value(filenameSuggested),
-      metadataJson: metadataJson == null && nullToAbsent
-          ? const Value.absent()
-          : Value(metadataJson),
+      filenameSuggested:
+          filenameSuggested == null && nullToAbsent
+              ? const Value.absent()
+              : Value(filenameSuggested),
+      metadataJson:
+          metadataJson == null && nullToAbsent
+              ? const Value.absent()
+              : Value(metadataJson),
     );
   }
 
@@ -1205,29 +1229,32 @@ class MediaAsset extends DataClass implements Insertable<MediaAsset> {
     sourceUrl: sourceUrl ?? this.sourceUrl,
     normalizedUrl: normalizedUrl ?? this.normalizedUrl,
     toolHint: toolHint ?? this.toolHint,
-    filenameSuggested: filenameSuggested.present
-        ? filenameSuggested.value
-        : this.filenameSuggested,
+    filenameSuggested:
+        filenameSuggested.present
+            ? filenameSuggested.value
+            : this.filenameSuggested,
     metadataJson: metadataJson.present ? metadataJson.value : this.metadataJson,
   );
   MediaAsset copyWithCompanion(MediaAssetsCompanion data) {
     return MediaAsset(
       id: data.id.present ? data.id.value : this.id,
-      savedItemId: data.savedItemId.present
-          ? data.savedItemId.value
-          : this.savedItemId,
+      savedItemId:
+          data.savedItemId.present ? data.savedItemId.value : this.savedItemId,
       type: data.type.present ? data.type.value : this.type,
       sourceUrl: data.sourceUrl.present ? data.sourceUrl.value : this.sourceUrl,
-      normalizedUrl: data.normalizedUrl.present
-          ? data.normalizedUrl.value
-          : this.normalizedUrl,
+      normalizedUrl:
+          data.normalizedUrl.present
+              ? data.normalizedUrl.value
+              : this.normalizedUrl,
       toolHint: data.toolHint.present ? data.toolHint.value : this.toolHint,
-      filenameSuggested: data.filenameSuggested.present
-          ? data.filenameSuggested.value
-          : this.filenameSuggested,
-      metadataJson: data.metadataJson.present
-          ? data.metadataJson.value
-          : this.metadataJson,
+      filenameSuggested:
+          data.filenameSuggested.present
+              ? data.filenameSuggested.value
+              : this.filenameSuggested,
+      metadataJson:
+          data.metadataJson.present
+              ? data.metadataJson.value
+              : this.metadataJson,
     );
   }
 
@@ -1623,38 +1650,45 @@ class $DownloadJobsTable extends DownloadJobs
   DownloadJob map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return DownloadJob(
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}id'],
-      )!,
-      savedItemId: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}saved_item_id'],
-      )!,
-      status: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}status'],
-      )!,
-      progress: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}progress'],
-      )!,
-      attempts: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}attempts'],
-      )!,
+      id:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}id'],
+          )!,
+      savedItemId:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}saved_item_id'],
+          )!,
+      status:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}status'],
+          )!,
+      progress:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.double,
+            data['${effectivePrefix}progress'],
+          )!,
+      attempts:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}attempts'],
+          )!,
       lastError: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}last_error'],
       ),
-      policySnapshot: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}policy_snapshot'],
-      )!,
-      outputPath: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}output_path'],
-      )!,
+      policySnapshot:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}policy_snapshot'],
+          )!,
+      outputPath:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}output_path'],
+          )!,
       startedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}started_at'],
@@ -1724,17 +1758,20 @@ class DownloadJob extends DataClass implements Insertable<DownloadJob> {
       status: Value(status),
       progress: Value(progress),
       attempts: Value(attempts),
-      lastError: lastError == null && nullToAbsent
-          ? const Value.absent()
-          : Value(lastError),
+      lastError:
+          lastError == null && nullToAbsent
+              ? const Value.absent()
+              : Value(lastError),
       policySnapshot: Value(policySnapshot),
       outputPath: Value(outputPath),
-      startedAt: startedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(startedAt),
-      completedAt: completedAt == null && nullToAbsent
-          ? const Value.absent()
-          : Value(completedAt),
+      startedAt:
+          startedAt == null && nullToAbsent
+              ? const Value.absent()
+              : Value(startedAt),
+      completedAt:
+          completedAt == null && nullToAbsent
+              ? const Value.absent()
+              : Value(completedAt),
     );
   }
 
@@ -1799,23 +1836,21 @@ class DownloadJob extends DataClass implements Insertable<DownloadJob> {
   DownloadJob copyWithCompanion(DownloadJobsCompanion data) {
     return DownloadJob(
       id: data.id.present ? data.id.value : this.id,
-      savedItemId: data.savedItemId.present
-          ? data.savedItemId.value
-          : this.savedItemId,
+      savedItemId:
+          data.savedItemId.present ? data.savedItemId.value : this.savedItemId,
       status: data.status.present ? data.status.value : this.status,
       progress: data.progress.present ? data.progress.value : this.progress,
       attempts: data.attempts.present ? data.attempts.value : this.attempts,
       lastError: data.lastError.present ? data.lastError.value : this.lastError,
-      policySnapshot: data.policySnapshot.present
-          ? data.policySnapshot.value
-          : this.policySnapshot,
-      outputPath: data.outputPath.present
-          ? data.outputPath.value
-          : this.outputPath,
+      policySnapshot:
+          data.policySnapshot.present
+              ? data.policySnapshot.value
+              : this.policySnapshot,
+      outputPath:
+          data.outputPath.present ? data.outputPath.value : this.outputPath,
       startedAt: data.startedAt.present ? data.startedAt.value : this.startedAt,
-      completedAt: data.completedAt.present
-          ? data.completedAt.value
-          : this.completedAt,
+      completedAt:
+          data.completedAt.present ? data.completedAt.value : this.completedAt,
     );
   }
 
@@ -2174,26 +2209,31 @@ class $LogEntriesTable extends LogEntries
   LogEntry map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return LogEntry(
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}id'],
-      )!,
-      timestamp: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}timestamp'],
-      )!,
-      scope: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}scope'],
-      )!,
-      level: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}level'],
-      )!,
-      message: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}message'],
-      )!,
+      id:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}id'],
+          )!,
+      timestamp:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.dateTime,
+            data['${effectivePrefix}timestamp'],
+          )!,
+      scope:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}scope'],
+          )!,
+      level:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}level'],
+          )!,
+      message:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}message'],
+          )!,
       contextJson: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}context_json'],
@@ -2252,12 +2292,14 @@ class LogEntry extends DataClass implements Insertable<LogEntry> {
       scope: Value(scope),
       level: Value(level),
       message: Value(message),
-      contextJson: contextJson == null && nullToAbsent
-          ? const Value.absent()
-          : Value(contextJson),
-      relatedJobId: relatedJobId == null && nullToAbsent
-          ? const Value.absent()
-          : Value(relatedJobId),
+      contextJson:
+          contextJson == null && nullToAbsent
+              ? const Value.absent()
+              : Value(contextJson),
+      relatedJobId:
+          relatedJobId == null && nullToAbsent
+              ? const Value.absent()
+              : Value(relatedJobId),
     );
   }
 
@@ -2314,12 +2356,12 @@ class LogEntry extends DataClass implements Insertable<LogEntry> {
       scope: data.scope.present ? data.scope.value : this.scope,
       level: data.level.present ? data.level.value : this.level,
       message: data.message.present ? data.message.value : this.message,
-      contextJson: data.contextJson.present
-          ? data.contextJson.value
-          : this.contextJson,
-      relatedJobId: data.relatedJobId.present
-          ? data.relatedJobId.value
-          : this.relatedJobId,
+      contextJson:
+          data.contextJson.present ? data.contextJson.value : this.contextJson,
+      relatedJobId:
+          data.relatedJobId.present
+              ? data.relatedJobId.value
+              : this.relatedJobId,
     );
   }
 
@@ -2553,18 +2595,21 @@ class $SettingsTable extends Settings with TableInfo<$SettingsTable, Setting> {
   Setting map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return Setting(
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}id'],
-      )!,
-      dataJson: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}data_json'],
-      )!,
-      updatedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}updated_at'],
-      )!,
+      id:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}id'],
+          )!,
+      dataJson:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}data_json'],
+          )!,
+      updatedAt:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.dateTime,
+            data['${effectivePrefix}updated_at'],
+          )!,
     );
   }
 
@@ -3202,12 +3247,12 @@ class $$SavedItemsTableTableManager
         TableManagerState(
           db: db,
           table: table,
-          createFilteringComposer: () =>
-              $$SavedItemsTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$SavedItemsTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$SavedItemsTableAnnotationComposer($db: db, $table: table),
+          createFilteringComposer:
+              () => $$SavedItemsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer:
+              () => $$SavedItemsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer:
+              () => $$SavedItemsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
@@ -3276,71 +3321,77 @@ class $$SavedItemsTableTableManager
                 resolutionStatus: resolutionStatus,
                 rawJsonCache: rawJsonCache,
               ),
-          withReferenceMapper: (p0) => p0
-              .map(
-                (e) => (
-                  e.readTable(table),
-                  $$SavedItemsTableReferences(db, table, e),
-                ),
-              )
-              .toList(),
-          prefetchHooksCallback:
-              ({mediaAssetsRefs = false, downloadJobsRefs = false}) {
-                return PrefetchHooks(
-                  db: db,
-                  explicitlyWatchedTables: [
-                    if (mediaAssetsRefs) db.mediaAssets,
-                    if (downloadJobsRefs) db.downloadJobs,
-                  ],
-                  addJoins: null,
-                  getPrefetchedDataCallback: (items) async {
-                    return [
-                      if (mediaAssetsRefs)
-                        await $_getPrefetchedData<
-                          SavedItem,
-                          $SavedItemsTable,
-                          MediaAsset
-                        >(
-                          currentTable: table,
-                          referencedTable: $$SavedItemsTableReferences
-                              ._mediaAssetsRefsTable(db),
-                          managerFromTypedResult: (p0) =>
+          withReferenceMapper:
+              (p0) =>
+                  p0
+                      .map(
+                        (e) => (
+                          e.readTable(table),
+                          $$SavedItemsTableReferences(db, table, e),
+                        ),
+                      )
+                      .toList(),
+          prefetchHooksCallback: ({
+            mediaAssetsRefs = false,
+            downloadJobsRefs = false,
+          }) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (mediaAssetsRefs) db.mediaAssets,
+                if (downloadJobsRefs) db.downloadJobs,
+              ],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (mediaAssetsRefs)
+                    await $_getPrefetchedData<
+                      SavedItem,
+                      $SavedItemsTable,
+                      MediaAsset
+                    >(
+                      currentTable: table,
+                      referencedTable: $$SavedItemsTableReferences
+                          ._mediaAssetsRefsTable(db),
+                      managerFromTypedResult:
+                          (p0) =>
                               $$SavedItemsTableReferences(
                                 db,
                                 table,
                                 p0,
                               ).mediaAssetsRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.savedItemId == item.id,
-                              ),
-                          typedResults: items,
-                        ),
-                      if (downloadJobsRefs)
-                        await $_getPrefetchedData<
-                          SavedItem,
-                          $SavedItemsTable,
-                          DownloadJob
-                        >(
-                          currentTable: table,
-                          referencedTable: $$SavedItemsTableReferences
-                              ._downloadJobsRefsTable(db),
-                          managerFromTypedResult: (p0) =>
+                      referencedItemsForCurrentItem:
+                          (item, referencedItems) => referencedItems.where(
+                            (e) => e.savedItemId == item.id,
+                          ),
+                      typedResults: items,
+                    ),
+                  if (downloadJobsRefs)
+                    await $_getPrefetchedData<
+                      SavedItem,
+                      $SavedItemsTable,
+                      DownloadJob
+                    >(
+                      currentTable: table,
+                      referencedTable: $$SavedItemsTableReferences
+                          ._downloadJobsRefsTable(db),
+                      managerFromTypedResult:
+                          (p0) =>
                               $$SavedItemsTableReferences(
                                 db,
                                 table,
                                 p0,
                               ).downloadJobsRefs,
-                          referencedItemsForCurrentItem:
-                              (item, referencedItems) => referencedItems.where(
-                                (e) => e.savedItemId == item.id,
-                              ),
-                          typedResults: items,
-                        ),
-                    ];
-                  },
-                );
+                      referencedItemsForCurrentItem:
+                          (item, referencedItems) => referencedItems.where(
+                            (e) => e.savedItemId == item.id,
+                          ),
+                      typedResults: items,
+                    ),
+                ];
               },
+            );
+          },
         ),
       );
 }
@@ -3622,12 +3673,13 @@ class $$MediaAssetsTableTableManager
         TableManagerState(
           db: db,
           table: table,
-          createFilteringComposer: () =>
-              $$MediaAssetsTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$MediaAssetsTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$MediaAssetsTableAnnotationComposer($db: db, $table: table),
+          createFilteringComposer:
+              () => $$MediaAssetsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer:
+              () => $$MediaAssetsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer:
+              () =>
+                  $$MediaAssetsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
@@ -3668,50 +3720,52 @@ class $$MediaAssetsTableTableManager
                 filenameSuggested: filenameSuggested,
                 metadataJson: metadataJson,
               ),
-          withReferenceMapper: (p0) => p0
-              .map(
-                (e) => (
-                  e.readTable(table),
-                  $$MediaAssetsTableReferences(db, table, e),
-                ),
-              )
-              .toList(),
+          withReferenceMapper:
+              (p0) =>
+                  p0
+                      .map(
+                        (e) => (
+                          e.readTable(table),
+                          $$MediaAssetsTableReferences(db, table, e),
+                        ),
+                      )
+                      .toList(),
           prefetchHooksCallback: ({savedItemId = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [],
-              addJoins:
-                  <
-                    T extends TableManagerState<
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic
-                    >
-                  >(state) {
-                    if (savedItemId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.savedItemId,
-                                referencedTable: $$MediaAssetsTableReferences
-                                    ._savedItemIdTable(db),
-                                referencedColumn: $$MediaAssetsTableReferences
+              addJoins: <
+                T extends TableManagerState<
+                  dynamic,
+                  dynamic,
+                  dynamic,
+                  dynamic,
+                  dynamic,
+                  dynamic,
+                  dynamic,
+                  dynamic,
+                  dynamic,
+                  dynamic,
+                  dynamic
+                >
+              >(state) {
+                if (savedItemId) {
+                  state =
+                      state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.savedItemId,
+                            referencedTable: $$MediaAssetsTableReferences
+                                ._savedItemIdTable(db),
+                            referencedColumn:
+                                $$MediaAssetsTableReferences
                                     ._savedItemIdTable(db)
                                     .id,
-                              )
-                              as T;
-                    }
+                          )
+                          as T;
+                }
 
-                    return state;
-                  },
+                return state;
+              },
               getPrefetchedDataCallback: (items) async {
                 return [];
               },
@@ -4028,12 +4082,13 @@ class $$DownloadJobsTableTableManager
         TableManagerState(
           db: db,
           table: table,
-          createFilteringComposer: () =>
-              $$DownloadJobsTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$DownloadJobsTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$DownloadJobsTableAnnotationComposer($db: db, $table: table),
+          createFilteringComposer:
+              () => $$DownloadJobsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer:
+              () => $$DownloadJobsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer:
+              () =>
+                  $$DownloadJobsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
@@ -4082,50 +4137,52 @@ class $$DownloadJobsTableTableManager
                 startedAt: startedAt,
                 completedAt: completedAt,
               ),
-          withReferenceMapper: (p0) => p0
-              .map(
-                (e) => (
-                  e.readTable(table),
-                  $$DownloadJobsTableReferences(db, table, e),
-                ),
-              )
-              .toList(),
+          withReferenceMapper:
+              (p0) =>
+                  p0
+                      .map(
+                        (e) => (
+                          e.readTable(table),
+                          $$DownloadJobsTableReferences(db, table, e),
+                        ),
+                      )
+                      .toList(),
           prefetchHooksCallback: ({savedItemId = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [],
-              addJoins:
-                  <
-                    T extends TableManagerState<
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic
-                    >
-                  >(state) {
-                    if (savedItemId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.savedItemId,
-                                referencedTable: $$DownloadJobsTableReferences
-                                    ._savedItemIdTable(db),
-                                referencedColumn: $$DownloadJobsTableReferences
+              addJoins: <
+                T extends TableManagerState<
+                  dynamic,
+                  dynamic,
+                  dynamic,
+                  dynamic,
+                  dynamic,
+                  dynamic,
+                  dynamic,
+                  dynamic,
+                  dynamic,
+                  dynamic,
+                  dynamic
+                >
+              >(state) {
+                if (savedItemId) {
+                  state =
+                      state.withJoin(
+                            currentTable: table,
+                            currentColumn: table.savedItemId,
+                            referencedTable: $$DownloadJobsTableReferences
+                                ._savedItemIdTable(db),
+                            referencedColumn:
+                                $$DownloadJobsTableReferences
                                     ._savedItemIdTable(db)
                                     .id,
-                              )
-                              as T;
-                    }
+                          )
+                          as T;
+                }
 
-                    return state;
-                  },
+                return state;
+              },
               getPrefetchedDataCallback: (items) async {
                 return [];
               },
@@ -4315,12 +4372,12 @@ class $$LogEntriesTableTableManager
         TableManagerState(
           db: db,
           table: table,
-          createFilteringComposer: () =>
-              $$LogEntriesTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$LogEntriesTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$LogEntriesTableAnnotationComposer($db: db, $table: table),
+          createFilteringComposer:
+              () => $$LogEntriesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer:
+              () => $$LogEntriesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer:
+              () => $$LogEntriesTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
@@ -4357,9 +4414,16 @@ class $$LogEntriesTableTableManager
                 contextJson: contextJson,
                 relatedJobId: relatedJobId,
               ),
-          withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
-              .toList(),
+          withReferenceMapper:
+              (p0) =>
+                  p0
+                      .map(
+                        (e) => (
+                          e.readTable(table),
+                          BaseReferences(db, table, e),
+                        ),
+                      )
+                      .toList(),
           prefetchHooksCallback: null,
         ),
       );
@@ -4481,12 +4545,12 @@ class $$SettingsTableTableManager
         TableManagerState(
           db: db,
           table: table,
-          createFilteringComposer: () =>
-              $$SettingsTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$SettingsTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$SettingsTableAnnotationComposer($db: db, $table: table),
+          createFilteringComposer:
+              () => $$SettingsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer:
+              () => $$SettingsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer:
+              () => $$SettingsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
@@ -4507,9 +4571,16 @@ class $$SettingsTableTableManager
                 dataJson: dataJson,
                 updatedAt: updatedAt,
               ),
-          withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
-              .toList(),
+          withReferenceMapper:
+              (p0) =>
+                  p0
+                      .map(
+                        (e) => (
+                          e.readTable(table),
+                          BaseReferences(db, table, e),
+                        ),
+                      )
+                      .toList(),
           prefetchHooksCallback: null,
         ),
       );

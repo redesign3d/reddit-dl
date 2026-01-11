@@ -15,12 +15,9 @@ import 'reddit_saved_listing_parser.dart';
 import 'webview_cookie_bridge.dart';
 
 class SyncCubit extends Cubit<SyncState> {
-  SyncCubit(
-    this._sessionRepository,
-    this._syncRepository,
-    this._logs,
-  )   : _webViewBridge = WebViewCookieBridge(_sessionRepository),
-        super(SyncState.initial());
+  SyncCubit(this._sessionRepository, this._syncRepository, this._logs)
+    : _webViewBridge = WebViewCookieBridge(_sessionRepository),
+      super(SyncState.initial());
 
   final SessionRepository _sessionRepository;
   final SyncRepository _syncRepository;
@@ -36,11 +33,13 @@ class SyncCubit extends Cubit<SyncState> {
   }
 
   Future<void> prepareLogin({required bool rememberSession}) async {
-    emit(state.copyWith(
-      phase: SyncPhase.login,
-      loginVisible: true,
-      errorMessage: null,
-    ));
+    emit(
+      state.copyWith(
+        phase: SyncPhase.login,
+        loginVisible: true,
+        errorMessage: null,
+      ),
+    );
     await _sessionRepository.initialize(remember: rememberSession);
     await _webViewBridge.syncCookiesToWebView();
     await _logs.add(
@@ -62,17 +61,20 @@ class SyncCubit extends Cubit<SyncState> {
     await _sessionRepository.initialize(remember: rememberSession);
     await _webViewBridge.syncCookiesFromWebView();
 
-    final client =
-        RedditSavedListingClient(cookieJar: _sessionRepository.cookieJar);
+    final client = RedditSavedListingClient(
+      cookieJar: _sessionRepository.cookieJar,
+    );
     while (true) {
       try {
         final result = await client.checkSession();
         if (!result.isValid) {
-          emit(state.copyWith(
-            phase: SyncPhase.error,
-            sessionValid: false,
-            errorMessage: 'Session invalid. Please log in again.',
-          ));
+          emit(
+            state.copyWith(
+              phase: SyncPhase.error,
+              sessionValid: false,
+              errorMessage: 'Session invalid. Please log in again.',
+            ),
+          );
           await _logs.add(
             LogRecord(
               timestamp: DateTime.now(),
@@ -83,13 +85,15 @@ class SyncCubit extends Cubit<SyncState> {
           );
           return;
         }
-        emit(state.copyWith(
-          phase: SyncPhase.ready,
-          sessionValid: true,
-          loginVisible: false,
-          username: result.username,
-          errorMessage: null,
-        ));
+        emit(
+          state.copyWith(
+            phase: SyncPhase.ready,
+            sessionValid: true,
+            loginVisible: false,
+            username: result.username,
+            errorMessage: null,
+          ),
+        );
         await _logs.add(
           LogRecord(
             timestamp: DateTime.now(),
@@ -105,11 +109,13 @@ class SyncCubit extends Cubit<SyncState> {
         if (CancelToken.isCancel(error)) {
           return;
         }
-        emit(state.copyWith(
-          phase: SyncPhase.error,
-          sessionValid: false,
-          errorMessage: 'Session check failed: $error',
-        ));
+        emit(
+          state.copyWith(
+            phase: SyncPhase.error,
+            sessionValid: false,
+            errorMessage: 'Session check failed: $error',
+          ),
+        );
         await _logs.add(
           LogRecord(
             timestamp: DateTime.now(),
@@ -120,11 +126,13 @@ class SyncCubit extends Cubit<SyncState> {
         );
         return;
       } catch (error) {
-        emit(state.copyWith(
-          phase: SyncPhase.error,
-          sessionValid: false,
-          errorMessage: 'Session check failed: $error',
-        ));
+        emit(
+          state.copyWith(
+            phase: SyncPhase.error,
+            sessionValid: false,
+            errorMessage: 'Session check failed: $error',
+          ),
+        );
         await _logs.add(
           LogRecord(
             timestamp: DateTime.now(),
@@ -142,15 +150,17 @@ class SyncCubit extends Cubit<SyncState> {
     await _sessionRepository.initialize(remember: rememberSession);
     await _sessionRepository.clearSession(removePersisted: true);
     await _webViewBridge.clearWebViewCookies();
-    emit(state.copyWith(
-      phase: SyncPhase.idle,
-      sessionValid: false,
-      username: null,
-      manualUsername: '',
-      progress: const SyncProgress(),
-      summary: null,
-      errorMessage: null,
-    ));
+    emit(
+      state.copyWith(
+        phase: SyncPhase.idle,
+        sessionValid: false,
+        username: null,
+        manualUsername: '',
+        progress: const SyncProgress(),
+        summary: null,
+        errorMessage: null,
+      ),
+    );
     await _logs.add(
       LogRecord(
         timestamp: DateTime.now(),
@@ -171,46 +181,53 @@ class SyncCubit extends Cubit<SyncState> {
     int? maxItems,
     int? timeframeDays,
   }) async {
-    emit(state.copyWith(
-      phase: SyncPhase.syncing,
-      progress: const SyncProgress(),
-      summary: null,
-      errorMessage: null,
-      isCancelling: false,
-    ));
+    emit(
+      state.copyWith(
+        phase: SyncPhase.syncing,
+        progress: const SyncProgress(),
+        summary: null,
+        errorMessage: null,
+        isCancelling: false,
+      ),
+    );
     _cancelRequested = false;
     _cancelToken?.cancel();
     _cancelToken = CancelToken();
 
     await _sessionRepository.initialize(remember: rememberSession);
 
-    final client =
-        RedditSavedListingClient(cookieJar: _sessionRepository.cookieJar);
-    final resolver =
-        RedditJsonResolver(cookieJar: _sessionRepository.cookieJar);
+    final client = RedditSavedListingClient(
+      cookieJar: _sessionRepository.cookieJar,
+    );
+    final resolver = RedditJsonResolver(
+      cookieJar: _sessionRepository.cookieJar,
+    );
 
     final sessionResult = await _checkSessionWithRetry(client);
     if (!sessionResult.isValid) {
-      emit(state.copyWith(
-        phase: SyncPhase.error,
-        sessionValid: false,
-        errorMessage: 'Session expired. Please log in again.',
-      ));
+      emit(
+        state.copyWith(
+          phase: SyncPhase.error,
+          sessionValid: false,
+          errorMessage: 'Session expired. Please log in again.',
+        ),
+      );
       return;
     }
     if (!state.sessionValid || state.username == null) {
-      emit(state.copyWith(
-        username: sessionResult.username,
-        sessionValid: true,
-      ));
+      emit(
+        state.copyWith(username: sessionResult.username, sessionValid: true),
+      );
     }
 
     final effectiveUsername = _effectiveUsername() ?? sessionResult.username;
     if (effectiveUsername == null || effectiveUsername.isEmpty) {
-      emit(state.copyWith(
-        phase: SyncPhase.error,
-        errorMessage: 'Enter a username or log in to detect one.',
-      ));
+      emit(
+        state.copyWith(
+          phase: SyncPhase.error,
+          errorMessage: 'Enter a username or log in to detect one.',
+        ),
+      );
       return;
     }
 
@@ -223,11 +240,10 @@ class SyncCubit extends Cubit<SyncState> {
       ),
     );
 
-    final cutoff = timeframeDays == null
-        ? null
-        : DateTime.now()
-            .toUtc()
-            .subtract(Duration(days: timeframeDays));
+    final cutoff =
+        timeframeDays == null
+            ? null
+            : DateTime.now().toUtc().subtract(Duration(days: timeframeDays));
     final seen = <String>{};
     String? nextUrl;
     var shouldStop = false;
@@ -256,13 +272,15 @@ class SyncCubit extends Cubit<SyncState> {
           }
           seen.add(item.permalink);
           permalinksFound = seen.length;
-          emit(state.copyWith(
-            progress: state.progress.copyWith(
-              pagesScanned: pages,
-              permalinksFound: permalinksFound,
-              retryAfterSeconds: null,
+          emit(
+            state.copyWith(
+              progress: state.progress.copyWith(
+                pagesScanned: pages,
+                permalinksFound: permalinksFound,
+                retryAfterSeconds: null,
+              ),
             ),
-          ));
+          );
 
           ResolvedItem resolvedItem;
           try {
@@ -284,16 +302,18 @@ class SyncCubit extends Cubit<SyncState> {
                 message: 'Failed to resolve ${item.permalink}: $error',
               ),
             );
-            emit(state.copyWith(
-              progress: state.progress.copyWith(
-                pagesScanned: pages,
-                permalinksFound: permalinksFound,
-                resolved: resolvedCount,
-                upserted: upsertedCount,
-                failures: failures,
-                mediaInserted: mediaInserted,
+            emit(
+              state.copyWith(
+                progress: state.progress.copyWith(
+                  pagesScanned: pages,
+                  permalinksFound: permalinksFound,
+                  resolved: resolvedCount,
+                  upserted: upsertedCount,
+                  failures: failures,
+                  mediaInserted: mediaInserted,
+                ),
               ),
-            ));
+            );
             continue;
           }
 
@@ -303,16 +323,18 @@ class SyncCubit extends Cubit<SyncState> {
           upsertedCount += upsert.inserted || upsert.updated ? 1 : 0;
           mediaInserted += upsert.mediaInserted;
 
-          emit(state.copyWith(
-            progress: state.progress.copyWith(
-              pagesScanned: pages,
-              permalinksFound: permalinksFound,
-              resolved: resolvedCount,
-              upserted: upsertedCount,
-              failures: failures,
-              mediaInserted: mediaInserted,
+          emit(
+            state.copyWith(
+              progress: state.progress.copyWith(
+                pagesScanned: pages,
+                permalinksFound: permalinksFound,
+                resolved: resolvedCount,
+                upserted: upsertedCount,
+                failures: failures,
+                mediaInserted: mediaInserted,
+              ),
             ),
-          ));
+          );
 
           if (maxItems != null) {
             final processed = resolvedCount + failures;
@@ -354,18 +376,20 @@ class SyncCubit extends Cubit<SyncState> {
         failures: failures,
         mediaInserted: mediaInserted,
       );
-      emit(state.copyWith(
-        phase: SyncPhase.completed,
-        summary: summary,
-        progress: state.progress.copyWith(
-          pagesScanned: summary.pagesScanned,
-          permalinksFound: summary.permalinksFound,
-          resolved: summary.resolved,
-          upserted: summary.upserted,
-          failures: summary.failures,
-          mediaInserted: summary.mediaInserted,
+      emit(
+        state.copyWith(
+          phase: SyncPhase.completed,
+          summary: summary,
+          progress: state.progress.copyWith(
+            pagesScanned: summary.pagesScanned,
+            permalinksFound: summary.permalinksFound,
+            resolved: summary.resolved,
+            upserted: summary.upserted,
+            failures: summary.failures,
+            mediaInserted: summary.mediaInserted,
+          ),
         ),
-      ));
+      );
       await _logs.add(
         LogRecord(
           timestamp: DateTime.now(),
@@ -386,11 +410,13 @@ class SyncCubit extends Cubit<SyncState> {
         ),
       );
     } catch (error) {
-      emit(state.copyWith(
-        phase: SyncPhase.error,
-        errorMessage: 'Sync failed: $error',
-        isCancelling: false,
-      ));
+      emit(
+        state.copyWith(
+          phase: SyncPhase.error,
+          errorMessage: 'Sync failed: $error',
+          isCancelling: false,
+        ),
+      );
       await _logs.add(
         LogRecord(
           timestamp: DateTime.now(),
@@ -479,9 +505,11 @@ class SyncCubit extends Cubit<SyncState> {
 
   Future<void> _handleRateLimit(RateLimitException error) async {
     final delaySeconds = error.retryAfterSeconds ?? 10;
-    emit(state.copyWith(
-      progress: state.progress.copyWith(retryAfterSeconds: delaySeconds),
-    ));
+    emit(
+      state.copyWith(
+        progress: state.progress.copyWith(retryAfterSeconds: delaySeconds),
+      ),
+    );
     await _logs.add(
       LogRecord(
         timestamp: DateTime.now(),
@@ -597,16 +625,16 @@ class SyncState extends Equatable {
 
   @override
   List<Object?> get props => [
-        phase,
-        loginVisible,
-        sessionValid,
-        username,
-        manualUsername,
-        progress,
-        summary,
-        errorMessage,
-        isCancelling,
-      ];
+    phase,
+    loginVisible,
+    sessionValid,
+    username,
+    manualUsername,
+    progress,
+    summary,
+    errorMessage,
+    isCancelling,
+  ];
 }
 
 class SyncProgress extends Equatable {
@@ -650,14 +678,14 @@ class SyncProgress extends Equatable {
 
   @override
   List<Object?> get props => [
-        pagesScanned,
-        permalinksFound,
-        resolved,
-        upserted,
-        failures,
-        mediaInserted,
-        retryAfterSeconds,
-      ];
+    pagesScanned,
+    permalinksFound,
+    resolved,
+    upserted,
+    failures,
+    mediaInserted,
+    retryAfterSeconds,
+  ];
 }
 
 class SyncSummary extends Equatable {
@@ -679,13 +707,13 @@ class SyncSummary extends Equatable {
 
   @override
   List<Object?> get props => [
-        pagesScanned,
-        permalinksFound,
-        resolved,
-        upserted,
-        failures,
-        mediaInserted,
-      ];
+    pagesScanned,
+    permalinksFound,
+    resolved,
+    upserted,
+    failures,
+    mediaInserted,
+  ];
 }
 
 enum SyncPhase { idle, login, ready, syncing, completed, cancelled, error }

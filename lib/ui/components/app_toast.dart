@@ -8,10 +8,7 @@ class AppToast {
     final messenger = ScaffoldMessenger.of(context);
     messenger.clearSnackBars();
     messenger.showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: colors.foreground,
-      ),
+      SnackBar(content: Text(message), backgroundColor: colors.foreground),
     );
   }
 }

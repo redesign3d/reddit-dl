@@ -21,9 +21,7 @@ void main() {
   });
 
   test('throws when zip missing saved csv files', () {
-    final zipBytes = _buildZip({
-      'data/other.csv': 'id,name\n1,example',
-    });
+    final zipBytes = _buildZip({'data/other.csv': 'id,name\n1,example'});
 
     final parser = ZipImportParser();
 

@@ -19,10 +19,7 @@ class ToolInfo {
 }
 
 class ToolDetector {
-  Future<ToolInfo> detect(
-    String name, {
-    String? overridePath,
-  }) async {
+  Future<ToolInfo> detect(String name, {String? overridePath}) async {
     if (overridePath != null && overridePath.trim().isNotEmpty) {
       final trimmed = overridePath.trim();
       final file = File(trimmed);

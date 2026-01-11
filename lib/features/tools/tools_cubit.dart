@@ -46,15 +46,8 @@ class ToolsCubit extends Cubit<ToolsState> {
         'gallery-dl',
         overridePath: _galleryOverride,
       );
-      final ytDlp = await _detector.detect(
-        'yt-dlp',
-        overridePath: _ytOverride,
-      );
-      emit(state.copyWith(
-        isLoading: false,
-        galleryDl: gallery,
-        ytDlp: ytDlp,
-      ));
+      final ytDlp = await _detector.detect('yt-dlp', overridePath: _ytOverride);
+      emit(state.copyWith(isLoading: false, galleryDl: gallery, ytDlp: ytDlp));
       await _logsRepository.add(
         LogRecord(
           timestamp: DateTime.now(),
@@ -64,10 +57,7 @@ class ToolsCubit extends Cubit<ToolsState> {
         ),
       );
     } catch (error) {
-      emit(state.copyWith(
-        isLoading: false,
-        errorMessage: error.toString(),
-      ));
+      emit(state.copyWith(isLoading: false, errorMessage: error.toString()));
       await _logsRepository.add(
         LogRecord(
           timestamp: DateTime.now(),
@@ -90,18 +80,17 @@ class ToolsCubit extends Cubit<ToolsState> {
       emit(state.copyWith(lastTestMessage: message, lastTestTool: tool.name));
       return message;
     }
-    final result = await _toolRunner.run(
-      tool: tool,
-      args: const ['--version'],
-    );
-    final output = result.stdout.isNotEmpty
-        ? result.stdout.first
-        : result.stderr.isNotEmpty
+    final result = await _toolRunner.run(tool: tool, args: const ['--version']);
+    final output =
+        result.stdout.isNotEmpty
+            ? result.stdout.first
+            : result.stderr.isNotEmpty
             ? result.stderr.first
             : '';
-    final message = result.isSuccess
-        ? (output.isNotEmpty ? output : '${tool.name} OK.')
-        : '${tool.name} failed (${result.exitCode}).';
+    final message =
+        result.isSuccess
+            ? (output.isNotEmpty ? output : '${tool.name} OK.')
+            : '${tool.name} failed (${result.exitCode}).';
     emit(state.copyWith(lastTestMessage: message, lastTestTool: tool.name));
     await _logsRepository.add(
       LogRecord(
@@ -132,12 +121,12 @@ class ToolsState extends Equatable {
   });
 
   const ToolsState.initial()
-      : isLoading = true,
-        galleryDl = null,
-        ytDlp = null,
-        errorMessage = null,
-        lastTestMessage = null,
-        lastTestTool = null;
+    : isLoading = true,
+      galleryDl = null,
+      ytDlp = null,
+      errorMessage = null,
+      lastTestMessage = null,
+      lastTestTool = null;
 
   final bool isLoading;
   final ToolInfo? galleryDl;
@@ -166,11 +155,11 @@ class ToolsState extends Equatable {
 
   @override
   List<Object?> get props => [
-        isLoading,
-        galleryDl,
-        ytDlp,
-        errorMessage,
-        lastTestMessage,
-        lastTestTool,
-      ];
+    isLoading,
+    galleryDl,
+    ytDlp,
+    errorMessage,
+    lastTestMessage,
+    lastTestTool,
+  ];
 }

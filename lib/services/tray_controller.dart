@@ -11,10 +11,10 @@ class TrayController with TrayListener, WindowListener {
     required VoidCallback onResumeAll,
     required Future<void> Function() onQuit,
     required Future<void> Function() onFirstHide,
-  })  : _onPauseAll = onPauseAll,
-        _onResumeAll = onResumeAll,
-        _onQuit = onQuit,
-        _onFirstHide = onFirstHide;
+  }) : _onPauseAll = onPauseAll,
+       _onResumeAll = onResumeAll,
+       _onQuit = onQuit,
+       _onFirstHide = onFirstHide;
 
   final VoidCallback _onPauseAll;
   final VoidCallback _onResumeAll;
@@ -31,14 +31,18 @@ class TrayController with TrayListener, WindowListener {
 
     await trayManager.setIcon(_trayIconPath());
     await trayManager.setToolTip('reddit-dl');
-    await trayManager.setContextMenu(Menu(items: [
-      MenuItem(key: 'show', label: 'Show/Hide'),
-      MenuItem.separator(),
-      MenuItem(key: 'pause', label: 'Pause all'),
-      MenuItem(key: 'resume', label: 'Resume all'),
-      MenuItem.separator(),
-      MenuItem(key: 'quit', label: 'Quit'),
-    ]));
+    await trayManager.setContextMenu(
+      Menu(
+        items: [
+          MenuItem(key: 'show', label: 'Show/Hide'),
+          MenuItem.separator(),
+          MenuItem(key: 'pause', label: 'Pause all'),
+          MenuItem(key: 'resume', label: 'Resume all'),
+          MenuItem.separator(),
+          MenuItem(key: 'quit', label: 'Quit'),
+        ],
+      ),
+    );
   }
 
   Future<void> dispose() async {

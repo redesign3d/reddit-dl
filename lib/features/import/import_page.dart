@@ -45,29 +45,33 @@ class _ImportPageState extends State<ImportPage> {
       if (!context.mounted) {
         return;
       }
-      await context
-          .read<ImportCubit>()
-          .importZipBytes(bytes, filename: filename);
+      await context.read<ImportCubit>().importZipBytes(
+        bytes,
+        filename: filename,
+      );
     } catch (error) {
       if (!context.mounted) {
         return;
       }
-      await context
-          .read<ImportCubit>()
-          .setError('Failed to read ZIP file: $error');
+      await context.read<ImportCubit>().setError(
+        'Failed to read ZIP file: $error',
+      );
     }
   }
 
-  Future<void> _handleDrop(BuildContext context, DropDoneDetails details) async {
+  Future<void> _handleDrop(
+    BuildContext context,
+    DropDoneDetails details,
+  ) async {
     if (details.files.isEmpty) {
       return;
     }
     final file = details.files.first;
     if (!file.path.toLowerCase().endsWith('.zip')) {
       context.read<ImportCubit>().setDragging(false);
-      await context
-          .read<ImportCubit>()
-          .setError('Please drop a .zip file exported from Reddit.');
+      await context.read<ImportCubit>().setError(
+        'Please drop a .zip file exported from Reddit.',
+      );
       return;
     }
     await _importFile(context, file.path, file.name);
@@ -87,20 +91,23 @@ class _ImportPageState extends State<ImportPage> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Backfill from Reddit ZIP',
-                style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              'Backfill from Reddit ZIP',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             SizedBox(height: AppTokens.space.s6),
             Text(
               'Drag and drop your Reddit data request ZIP to index saved posts and comments.',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: colors.mutedForeground),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: colors.mutedForeground),
             ),
             SizedBox(height: AppTokens.space.s16),
             DropTarget(
-              onDragEntered: (_) => context.read<ImportCubit>().setDragging(true),
-              onDragExited: (_) => context.read<ImportCubit>().setDragging(false),
+              onDragEntered:
+                  (_) => context.read<ImportCubit>().setDragging(true),
+              onDragExited:
+                  (_) => context.read<ImportCubit>().setDragging(false),
               onDragDone: (details) => _handleDrop(context, details),
               child: AppCard(
                 child: Column(
@@ -111,9 +118,7 @@ class _ImportPageState extends State<ImportPage> {
                       width: double.infinity,
                       padding: EdgeInsets.all(AppTokens.space.s16),
                       decoration: BoxDecoration(
-                        color: state.isDragging
-                            ? colors.accent
-                            : colors.muted,
+                        color: state.isDragging ? colors.accent : colors.muted,
                         borderRadius: BorderRadius.circular(AppTokens.radii.lg),
                         border: Border.all(
                           color: state.isDragging ? colors.ring : colors.border,
@@ -122,14 +127,14 @@ class _ImportPageState extends State<ImportPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Drop ZIP here',
-                              style: Theme.of(context).textTheme.titleLarge),
+                          Text(
+                            'Drop ZIP here',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
                           SizedBox(height: AppTokens.space.s6),
                           Text(
                             'Includes saved_posts.csv and saved_comments.csv.',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
+                            style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(color: colors.mutedForeground),
                           ),
                           SizedBox(height: AppTokens.space.s12),
@@ -139,16 +144,19 @@ class _ImportPageState extends State<ImportPage> {
                             children: [
                               AppButton(
                                 label: 'Select ZIP',
-                                onPressed: isImporting
-                                    ? null
-                                    : () => _pickZip(context),
+                                onPressed:
+                                    isImporting
+                                        ? null
+                                        : () => _pickZip(context),
                               ),
                               AppButton(
                                 label: 'Reset',
                                 variant: AppButtonVariant.ghost,
-                                onPressed: isImporting
-                                    ? null
-                                    : () => context.read<ImportCubit>().reset(),
+                                onPressed:
+                                    isImporting
+                                        ? null
+                                        : () =>
+                                            context.read<ImportCubit>().reset(),
                               ),
                             ],
                           ),
@@ -156,9 +164,7 @@ class _ImportPageState extends State<ImportPage> {
                             SizedBox(height: AppTokens.space.s12),
                             Text(
                               'Selected: ${state.filename}',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
+                              style: Theme.of(context).textTheme.bodySmall
                                   ?.copyWith(color: colors.mutedForeground),
                             ),
                           ],
@@ -188,9 +194,7 @@ class _ImportPageState extends State<ImportPage> {
                       AppCard(
                         child: Text(
                           state.errorMessage!,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
+                          style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: colors.destructive),
                         ),
                       ),
@@ -199,14 +203,17 @@ class _ImportPageState extends State<ImportPage> {
                 ),
               ),
             ),
-            if (state.status == ImportStatus.success && state.result != null) ...[
+            if (state.status == ImportStatus.success &&
+                state.result != null) ...[
               SizedBox(height: AppTokens.space.s16),
               AppCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Import summary',
-                        style: Theme.of(context).textTheme.titleLarge),
+                    Text(
+                      'Import summary',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
                     SizedBox(height: AppTokens.space.s12),
                     Wrap(
                       spacing: AppTokens.space.s12,
@@ -242,9 +249,10 @@ class _ImportPageState extends State<ImportPage> {
                     AppButton(
                       label: 'View in library',
                       variant: AppButtonVariant.secondary,
-                      onPressed: () => context
-                          .read<NavigationCubit>()
-                          .select(AppSection.library),
+                      onPressed:
+                          () => context.read<NavigationCubit>().select(
+                            AppSection.library,
+                          ),
                     ),
                   ],
                 ),
@@ -275,10 +283,9 @@ class _SummaryTile extends StatelessWidget {
           SizedBox(height: AppTokens.space.s4),
           Text(
             label,
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(color: colors.mutedForeground),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: colors.mutedForeground),
           ),
         ],
       ),

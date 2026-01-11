@@ -8,10 +8,10 @@ import 'log_record.dart';
 
 class LogsCubit extends Cubit<LogsState> {
   LogsCubit(this._repository)
-      : super(const LogsState(entries: [], isLoading: true)) {
+    : super(const LogsState(entries: [], isLoading: true)) {
     _subscription = _repository.watchAll().listen(
-          (entries) => emit(state.copyWith(entries: entries, isLoading: false)),
-        );
+      (entries) => emit(state.copyWith(entries: entries, isLoading: false)),
+    );
     _seed();
   }
 
@@ -30,18 +30,12 @@ class LogsCubit extends Cubit<LogsState> {
 }
 
 class LogsState extends Equatable {
-  const LogsState({
-    required this.entries,
-    required this.isLoading,
-  });
+  const LogsState({required this.entries, required this.isLoading});
 
   final List<LogRecord> entries;
   final bool isLoading;
 
-  LogsState copyWith({
-    List<LogRecord>? entries,
-    bool? isLoading,
-  }) {
+  LogsState copyWith({List<LogRecord>? entries, bool? isLoading}) {
     return LogsState(
       entries: entries ?? this.entries,
       isLoading: isLoading ?? this.isLoading,

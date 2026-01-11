@@ -3,10 +3,7 @@ import 'package:flutter/material.dart';
 import '../tokens.dart';
 
 class AppSelectOption<T> {
-  const AppSelectOption({
-    required this.label,
-    required this.value,
-  });
+  const AppSelectOption({required this.label, required this.value});
 
   final String label;
   final T value;
@@ -39,14 +36,15 @@ class AppSelect<T> extends StatelessWidget {
           borderSide: BorderSide(color: colors.border),
         ),
       ),
-      items: options
-          .map(
-            (option) => DropdownMenuItem<T>(
-              value: option.value,
-              child: Text(option.label),
-            ),
-          )
-          .toList(),
+      items:
+          options
+              .map(
+                (option) => DropdownMenuItem<T>(
+                  value: option.value,
+                  child: Text(option.label),
+                ),
+              )
+              .toList(),
       onChanged: onChanged,
     );
   }

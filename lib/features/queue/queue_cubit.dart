@@ -16,15 +16,16 @@ class QueueCubit extends Cubit<QueueState> {
     this._logs,
     this._settingsRepository,
     this._telemetry,
-  ) : super(const QueueState(
+  ) : super(
+        const QueueState(
           items: [],
           paused: false,
           concurrency: 2,
           rateLimitPerMinute: 30,
-        )) {
+        ),
+      ) {
     _subscription = _repository.watchQueue().listen(_handleItems);
-    _settingsSubscription =
-        _settingsRepository.watch().listen(_handleSettings);
+    _settingsSubscription = _settingsRepository.watch().listen(_handleSettings);
     _telemetrySubscription = _telemetry.stream.listen(_handleTelemetry);
   }
 
@@ -41,29 +42,35 @@ class QueueCubit extends Cubit<QueueState> {
     final hasActive = items.any(
       (item) => item.job.status == 'queued' || item.job.status == 'running',
     );
-    final paused = !hasActive && items.any((item) => item.job.status == 'paused');
+    final paused =
+        !hasActive && items.any((item) => item.job.status == 'paused');
     emit(state.copyWith(items: items, paused: paused));
   }
 
   void _handleSettings(AppSettings settings) {
     _settings = settings;
-    emit(state.copyWith(
-      concurrency: settings.concurrency,
-      rateLimitPerMinute: settings.rateLimitPerMinute,
-    ));
+    emit(
+      state.copyWith(
+        concurrency: settings.concurrency,
+        rateLimitPerMinute: settings.rateLimitPerMinute,
+      ),
+    );
   }
 
   void _handleTelemetry(DownloadTelemetryState telemetry) {
-    emit(state.copyWith(
-      rateLimitRemaining: telemetry.remaining,
-      rateLimitResetAt: telemetry.resetAt,
-    ));
+    emit(
+      state.copyWith(
+        rateLimitRemaining: telemetry.remaining,
+        rateLimitResetAt: telemetry.resetAt,
+      ),
+    );
   }
 
   Future<bool> enqueueSavedItem(SavedItem item) async {
-    final policySnapshot = _settings.overwritePolicy == OverwritePolicy.skipIfExists
-        ? 'skip_if_exists'
-        : 'overwrite_if_newer';
+    final policySnapshot =
+        _settings.overwritePolicy == OverwritePolicy.skipIfExists
+            ? 'skip_if_exists'
+            : 'overwrite_if_newer';
     final result = await _repository.enqueueForItem(
       item,
       policySnapshot: policySnapshot,
@@ -73,9 +80,10 @@ class QueueCubit extends Cubit<QueueState> {
         timestamp: DateTime.now(),
         scope: 'download',
         level: 'info',
-        message: result.created
-            ? 'Enqueued download for ${item.permalink}.'
-            : 'Download already queued for ${item.permalink}.',
+        message:
+            result.created
+                ? 'Enqueued download for ${item.permalink}.'
+                : 'Download already queued for ${item.permalink}.',
       ),
     );
     return result.created;
@@ -159,11 +167,11 @@ class QueueState extends Equatable {
 
   @override
   List<Object?> get props => [
-        items,
-        paused,
-        concurrency,
-        rateLimitPerMinute,
-        rateLimitRemaining,
-        rateLimitResetAt,
-      ];
+    items,
+    paused,
+    concurrency,
+    rateLimitPerMinute,
+    rateLimitRemaining,
+    rateLimitResetAt,
+  ];
 }

@@ -17,9 +17,7 @@ class PathTemplateEngine {
     final warnings = <String>[];
 
     if (settings.downloadRoot.trim().isEmpty) {
-      return PathTemplateResult.invalid(
-        'Download root is not set.',
-      );
+      return PathTemplateResult.invalid('Download root is not set.');
     }
 
     final tokens = _buildTokens(item);
@@ -145,7 +143,10 @@ class PathTemplateEngine {
         segment = segment.replaceAll('{$key}', value);
       });
       segment = _sanitizeSegment(segment);
-      if (unsafeRaw || segment == '.' || segment == '..' || segment.contains('..')) {
+      if (unsafeRaw ||
+          segment == '.' ||
+          segment == '..' ||
+          segment.contains('..')) {
         warnings.add('Template contained unsafe path segments.');
         segment = segment.replaceAll('..', '_');
       }
@@ -163,9 +164,7 @@ class PathTemplateEngine {
     List<String> warnings,
   ) {
     if (settings.mediaLayoutMode == MediaLayoutMode.folderPerMedia) {
-      final folderName = _sanitizeSegment(
-        p.basenameWithoutExtension(filename),
-      );
+      final folderName = _sanitizeSegment(p.basenameWithoutExtension(filename));
       if (folderName.isEmpty) {
         warnings.add('Media folder name fallback applied.');
       }
@@ -216,17 +215,14 @@ class PathTemplateEngine {
     );
   }
 
-  String _buildFilename(
-    MediaAsset asset,
-    int mediaIndex,
-    String? override,
-  ) {
+  String _buildFilename(MediaAsset asset, int mediaIndex, String? override) {
     if (override != null && override.trim().isNotEmpty) {
       return override.trim();
     }
-    final url = asset.filenameSuggested?.trim().isNotEmpty == true
-        ? asset.filenameSuggested!
-        : asset.normalizedUrl.isNotEmpty
+    final url =
+        asset.filenameSuggested?.trim().isNotEmpty == true
+            ? asset.filenameSuggested!
+            : asset.normalizedUrl.isNotEmpty
             ? asset.normalizedUrl
             : asset.sourceUrl;
     final parsed = Uri.tryParse(url);
@@ -239,10 +235,11 @@ class PathTemplateEngine {
   }
 
   String _sanitizeSegment(String value) {
-    var sanitized = value
-        .replaceAll(RegExp(r'[<>:"/\\\\|?*]'), '_')
-        .replaceAll(RegExp(r'[\x00-\x1F]'), '')
-        .trim();
+    var sanitized =
+        value
+            .replaceAll(RegExp(r'[<>:"/\\\\|?*]'), '_')
+            .replaceAll(RegExp(r'[\x00-\x1F]'), '')
+            .trim();
     sanitized = sanitized.replaceAll(RegExp(r'\s+'), ' ');
     sanitized = sanitized.replaceAll('..', '_');
     if (sanitized.isEmpty) {
@@ -258,7 +255,9 @@ class PathTemplateEngine {
   String _slugify(String value) {
     final lower = value.toLowerCase();
     var slug = lower.replaceAll(RegExp(r'[^a-z0-9]+'), '-');
-    slug = slug.replaceAll(RegExp(r'-+'), '-').replaceAll(RegExp(r'^-+|-+$'), '');
+    slug = slug
+        .replaceAll(RegExp(r'-+'), '-')
+        .replaceAll(RegExp(r'^-+|-+$'), '');
     if (slug.isEmpty) {
       return 'untitled';
     }
@@ -276,8 +275,10 @@ class PathTemplateEngine {
   }
 
   String _extractPostId(String permalink) {
-    final match = RegExp(r'/comments/([a-z0-9]+)/', caseSensitive: false)
-        .firstMatch(permalink);
+    final match = RegExp(
+      r'/comments/([a-z0-9]+)/',
+      caseSensitive: false,
+    ).firstMatch(permalink);
     return match?.group(1) ?? '';
   }
 
@@ -305,11 +306,7 @@ class PathTemplateEngine {
     return p.normalize(p.join(base, candidate));
   }
 
-  String? _safeJoin(
-    String root,
-    String relative,
-    List<String> warnings,
-  ) {
+  String? _safeJoin(String root, String relative, List<String> warnings) {
     final joined = p.normalize(p.join(root, relative));
     if (!p.isWithin(root, joined) && joined != root) {
       warnings.add('Template resolved outside of download root.');
@@ -330,14 +327,14 @@ class PathTemplateResult {
     required this.directoryPath,
     required this.filePath,
     required this.warnings,
-  })  : isValid = true,
-        error = null;
+  }) : isValid = true,
+       error = null;
 
   PathTemplateResult.invalid(this.error)
-      : directoryPath = '',
-        filePath = '',
-        warnings = const [],
-        isValid = false;
+    : directoryPath = '',
+      filePath = '',
+      warnings = const [],
+      isValid = false;
 
   final String directoryPath;
   final String filePath;

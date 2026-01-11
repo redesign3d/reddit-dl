@@ -93,11 +93,10 @@ class OverwriteDecision {
     required this.reason,
   });
 
-  const OverwriteDecision.download()
-      : this._(shouldDownload: true, reason: '');
+  const OverwriteDecision.download() : this._(shouldDownload: true, reason: '');
 
   const OverwriteDecision.skip(String reason)
-      : this._(shouldDownload: false, reason: reason);
+    : this._(shouldDownload: false, reason: reason);
 
   final bool shouldDownload;
   final String reason;

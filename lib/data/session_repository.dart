@@ -73,10 +73,7 @@ class SessionRepository {
   }
 
   Future<void> _copyCookies(CookieJar from, CookieJar to) async {
-    const urls = [
-      'https://old.reddit.com/',
-      'https://www.reddit.com/',
-    ];
+    const urls = ['https://old.reddit.com/', 'https://www.reddit.com/'];
     for (final url in urls) {
       final uri = Uri.parse(url);
       final cookies = await from.loadForRequest(uri);

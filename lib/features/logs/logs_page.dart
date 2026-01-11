@@ -15,15 +15,13 @@ class LogsPage extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Activity stream',
-            style: Theme.of(context).textTheme.titleLarge),
+        Text('Activity stream', style: Theme.of(context).textTheme.titleLarge),
         SizedBox(height: AppTokens.space.s8),
         Text(
           'Logs are persisted and filterable. Export and copy from here.',
-          style: Theme.of(context)
-              .textTheme
-              .bodySmall
-              ?.copyWith(color: colors.mutedForeground),
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: colors.mutedForeground),
         ),
         SizedBox(height: AppTokens.space.s16),
         BlocBuilder<LogsCubit, LogsState>(

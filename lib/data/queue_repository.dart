@@ -13,13 +13,13 @@ class QueueRepository {
         _db.savedItems,
         _db.savedItems.id.equalsExp(_db.downloadJobs.savedItemId),
       ),
-    ])
-      ..orderBy([
-        OrderingTerm(expression: _db.downloadJobs.id, mode: OrderingMode.desc),
-      ]);
+    ])..orderBy([
+      OrderingTerm(expression: _db.downloadJobs.id, mode: OrderingMode.desc),
+    ]);
 
     return query.watch().map(
-          (rows) => rows
+      (rows) =>
+          rows
               .map(
                 (row) => QueueRecord(
                   job: row.readTable(_db.downloadJobs),
@@ -27,24 +27,26 @@ class QueueRepository {
                 ),
               )
               .toList(),
-        );
+    );
   }
 
   Future<QueueEnqueueResult> enqueueForItem(
     SavedItem item, {
     required String policySnapshot,
   }) async {
-    final existing = await (_db.select(_db.downloadJobs)
-          ..where(
-            (tbl) => tbl.savedItemId.equals(item.id) &
-                tbl.status.isIn(['queued', 'running', 'paused']),
-          ))
-        .getSingleOrNull();
+    final existing =
+        await (_db.select(_db.downloadJobs)..where(
+          (tbl) =>
+              tbl.savedItemId.equals(item.id) &
+              tbl.status.isIn(['queued', 'running', 'paused']),
+        )).getSingleOrNull();
     if (existing != null) {
       return QueueEnqueueResult(created: false, job: existing);
     }
 
-    final jobId = await _db.into(_db.downloadJobs).insert(
+    final jobId = await _db
+        .into(_db.downloadJobs)
+        .insert(
           DownloadJobsCompanion.insert(
             savedItemId: item.id,
             status: 'queued',
@@ -53,25 +55,29 @@ class QueueRepository {
           ),
         );
 
-    final job = await (_db.select(_db.downloadJobs)
-          ..where((tbl) => tbl.id.equals(jobId)))
-        .getSingle();
+    final job =
+        await (_db.select(_db.downloadJobs)
+          ..where((tbl) => tbl.id.equals(jobId))).getSingle();
 
     return QueueEnqueueResult(created: true, job: job);
   }
 
   Future<List<QueueRecord>> fetchQueuedRecords(int limit) async {
-    final query = _db.select(_db.downloadJobs).join([
-      innerJoin(
-        _db.savedItems,
-        _db.savedItems.id.equalsExp(_db.downloadJobs.savedItemId),
-      ),
-    ])
-      ..where(_db.downloadJobs.status.equals('queued'))
-      ..orderBy([
-        OrderingTerm(expression: _db.downloadJobs.id, mode: OrderingMode.asc),
-      ])
-      ..limit(limit);
+    final query =
+        _db.select(_db.downloadJobs).join([
+            innerJoin(
+              _db.savedItems,
+              _db.savedItems.id.equalsExp(_db.downloadJobs.savedItemId),
+            ),
+          ])
+          ..where(_db.downloadJobs.status.equals('queued'))
+          ..orderBy([
+            OrderingTerm(
+              expression: _db.downloadJobs.id,
+              mode: OrderingMode.asc,
+            ),
+          ])
+          ..limit(limit);
 
     final rows = await query.get();
     return rows
@@ -86,141 +92,126 @@ class QueueRepository {
 
   Future<List<MediaAsset>> fetchMediaAssets(int savedItemId) {
     return (_db.select(_db.mediaAssets)
-          ..where((tbl) => tbl.savedItemId.equals(savedItemId)))
-        .get();
+      ..where((tbl) => tbl.savedItemId.equals(savedItemId))).get();
   }
 
   Future<void> markJobRunning(int jobId) async {
     await (_db.update(_db.downloadJobs)
-          ..where((tbl) => tbl.id.equals(jobId)))
-        .write(
-          DownloadJobsCompanion(
-            status: const Value('running'),
-            startedAt: Value(DateTime.now()),
-            lastError: const Value.absent(),
-          ),
-        );
+      ..where((tbl) => tbl.id.equals(jobId))).write(
+      DownloadJobsCompanion(
+        status: const Value('running'),
+        startedAt: Value(DateTime.now()),
+        lastError: const Value.absent(),
+      ),
+    );
   }
 
   Future<void> updateJobStatus(int jobId, String status) async {
-    await (_db.update(_db.downloadJobs)
-          ..where((tbl) => tbl.id.equals(jobId)))
-        .write(DownloadJobsCompanion(status: Value(status)));
+    await (_db.update(_db.downloadJobs)..where(
+      (tbl) => tbl.id.equals(jobId),
+    )).write(DownloadJobsCompanion(status: Value(status)));
   }
 
   Future<void> updateJobProgress(int jobId, double progress) async {
-    await (_db.update(_db.downloadJobs)
-          ..where((tbl) => tbl.id.equals(jobId)))
-        .write(DownloadJobsCompanion(progress: Value(progress)));
+    await (_db.update(_db.downloadJobs)..where(
+      (tbl) => tbl.id.equals(jobId),
+    )).write(DownloadJobsCompanion(progress: Value(progress)));
   }
 
   Future<void> markJobCompleted(int jobId, String outputPath) async {
     await (_db.update(_db.downloadJobs)
-          ..where((tbl) => tbl.id.equals(jobId)))
-        .write(
-          DownloadJobsCompanion(
-            status: const Value('completed'),
-            progress: const Value(1),
-            outputPath: Value(outputPath),
-            completedAt: Value(DateTime.now()),
-          ),
-        );
+      ..where((tbl) => tbl.id.equals(jobId))).write(
+      DownloadJobsCompanion(
+        status: const Value('completed'),
+        progress: const Value(1),
+        outputPath: Value(outputPath),
+        completedAt: Value(DateTime.now()),
+      ),
+    );
   }
 
   Future<void> markJobFailed(int jobId, String error) async {
     await (_db.update(_db.downloadJobs)
-          ..where((tbl) => tbl.id.equals(jobId)))
-        .write(
-          DownloadJobsCompanion(
-            status: const Value('failed'),
-            lastError: Value(error),
-          ),
-        );
+      ..where((tbl) => tbl.id.equals(jobId))).write(
+      DownloadJobsCompanion(
+        status: const Value('failed'),
+        lastError: Value(error),
+      ),
+    );
   }
 
   Future<void> markJobSkipped(int jobId, String reason) async {
     await (_db.update(_db.downloadJobs)
-          ..where((tbl) => tbl.id.equals(jobId)))
-        .write(
-          DownloadJobsCompanion(
-            status: const Value('skipped'),
-            progress: const Value(1),
-            lastError: Value(reason),
-            completedAt: Value(DateTime.now()),
-          ),
-        );
+      ..where((tbl) => tbl.id.equals(jobId))).write(
+      DownloadJobsCompanion(
+        status: const Value('skipped'),
+        progress: const Value(1),
+        lastError: Value(reason),
+        completedAt: Value(DateTime.now()),
+      ),
+    );
   }
 
   Future<void> pauseJob(int jobId) async {
-    await (_db.update(_db.downloadJobs)
-          ..where((tbl) => tbl.id.equals(jobId)))
-        .write(const DownloadJobsCompanion(status: Value('paused')));
+    await (_db.update(_db.downloadJobs)..where(
+      (tbl) => tbl.id.equals(jobId),
+    )).write(const DownloadJobsCompanion(status: Value('paused')));
   }
 
   Future<void> resumeJob(int jobId) async {
-    await (_db.update(_db.downloadJobs)
-          ..where((tbl) => tbl.id.equals(jobId)))
-        .write(const DownloadJobsCompanion(status: Value('queued')));
+    await (_db.update(_db.downloadJobs)..where(
+      (tbl) => tbl.id.equals(jobId),
+    )).write(const DownloadJobsCompanion(status: Value('queued')));
   }
 
   Future<void> retryJob(int jobId) async {
     await (_db.update(_db.downloadJobs)
-          ..where((tbl) => tbl.id.equals(jobId)))
-        .write(
-          DownloadJobsCompanion(
-            status: const Value('queued'),
-            progress: const Value(0),
-            lastError: const Value.absent(),
-          ),
-        );
+      ..where((tbl) => tbl.id.equals(jobId))).write(
+      DownloadJobsCompanion(
+        status: const Value('queued'),
+        progress: const Value(0),
+        lastError: const Value.absent(),
+      ),
+    );
   }
 
   Future<void> incrementAttempts(int jobId) async {
-    final job = await (_db.select(_db.downloadJobs)
-          ..where((tbl) => tbl.id.equals(jobId)))
-        .getSingle();
-    await (_db.update(_db.downloadJobs)
-          ..where((tbl) => tbl.id.equals(jobId)))
-        .write(
-          DownloadJobsCompanion(attempts: Value(job.attempts + 1)),
-        );
+    final job =
+        await (_db.select(_db.downloadJobs)
+          ..where((tbl) => tbl.id.equals(jobId))).getSingle();
+    await (_db.update(_db.downloadJobs)..where(
+      (tbl) => tbl.id.equals(jobId),
+    )).write(DownloadJobsCompanion(attempts: Value(job.attempts + 1)));
   }
 
   Future<void> clearCompleted() async {
     await (_db.delete(_db.downloadJobs)
-          ..where((tbl) => tbl.status.equals('completed')))
-        .go();
+      ..where((tbl) => tbl.status.equals('completed'))).go();
   }
 
   Future<void> pauseAll() async {
-    await (_db.update(_db.downloadJobs)
-          ..where(
-            (tbl) => tbl.status.isIn([
-              'queued',
-              'running',
-              'merging',
-              'running_tool',
-              'exporting',
-            ]),
-          ))
-        .write(const DownloadJobsCompanion(status: Value('paused')));
+    await (_db.update(_db.downloadJobs)..where(
+      (tbl) => tbl.status.isIn([
+        'queued',
+        'running',
+        'merging',
+        'running_tool',
+        'exporting',
+      ]),
+    )).write(const DownloadJobsCompanion(status: Value('paused')));
   }
 
   Future<void> resumeAll() async {
-    await (_db.update(_db.downloadJobs)
-          ..where((tbl) => tbl.status.equals('paused')))
-        .write(const DownloadJobsCompanion(status: Value('queued')));
+    await (_db.update(_db.downloadJobs)..where(
+      (tbl) => tbl.status.equals('paused'),
+    )).write(const DownloadJobsCompanion(status: Value('queued')));
   }
 
   Future<void> resetRunningToQueued() async {
-    await (_db.update(_db.downloadJobs)
-          ..where((tbl) => tbl.status.isIn([
-                'running',
-                'merging',
-                'running_tool',
-                'exporting',
-              ])))
-        .write(const DownloadJobsCompanion(status: Value('queued')));
+    await (_db.update(_db.downloadJobs)..where(
+      (tbl) =>
+          tbl.status.isIn(['running', 'merging', 'running_tool', 'exporting']),
+    )).write(const DownloadJobsCompanion(status: Value('queued')));
   }
 }
 

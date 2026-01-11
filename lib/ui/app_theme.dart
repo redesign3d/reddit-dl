@@ -98,9 +98,7 @@ class AppTheme {
         labelStyle: textTheme.bodySmall?.copyWith(
           color: colors.mutedForeground,
         ),
-        hintStyle: textTheme.bodySmall?.copyWith(
-          color: colors.mutedForeground,
-        ),
+        hintStyle: textTheme.bodySmall?.copyWith(color: colors.mutedForeground),
         contentPadding: EdgeInsets.symmetric(
           horizontal: AppTokens.space.s12,
           vertical: AppTokens.space.s8,
@@ -131,8 +129,9 @@ class AppTheme {
         backgroundColor: colors.muted,
         selectedColor: colors.secondary,
         labelStyle: textTheme.bodySmall?.copyWith(color: colors.foreground),
-        secondaryLabelStyle:
-            textTheme.bodySmall?.copyWith(color: colors.secondaryForeground),
+        secondaryLabelStyle: textTheme.bodySmall?.copyWith(
+          color: colors.secondaryForeground,
+        ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppTokens.radii.lg),
           side: BorderSide(color: colors.border),
@@ -161,9 +160,7 @@ class AppTheme {
         color: colors.primary,
         linearTrackColor: colors.muted,
       ),
-      iconTheme: IconThemeData(
-        color: colors.foreground,
-      ),
+      iconTheme: IconThemeData(color: colors.foreground),
     );
   }
 }

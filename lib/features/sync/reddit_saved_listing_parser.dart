@@ -4,20 +4,14 @@ import 'package:html/parser.dart' as html_parser;
 import 'permalink_utils.dart';
 
 class SavedListingItem {
-  const SavedListingItem({
-    required this.permalink,
-    required this.kindHint,
-  });
+  const SavedListingItem({required this.permalink, required this.kindHint});
 
   final String permalink;
   final ListingKindHint kindHint;
 }
 
 class SavedListingPage {
-  const SavedListingPage({
-    required this.items,
-    required this.nextPage,
-  });
+  const SavedListingPage({required this.items, required this.nextPage});
 
   final List<SavedListingItem> items;
   final String? nextPage;
@@ -33,7 +27,8 @@ class RedditSavedListingParser {
     final seen = <String>{};
 
     for (final thing in things) {
-      final rawPermalink = thing.attributes['data-permalink'] ??
+      final rawPermalink =
+          thing.attributes['data-permalink'] ??
           thing.querySelector('a.comments')?.attributes['href'] ??
           thing.querySelector('a.bylink')?.attributes['href'] ??
           thing.querySelector('a.title')?.attributes['href'] ??
@@ -43,10 +38,12 @@ class RedditSavedListingParser {
         continue;
       }
       seen.add(permalink);
-      items.add(SavedListingItem(
-        permalink: permalink,
-        kindHint: _inferKind(thing.attributes),
-      ));
+      items.add(
+        SavedListingItem(
+          permalink: permalink,
+          kindHint: _inferKind(thing.attributes),
+        ),
+      );
     }
 
     final nextLink = document.querySelector('span.next-button a');
@@ -58,8 +55,9 @@ class RedditSavedListingParser {
 
   String? parseUsername(String html) {
     final document = html_parser.parse(html);
-    final headerAnchor =
-        document.querySelector('#header-bottom-right a[href*="/user/"]');
+    final headerAnchor = document.querySelector(
+      '#header-bottom-right a[href*="/user/"]',
+    );
     final username = _usernameFromAnchor(headerAnchor);
     if (username != null) {
       return username;

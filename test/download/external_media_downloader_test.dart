@@ -83,10 +83,7 @@ MediaAsset _externalAsset({required String toolHint}) {
 
 class FakeToolDetector extends ToolDetector {
   @override
-  Future<ToolInfo> detect(
-    String name, {
-    String? overridePath,
-  }) async {
+  Future<ToolInfo> detect(String name, {String? overridePath}) async {
     return ToolInfo(
       name: name,
       path: '/usr/bin/$name',
@@ -99,8 +96,8 @@ class FakeToolDetector extends ToolDetector {
 
 class FakeToolRunner extends ExternalToolRunner {
   FakeToolRunner({this.exitCode = 0})
-      : _db = AppDatabase.inMemory(),
-        super(LogsRepository(_db));
+    : _db = AppDatabase.inMemory(),
+      super(LogsRepository(_db));
 
   final int exitCode;
   List<String>? lastArgs;

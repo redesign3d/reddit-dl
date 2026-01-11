@@ -21,9 +21,9 @@ class HttpMediaDownloader {
     void Function(Headers headers)? onHeaders,
     CancelToken? cancelToken,
   }) async {
-    final url = Uri.parse(asset.normalizedUrl.isNotEmpty
-        ? asset.normalizedUrl
-        : asset.sourceUrl);
+    final url = Uri.parse(
+      asset.normalizedUrl.isNotEmpty ? asset.normalizedUrl : asset.sourceUrl,
+    );
 
     final decision = await _policyEvaluator.evaluate(targetFile, url, policy);
     if (!decision.shouldDownload) {
@@ -50,11 +50,9 @@ class HttpMediaDownloader {
 
     final status = response.statusCode ?? 0;
     if (status == 429) {
-      final retryAfter =
-          response.headers.value(HttpHeaders.retryAfterHeader);
+      final retryAfter = response.headers.value(HttpHeaders.retryAfterHeader);
       throw DownloadRateLimitException(
-        retryAfterSeconds:
-            retryAfter == null ? null : int.tryParse(retryAfter),
+        retryAfterSeconds: retryAfter == null ? null : int.tryParse(retryAfter),
       );
     }
     if (status >= 500) {
@@ -83,7 +81,10 @@ class HttpMediaDownloader {
 
     final body = response.data;
     if (body == null) {
-      return MediaDownloadResult.failed('Empty response body.', targetFile.path);
+      return MediaDownloadResult.failed(
+        'Empty response body.',
+        targetFile.path,
+      );
     }
 
     final total = body.contentLength;

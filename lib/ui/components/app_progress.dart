@@ -3,11 +3,7 @@ import 'package:flutter/material.dart';
 import '../tokens.dart';
 
 class AppProgress extends StatelessWidget {
-  const AppProgress({
-    super.key,
-    required this.progress,
-    this.label,
-  });
+  const AppProgress({super.key, required this.progress, this.label});
 
   final double progress;
   final String? label;
@@ -22,10 +18,9 @@ class AppProgress extends StatelessWidget {
         if (label != null)
           Text(
             label!,
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(color: colors.mutedForeground),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: colors.mutedForeground),
           ),
         SizedBox(height: AppTokens.space.s6),
         ClipRRect(
@@ -36,7 +31,10 @@ class AppProgress extends StatelessWidget {
           ),
         ),
         SizedBox(height: AppTokens.space.s6),
-        Text('$percent% complete', style: Theme.of(context).textTheme.bodySmall),
+        Text(
+          '$percent% complete',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
       ],
     );
   }

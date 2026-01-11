@@ -24,10 +24,7 @@ void main() {
     final engine = PathTemplateEngine(settings);
     final exporter = TextPostMarkdownExporter();
 
-    final item = _buildItem(
-      kind: 'post',
-      bodyMarkdown: 'Hello **world**',
-    );
+    final item = _buildItem(kind: 'post', bodyMarkdown: 'Hello **world**');
 
     final result = await exporter.export(
       item: item,
@@ -51,10 +48,7 @@ void main() {
     final engine = PathTemplateEngine(settings);
     final exporter = SavedCommentMarkdownExporter();
 
-    final item = _buildItem(
-      kind: 'comment',
-      bodyMarkdown: 'Saved comment',
-    );
+    final item = _buildItem(kind: 'comment', bodyMarkdown: 'Saved comment');
 
     final result = await exporter.export(
       item: item,
@@ -85,10 +79,7 @@ void main() {
         'https://www.reddit.com/r/test/comments/abc/title.json?sort=best&raw_json=1';
     adapter.onGet(
       url,
-      (server) => server.reply(
-        200,
-        jsonDecode(_threadCommentsJson),
-      ),
+      (server) => server.reply(200, jsonDecode(_threadCommentsJson)),
     );
 
     final item = _buildItem(kind: 'post');
@@ -106,10 +97,7 @@ void main() {
   });
 }
 
-SavedItem _buildItem({
-  required String kind,
-  String? bodyMarkdown,
-}) {
+SavedItem _buildItem({required String kind, String? bodyMarkdown}) {
   return SavedItem(
     id: 1,
     permalink: 'https://www.reddit.com/r/test/comments/abc/title',
