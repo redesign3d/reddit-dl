@@ -52,15 +52,36 @@ class App extends StatefulWidget {
 
 class _AppState extends State<App> {
   late final AppDatabase _database;
+  late final SettingsRepository _settingsRepository;
+  late final LogsRepository _logsRepository;
+  late final QueueRepository _queueRepository;
+  late final SessionRepository _sessionRepository;
+  late final DownloadTelemetry _downloadTelemetry;
+  late final DownloadScheduler _downloadScheduler;
 
   @override
   void initState() {
     super.initState();
     _database = widget.database ?? AppDatabase();
+    _settingsRepository = SettingsRepository(_database);
+    _logsRepository = LogsRepository(_database);
+    _queueRepository = QueueRepository(_database);
+    _sessionRepository = SessionRepository();
+    _downloadTelemetry = DownloadTelemetry();
+    _downloadScheduler = DownloadScheduler(
+      queueRepository: _queueRepository,
+      settingsRepository: _settingsRepository,
+      logsRepository: _logsRepository,
+      sessionRepository: _sessionRepository,
+      telemetry: _downloadTelemetry,
+    );
+    _downloadScheduler.start();
   }
 
   @override
   void dispose() {
+    _downloadScheduler.dispose();
+    _downloadTelemetry.dispose();
     _database.close();
     super.dispose();
   }
@@ -70,13 +91,8 @@ class _AppState extends State<App> {
     return MultiRepositoryProvider(
       providers: [
         RepositoryProvider.value(value: _database),
-        RepositoryProvider(
-          create: (context) =>
-              SettingsRepository(context.read<AppDatabase>()),
-        ),
-        RepositoryProvider(
-          create: (context) => LogsRepository(context.read<AppDatabase>()),
-        ),
+        RepositoryProvider.value(value: _settingsRepository),
+        RepositoryProvider.value(value: _logsRepository),
         RepositoryProvider(
           create: (context) =>
               ImportRepository(context.read<AppDatabase>(), ZipImportParser()),
@@ -85,10 +101,8 @@ class _AppState extends State<App> {
           create: (context) =>
               LibraryRepository(context.read<AppDatabase>()),
         ),
-        RepositoryProvider(
-          create: (context) => QueueRepository(context.read<AppDatabase>()),
-        ),
-        RepositoryProvider(create: (_) => SessionRepository()),
+        RepositoryProvider.value(value: _queueRepository),
+        RepositoryProvider.value(value: _sessionRepository),
         RepositoryProvider(
           create: (context) => SyncRepository(context.read<AppDatabase>()),
         ),
@@ -98,22 +112,7 @@ class _AppState extends State<App> {
           create: (context) =>
               ExternalToolRunner(context.read<LogsRepository>()),
         ),
-        RepositoryProvider(create: (_) => DownloadTelemetry()),
-        RepositoryProvider(
-          lazy: false,
-          create: (context) {
-            final scheduler = DownloadScheduler(
-              queueRepository: context.read<QueueRepository>(),
-              settingsRepository: context.read<SettingsRepository>(),
-              logsRepository: context.read<LogsRepository>(),
-              sessionRepository: context.read<SessionRepository>(),
-              telemetry: context.read<DownloadTelemetry>(),
-            );
-            scheduler.start();
-            return scheduler;
-          },
-          dispose: (_, scheduler) => scheduler.dispose(),
-        ),
+        RepositoryProvider.value(value: _downloadTelemetry),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -314,6 +313,9 @@ class _AppShellState extends State<AppShell> {
             variant: AppButtonVariant.secondary,
             onPressed: () async {
               final logs = await context.read<LogsRepository>().fetchAll();
+              if (!context.mounted) {
+                return;
+              }
               final text = logs
                   .map((entry) =>
                       '${entry.timestamp.toIso8601String()} [${entry.level}] ${entry.scope}: ${entry.message}')
