@@ -1,0 +1,80 @@
+import 'dart:io';
+
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+
+import '../../data/session_repository.dart';
+
+class WebViewCookieBridge {
+  WebViewCookieBridge(this._sessionRepository);
+
+  final SessionRepository _sessionRepository;
+
+  Future<void> syncCookiesFromWebView() async {
+    final cookies = await CookieManager.instance().getCookies(
+      url: WebUri('https://old.reddit.com/'),
+    );
+    await _storeWebViewCookies(Uri.parse('https://old.reddit.com/'), cookies);
+
+    final wwwCookies = await CookieManager.instance().getCookies(
+      url: WebUri('https://www.reddit.com/'),
+    );
+    await _storeWebViewCookies(Uri.parse('https://www.reddit.com/'), wwwCookies);
+  }
+
+  Future<void> syncCookiesToWebView() async {
+    await _applyCookies(Uri.parse('https://old.reddit.com/'));
+    await _applyCookies(Uri.parse('https://www.reddit.com/'));
+  }
+
+  Future<void> clearWebViewCookies() async {
+    await CookieManager.instance().deleteAllCookies();
+  }
+
+  Future<void> _storeWebViewCookies(
+    Uri url,
+    List<Cookie> cookies,
+  ) async {
+    if (cookies.isEmpty) {
+      return;
+    }
+    final ioCookies = cookies.map(_toIoCookie).toList();
+    await _sessionRepository.storeCookies(url, ioCookies);
+  }
+
+  Cookie _toIoCookie(Cookie cookie) {
+    final ioCookie = Cookie(cookie.name, cookie.value);
+    if (cookie.domain != null) {
+      ioCookie.domain = cookie.domain;
+    }
+    if (cookie.path != null) {
+      ioCookie.path = cookie.path;
+    }
+    if (cookie.expiresDate != null) {
+      ioCookie.expires =
+          DateTime.fromMillisecondsSinceEpoch(cookie.expiresDate!);
+    }
+    if (cookie.isHttpOnly != null) {
+      ioCookie.httpOnly = cookie.isHttpOnly!;
+    }
+    if (cookie.isSecure != null) {
+      ioCookie.secure = cookie.isSecure!;
+    }
+    return ioCookie;
+  }
+
+  Future<void> _applyCookies(Uri url) async {
+    final cookies = await _sessionRepository.loadCookies(url);
+    for (final cookie in cookies) {
+      await CookieManager.instance().setCookie(
+        url: WebUri(url.toString()),
+        name: cookie.name,
+        value: cookie.value,
+        domain: cookie.domain.isNotEmpty ? cookie.domain : null,
+        path: cookie.path,
+        expiresDate: cookie.expires?.millisecondsSinceEpoch,
+        isSecure: cookie.secure,
+        isHttpOnly: cookie.httpOnly,
+      );
+    }
+  }
+}
