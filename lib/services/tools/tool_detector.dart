@@ -81,7 +81,9 @@ class ToolDetector {
     if (result.exitCode != 0) {
       return null;
     }
-    final output = (result.stdout as String).trim();
+    final stdout = (result.stdout as String).trim();
+    final stderr = (result.stderr as String).trim();
+    final output = stdout.isNotEmpty ? stdout : stderr;
     if (output.isEmpty) {
       return null;
     }
