@@ -54,6 +54,8 @@ enum OverwritePolicy { skipIfExists, overwriteIfNewer }
 
 enum MediaLayoutMode { flat, folderPerMedia }
 
+enum CommentSort { best, new, top, controversial }
+
 class AppSettings {
   const AppSettings({
     required this.downloadRoot,
@@ -70,6 +72,12 @@ class AppSettings {
     required this.maxDownloadAttempts,
     required this.galleryDlPathOverride,
     required this.ytDlpPathOverride,
+    required this.exportTextPosts,
+    required this.exportSavedComments,
+    required this.exportPostComments,
+    required this.postCommentsMaxCount,
+    required this.postCommentsSort,
+    required this.postCommentsTimeframeDays,
   });
 
   static const int storageId = 1;
@@ -88,6 +96,12 @@ class AppSettings {
   final int maxDownloadAttempts;
   final String galleryDlPathOverride;
   final String ytDlpPathOverride;
+  final bool exportTextPosts;
+  final bool exportSavedComments;
+  final bool exportPostComments;
+  final int? postCommentsMaxCount;
+  final CommentSort postCommentsSort;
+  final int? postCommentsTimeframeDays;
 
   static AppSettings defaults() {
     return const AppSettings(
@@ -106,6 +120,12 @@ class AppSettings {
       maxDownloadAttempts: 5,
       galleryDlPathOverride: '',
       ytDlpPathOverride: '',
+      exportTextPosts: false,
+      exportSavedComments: false,
+      exportPostComments: false,
+      postCommentsMaxCount: null,
+      postCommentsSort: CommentSort.best,
+      postCommentsTimeframeDays: null,
     );
   }
 
@@ -124,6 +144,12 @@ class AppSettings {
     int? maxDownloadAttempts,
     String? galleryDlPathOverride,
     String? ytDlpPathOverride,
+    bool? exportTextPosts,
+    bool? exportSavedComments,
+    bool? exportPostComments,
+    int? postCommentsMaxCount,
+    CommentSort? postCommentsSort,
+    int? postCommentsTimeframeDays,
   }) {
     return AppSettings(
       downloadRoot: downloadRoot ?? this.downloadRoot,
@@ -140,6 +166,13 @@ class AppSettings {
       maxDownloadAttempts: maxDownloadAttempts ?? this.maxDownloadAttempts,
       galleryDlPathOverride: galleryDlPathOverride ?? this.galleryDlPathOverride,
       ytDlpPathOverride: ytDlpPathOverride ?? this.ytDlpPathOverride,
+      exportTextPosts: exportTextPosts ?? this.exportTextPosts,
+      exportSavedComments: exportSavedComments ?? this.exportSavedComments,
+      exportPostComments: exportPostComments ?? this.exportPostComments,
+      postCommentsMaxCount: postCommentsMaxCount ?? this.postCommentsMaxCount,
+      postCommentsSort: postCommentsSort ?? this.postCommentsSort,
+      postCommentsTimeframeDays:
+          postCommentsTimeframeDays ?? this.postCommentsTimeframeDays,
     );
   }
 
@@ -159,6 +192,12 @@ class AppSettings {
       'maxDownloadAttempts': maxDownloadAttempts,
       'galleryDlPathOverride': galleryDlPathOverride,
       'ytDlpPathOverride': ytDlpPathOverride,
+      'exportTextPosts': exportTextPosts,
+      'exportSavedComments': exportSavedComments,
+      'exportPostComments': exportPostComments,
+      'postCommentsMaxCount': postCommentsMaxCount,
+      'postCommentsSort': postCommentsSort.name,
+      'postCommentsTimeframeDays': postCommentsTimeframeDays,
     };
   }
 
@@ -183,6 +222,14 @@ class AppSettings {
       maxDownloadAttempts: json['maxDownloadAttempts'] as int? ?? 5,
       galleryDlPathOverride: json['galleryDlPathOverride'] as String? ?? '',
       ytDlpPathOverride: json['ytDlpPathOverride'] as String? ?? '',
+      exportTextPosts: json['exportTextPosts'] as bool? ?? false,
+      exportSavedComments: json['exportSavedComments'] as bool? ?? false,
+      exportPostComments: json['exportPostComments'] as bool? ?? false,
+      postCommentsMaxCount: json['postCommentsMaxCount'] as int?,
+      postCommentsSort: _parseCommentSort(
+        json['postCommentsSort'] as String?,
+      ),
+      postCommentsTimeframeDays: json['postCommentsTimeframeDays'] as int?,
     );
   }
 
@@ -223,5 +270,19 @@ MediaLayoutMode _parseMediaLayoutMode(String? value) {
     case 'flat':
     default:
       return MediaLayoutMode.flat;
+  }
+}
+
+CommentSort _parseCommentSort(String? value) {
+  switch (value) {
+    case 'new':
+      return CommentSort.new;
+    case 'top':
+      return CommentSort.top;
+    case 'controversial':
+      return CommentSort.controversial;
+    case 'best':
+    default:
+      return CommentSort.best;
   }
 }
