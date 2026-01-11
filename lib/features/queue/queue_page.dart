@@ -28,6 +28,8 @@ class QueuePage extends StatelessWidget {
         final failed = state.items
             .where((item) => item.job.status == 'failed')
             .length;
+        final remaining = state.rateLimitRemaining;
+        final resetAt = state.rateLimitResetAt;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -63,12 +65,22 @@ class QueuePage extends StatelessWidget {
                             style: Theme.of(context).textTheme.titleLarge),
                         SizedBox(height: AppTokens.space.s6),
                         Text(
-                          'Safe mode • 2 concurrency',
+                          'Rate limit: ${state.rateLimitPerMinute}/min • Concurrency: ${state.concurrency}',
                           style: Theme.of(context)
                               .textTheme
                               .bodySmall
                               ?.copyWith(color: colors.mutedForeground),
                         ),
+                        if (remaining != null || resetAt != null) ...[
+                          SizedBox(height: AppTokens.space.s6),
+                          Text(
+                            _formatRateLimit(remaining, resetAt),
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(color: colors.mutedForeground),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -147,6 +159,8 @@ class _QueueItemCard extends StatelessWidget {
     final isQueued = status == 'queued';
     final isPaused = status == 'paused';
     final isFailed = status == 'failed';
+    final isSkipped = status == 'skipped';
+    final isCompleted = status == 'completed';
 
     return GestureDetector(
       onSecondaryTapDown: (details) async {
@@ -174,8 +188,10 @@ class _QueueItemCard extends StatelessWidget {
           AppToast.show(context, 'Retry queued.');
         }
         if (selection == 'reveal') {
-          final success =
-              await revealInFileManager(Directory.systemTemp.path);
+          final path = item.job.outputPath.isEmpty
+              ? Directory.systemTemp.path
+              : item.job.outputPath;
+          final success = await revealInFileManager(path);
           if (!context.mounted) {
             return;
           }
@@ -243,7 +259,7 @@ class _QueueItemCard extends StatelessWidget {
               children: [
                 AppChip(
                   label: status.toUpperCase(),
-                  selected: status == 'running',
+                  selected: status == 'running' || status == 'completed',
                   onSelected: (_) {},
                 ),
                 if (item.job.lastError != null)
@@ -259,15 +275,54 @@ class _QueueItemCard extends StatelessWidget {
             SizedBox(height: AppTokens.space.s12),
             AppProgress(
               progress: item.job.progress,
-              label: isQueued
-                  ? 'Downloader not implemented yet'
-                  : isFailed
-                      ? 'Download stalled'
-                      : 'Download progress',
+              label: _statusLabel(
+                isQueued: isQueued,
+                isPaused: isPaused,
+                isFailed: isFailed,
+                isSkipped: isSkipped,
+                isCompleted: isCompleted,
+              ),
             ),
           ],
         ),
       ),
     );
   }
+}
+
+String _statusLabel({
+  required bool isQueued,
+  required bool isPaused,
+  required bool isFailed,
+  required bool isSkipped,
+  required bool isCompleted,
+}) {
+  if (isQueued) {
+    return 'Queued';
+  }
+  if (isPaused) {
+    return 'Paused';
+  }
+  if (isFailed) {
+    return 'Failed';
+  }
+  if (isSkipped) {
+    return 'Skipped';
+  }
+  if (isCompleted) {
+    return 'Completed';
+  }
+  return 'Downloading';
+}
+
+String _formatRateLimit(double? remaining, DateTime? resetAt) {
+  final parts = <String>[];
+  if (remaining != null) {
+    parts.add('Remaining: ${remaining.toStringAsFixed(1)}');
+  }
+  if (resetAt != null) {
+    final local = resetAt.toLocal();
+    parts.add('Resets: ${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}');
+  }
+  return parts.join(' • ');
 }
