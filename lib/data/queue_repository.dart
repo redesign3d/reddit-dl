@@ -155,9 +155,6 @@ class QueueRepository {
   }
 
   Future<void> retryJob(int jobId) async {
-    final job = await (_db.select(_db.downloadJobs)
-          ..where((tbl) => tbl.id.equals(jobId)))
-        .getSingle();
     await (_db.update(_db.downloadJobs)
           ..where((tbl) => tbl.id.equals(jobId)))
         .write(
@@ -165,8 +162,18 @@ class QueueRepository {
             status: const Value('queued'),
             progress: const Value(0),
             lastError: const Value.absent(),
-            attempts: Value(job.attempts + 1),
           ),
+        );
+  }
+
+  Future<void> incrementAttempts(int jobId) async {
+    final job = await (_db.select(_db.downloadJobs)
+          ..where((tbl) => tbl.id.equals(jobId)))
+        .getSingle();
+    await (_db.update(_db.downloadJobs)
+          ..where((tbl) => tbl.id.equals(jobId)))
+        .write(
+          DownloadJobsCompanion(attempts: Value(job.attempts + 1)),
         );
   }
 
