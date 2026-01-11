@@ -35,9 +35,10 @@ class RedditJsonResolver {
   Future<ResolvedItem> resolve(
     String permalink, {
     ListingKindHint hint = ListingKindHint.unknown,
+    CancelToken? cancelToken,
   }) async {
     final url = _jsonUrlFor(permalink);
-    final response = await _dio.get<dynamic>(url);
+    final response = await _dio.get<dynamic>(url, cancelToken: cancelToken);
     final status = response.statusCode ?? 0;
     if (status == 429) {
       final retryAfter = _retryAfter(response.headers);

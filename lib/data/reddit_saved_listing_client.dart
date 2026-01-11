@@ -29,8 +29,11 @@ class RedditSavedListingClient {
   final Dio _dio;
   final RedditSavedListingParser _parser;
 
-  Future<SessionCheckResult> checkSession() async {
-    final response = await _dio.get<String>('https://old.reddit.com/');
+  Future<SessionCheckResult> checkSession({CancelToken? cancelToken}) async {
+    final response = await _dio.get<String>(
+      'https://old.reddit.com/',
+      cancelToken: cancelToken,
+    );
     final html = response.data ?? '';
     final username = _parser.parseUsername(html);
     return SessionCheckResult(
@@ -42,9 +45,13 @@ class RedditSavedListingClient {
   Future<SavedListingPage> fetchSavedPage({
     required String username,
     String? url,
+    CancelToken? cancelToken,
   }) async {
     final target = url ?? 'https://old.reddit.com/user/$username/saved/';
-    final response = await _dio.get<String>(target);
+    final response = await _dio.get<String>(
+      target,
+      cancelToken: cancelToken,
+    );
     final status = response.statusCode ?? 0;
     if (status == 429) {
       final retryAfter = _retryAfter(response.headers);
