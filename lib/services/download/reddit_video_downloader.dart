@@ -48,37 +48,63 @@ class RedditVideoDownloader {
     }
 
     final dashUrl = _stringValue(metadata['dash_url']);
-    if (dashUrl == null || dashUrl.isEmpty) {
+    final resolvedTarget = _ensureMp4Extension(targetFile);
+    try {
+      if (dashUrl != null && dashUrl.isNotEmpty) {
+        final decision = await _policyEvaluator.evaluate(
+          resolvedTarget,
+          Uri.parse(dashUrl),
+          policy,
+        );
+        if (!decision.shouldDownload) {
+          return MediaDownloadResult.skipped(
+            decision.reason.isEmpty ? 'Skipped by policy.' : decision.reason,
+            resolvedTarget.path,
+          );
+        }
+        return await _downloadFromDash(
+          dashUrl: dashUrl,
+          targetFile: resolvedTarget,
+          cancelToken: cancelToken,
+          onProgress: onProgress,
+          log: log,
+        );
+      }
+
+      final audioUrl = await _resolveAudioUrl(
+        fallbackUrl,
+        cancelToken: cancelToken,
+      );
+      if (audioUrl != null) {
+        final decision = await _policyEvaluator.evaluate(
+          resolvedTarget,
+          Uri.parse(fallbackUrl),
+          policy,
+        );
+        if (!decision.shouldDownload) {
+          return MediaDownloadResult.skipped(
+            decision.reason.isEmpty ? 'Skipped by policy.' : decision.reason,
+            resolvedTarget.path,
+          );
+        }
+        return await _downloadAndMerge(
+          videoUrl: Uri.parse(fallbackUrl),
+          audioUrl: audioUrl,
+          targetFile: resolvedTarget,
+          cancelToken: cancelToken,
+          onHeaders: onHeaders,
+          onProgress: onProgress,
+          log: log,
+        );
+      }
+
       return _httpDownloader.download(
         asset: asset,
-        targetFile: targetFile,
+        targetFile: resolvedTarget,
         policy: policy,
         cancelToken: cancelToken,
         onHeaders: onHeaders,
         onProgress: onProgress,
-      );
-    }
-
-    final resolvedTarget = _ensureMp4Extension(targetFile);
-    final decision = await _policyEvaluator.evaluate(
-      resolvedTarget,
-      Uri.parse(dashUrl),
-      policy,
-    );
-    if (!decision.shouldDownload) {
-      return MediaDownloadResult.skipped(
-        decision.reason.isEmpty ? 'Skipped by policy.' : decision.reason,
-        resolvedTarget.path,
-      );
-    }
-
-    try {
-      return await _downloadFromDash(
-        dashUrl: dashUrl,
-        targetFile: resolvedTarget,
-        cancelToken: cancelToken,
-        onProgress: onProgress,
-        log: log,
       );
     } on DownloadClientException catch (error) {
       return MediaDownloadResult.failed(error.message, resolvedTarget.path);
@@ -123,6 +149,160 @@ class RedditVideoDownloader {
     await tempFile.rename(targetFile.path);
     onProgress(1);
     return MediaDownloadResult.completed(targetFile.path);
+  }
+
+  Future<MediaDownloadResult> _downloadAndMerge({
+    required Uri videoUrl,
+    required Uri audioUrl,
+    required File targetFile,
+    required void Function(double progress) onProgress,
+    void Function(Headers headers)? onHeaders,
+    CancelToken? cancelToken,
+    DownloadLog? log,
+  }) async {
+    await _ensureParent(targetFile);
+
+    final baseName = p.basenameWithoutExtension(targetFile.path);
+    final videoFile = File(
+      p.join(targetFile.parent.path, '${baseName}_video.mp4'),
+    );
+    final audioFile = File(
+      p.join(targetFile.parent.path, '${baseName}_audio.m4a'),
+    );
+
+    await log?.call('info', 'Downloading video stream.');
+    await _downloadStream(
+      url: videoUrl,
+      targetFile: videoFile,
+      cancelToken: cancelToken,
+      onHeaders: onHeaders,
+      onProgress: (progress) => onProgress(progress * 0.5),
+    );
+
+    await log?.call('info', 'Downloading audio stream.');
+    await _downloadStream(
+      url: audioUrl,
+      targetFile: audioFile,
+      cancelToken: cancelToken,
+      onProgress: (progress) => onProgress(0.5 + progress * 0.5),
+    );
+
+    final ffmpegPath = await _ensureFfmpeg(log);
+    final tempPath = '${targetFile.path}.part';
+    final tempFile = File(tempPath);
+    if (await tempFile.exists()) {
+      await tempFile.delete();
+    }
+
+    await log?.call('info', 'Merging video and audio.');
+    final args = buildMergeArgs(
+      videoPath: videoFile.path,
+      audioPath: audioFile.path,
+      outputPath: tempFile.path,
+    );
+    final result = await _ffmpegExecutor.run(
+      ffmpegPath: ffmpegPath,
+      args: args,
+      cancelToken: cancelToken,
+      onStdout: (line) => log?.call('info', line),
+      onStderr: (line) => log?.call('warn', line),
+    );
+    if (!result.isSuccess) {
+      return MediaDownloadResult.failed(
+        'ffmpeg failed with exit code ${result.exitCode}.',
+        targetFile.path,
+      );
+    }
+
+    if (await targetFile.exists()) {
+      await targetFile.delete();
+    }
+    await tempFile.rename(targetFile.path);
+    onProgress(1);
+
+    await _cleanupTemp(videoFile);
+    await _cleanupTemp(audioFile);
+    return MediaDownloadResult.completed(targetFile.path);
+  }
+
+  Future<void> _downloadStream({
+    required Uri url,
+    required File targetFile,
+    required void Function(double progress) onProgress,
+    CancelToken? cancelToken,
+    void Function(Headers headers)? onHeaders,
+  }) async {
+    await _ensureParent(targetFile);
+
+    final response = await _dio.get<ResponseBody>(
+      url.toString(),
+      options: Options(
+        responseType: ResponseType.stream,
+        followRedirects: true,
+        validateStatus: (status) => status != null && status < 500,
+      ),
+      cancelToken: cancelToken,
+    );
+
+    final status = response.statusCode ?? 0;
+    if (status == 429) {
+      final retryAfter =
+          response.headers.value(HttpHeaders.retryAfterHeader);
+      throw DownloadRateLimitException(
+        retryAfterSeconds:
+            retryAfter == null ? null : int.tryParse(retryAfter),
+      );
+    }
+    if (status >= 500) {
+      throw DownloadHttpException(statusCode: status);
+    }
+    if (status >= 400) {
+      throw DownloadClientException('HTTP $status while downloading.');
+    }
+
+    onHeaders?.call(response.headers);
+
+    final tempPath = '${targetFile.path}.part';
+    final tempFile = File(tempPath);
+    if (await tempFile.exists()) {
+      await tempFile.delete();
+    }
+
+    final body = response.data;
+    if (body == null) {
+      throw DownloadClientException('Empty response body.');
+    }
+
+    final total = body.contentLength;
+    var received = 0;
+    var lastUpdate = DateTime.fromMillisecondsSinceEpoch(0);
+
+    final sink = tempFile.openWrite();
+    try {
+      await for (final chunk in body.stream) {
+        sink.add(chunk);
+        received += chunk.length;
+        if (total > 0) {
+          final now = DateTime.now();
+          if (now.difference(lastUpdate).inMilliseconds > 250) {
+            onProgress(received / total);
+            lastUpdate = now;
+          }
+        }
+      }
+    } finally {
+      await sink.flush();
+      await sink.close();
+    }
+
+    if (total > 0) {
+      onProgress(1);
+    }
+
+    if (await targetFile.exists()) {
+      await targetFile.delete();
+    }
+    await tempFile.rename(targetFile.path);
   }
 
   Future<String> _ensureFfmpeg(DownloadLog? log) async {
@@ -190,6 +370,75 @@ class RedditVideoDownloader {
     }
   }
 
+  Future<void> _cleanupTemp(File file) async {
+    if (await file.exists()) {
+      await file.delete();
+    }
+    final part = File('${file.path}.part');
+    if (await part.exists()) {
+      await part.delete();
+    }
+  }
+
+  Future<Uri?> _resolveAudioUrl(
+    String fallbackUrl, {
+    CancelToken? cancelToken,
+  }) async {
+    final candidates = _audioCandidates(fallbackUrl);
+    if (candidates.isEmpty) {
+      return null;
+    }
+
+    for (final candidate in candidates) {
+      if (await _probeUrl(candidate, cancelToken: cancelToken)) {
+        return candidate;
+      }
+    }
+    return null;
+  }
+
+  List<Uri> _audioCandidates(String fallbackUrl) {
+    final uri = Uri.tryParse(fallbackUrl);
+    if (uri == null) {
+      return const [];
+    }
+    final match = RegExp(r'(.*)/DASH_[^/]+\\.mp4').firstMatch(uri.path);
+    if (match == null) {
+      return const [];
+    }
+    final base = match.group(1)!;
+    return [
+      uri.replace(path: '$base/DASH_audio.mp4', query: ''),
+      uri.replace(path: '$base/DASH_AUDIO_128.mp4', query: ''),
+    ];
+  }
+
+  Future<bool> _probeUrl(
+    Uri url, {
+    CancelToken? cancelToken,
+  }) async {
+    final response = await _dio.head<String>(
+      url.toString(),
+      options: Options(
+        validateStatus: (status) => status != null && status < 500,
+      ),
+      cancelToken: cancelToken,
+    );
+    final status = response.statusCode ?? 0;
+    if (status == 429) {
+      final retryAfter =
+          response.headers.value(HttpHeaders.retryAfterHeader);
+      throw DownloadRateLimitException(
+        retryAfterSeconds:
+            retryAfter == null ? null : int.tryParse(retryAfter),
+      );
+    }
+    if (status >= 400) {
+      return false;
+    }
+    return true;
+  }
+
   List<String> buildDashArgs({
     required String dashUrl,
     required String outputPath,
@@ -198,6 +447,23 @@ class RedditVideoDownloader {
       '-y',
       '-i',
       dashUrl,
+      '-c',
+      'copy',
+      outputPath,
+    ];
+  }
+
+  List<String> buildMergeArgs({
+    required String videoPath,
+    required String audioPath,
+    required String outputPath,
+  }) {
+    return [
+      '-y',
+      '-i',
+      videoPath,
+      '-i',
+      audioPath,
       '-c',
       'copy',
       outputPath,
