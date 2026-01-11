@@ -11,10 +11,13 @@ import '../../data/queue_repository.dart';
 import '../../data/session_repository.dart';
 import '../../data/settings_repository.dart';
 import '../../features/logs/log_record.dart';
+import '../ffmpeg_runtime_manager.dart';
 import '../path_template_engine.dart';
 import 'download_telemetry.dart';
+import 'ffmpeg_executor.dart';
 import 'http_media_downloader.dart';
 import 'overwrite_policy.dart';
+import 'reddit_video_downloader.dart';
 
 class DownloadScheduler {
   DownloadScheduler({
@@ -26,6 +29,9 @@ class DownloadScheduler {
     Dio? dio,
     OverwritePolicyEvaluator? policyEvaluator,
     HttpMediaDownloader? downloader,
+    RedditVideoDownloader? videoDownloader,
+    FfmpegRuntimeManager? ffmpegRuntimeManager,
+    FfmpegExecutor? ffmpegExecutor,
   })  : _queueRepository = queueRepository,
         _settingsRepository = settingsRepository,
         _logsRepository = logsRepository,
@@ -45,6 +51,14 @@ class DownloadScheduler {
     _dio.interceptors.add(CookieManager(_sessionRepository.cookieJar));
     _policyEvaluator = policyEvaluator ?? OverwritePolicyEvaluator(_dio);
     _downloader = downloader ?? HttpMediaDownloader(_dio, _policyEvaluator);
+    _videoDownloader = videoDownloader ??
+        RedditVideoDownloader(
+          dio: _dio,
+          policyEvaluator: _policyEvaluator,
+          httpDownloader: _downloader,
+          ffmpegRuntime: ffmpegRuntimeManager ?? FfmpegRuntimeManager(),
+          ffmpegExecutor: ffmpegExecutor ?? ProcessFfmpegExecutor(),
+        );
   }
 
   final QueueRepository _queueRepository;
@@ -56,6 +70,7 @@ class DownloadScheduler {
   late final Dio _dio;
   late final OverwritePolicyEvaluator _policyEvaluator;
   late final HttpMediaDownloader _downloader;
+  late final RedditVideoDownloader _videoDownloader;
 
   late AppSettings _settings;
   StreamSubscription<AppSettings>? _settingsSubscription;
@@ -204,13 +219,37 @@ class DownloadScheduler {
 
       try {
         final result = await _downloadWithRetry(
-          asset: asset,
-          targetFile: targetFile,
-          policy: _policyFromSnapshot(record.job.policySnapshot),
-          cancelToken: token,
-          onProgress: (progress) async {
-            final overall = (completed + progress) / assets.length;
-            await _queueRepository.updateJobProgress(jobId, overall);
+          action: () {
+            if (asset.type == 'video') {
+              return _videoDownloader.download(
+                asset: asset,
+                targetFile: targetFile,
+                policy: _policyFromSnapshot(record.job.policySnapshot),
+                cancelToken: token,
+                onHeaders: _telemetry.updateFromHeaders,
+                onProgress: (progress) async {
+                  final overall = (completed + progress) / assets.length;
+                  await _queueRepository.updateJobProgress(jobId, overall);
+                },
+                log: (level, message) => _log(
+                  jobId,
+                  'download',
+                  level,
+                  message,
+                ),
+              );
+            }
+            return _downloader.download(
+              asset: asset,
+              targetFile: targetFile,
+              policy: _policyFromSnapshot(record.job.policySnapshot),
+              cancelToken: token,
+              onHeaders: _telemetry.updateFromHeaders,
+              onProgress: (progress) async {
+                final overall = (completed + progress) / assets.length;
+                await _queueRepository.updateJobProgress(jobId, overall);
+              },
+            );
           },
         );
         if (result.isCompleted) {
@@ -260,24 +299,13 @@ class DownloadScheduler {
   }
 
   Future<MediaDownloadResult> _downloadWithRetry({
-    required MediaAsset asset,
-    required File targetFile,
-    required OverwritePolicy policy,
-    required CancelToken cancelToken,
-    required void Function(double progress) onProgress,
+    required Future<MediaDownloadResult> Function() action,
   }) async {
     var attempt = 0;
     const maxRetries = 3;
     while (true) {
       try {
-        return await _downloader.download(
-          asset: asset,
-          targetFile: targetFile,
-          policy: policy,
-          cancelToken: cancelToken,
-          onHeaders: _telemetry.updateFromHeaders,
-          onProgress: onProgress,
-        );
+        return await action();
       } on DownloadRateLimitException catch (error) {
         await _handleRateLimit(error);
       } on DownloadHttpException catch (error) {
@@ -347,12 +375,13 @@ class DownloadScheduler {
     String level,
     String message,
   ) async {
+    final prefix = jobId == null ? '' : '[job $jobId] ';
     await _logsRepository.add(
       LogRecord(
         timestamp: DateTime.now(),
         scope: scope,
         level: level,
-        message: message,
+        message: '$prefix$message',
       ),
     );
   }
