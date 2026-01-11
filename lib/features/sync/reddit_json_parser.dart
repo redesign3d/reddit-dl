@@ -266,7 +266,28 @@ class RedditJsonParser {
     final secureMedia = data['secure_media'];
     final video = _redditVideoFrom(media) ?? _redditVideoFrom(secureMedia);
     if (video != null) {
-      addAsset('video', video['fallback_url'] as String?);
+      final metadata = <String, dynamic>{};
+      final fallback = video['fallback_url'] as String?;
+      final dash = video['dash_url'] as String?;
+      final hls = video['hls_url'] as String?;
+      final isGif = video['is_gif'] as bool?;
+      if (fallback != null) {
+        metadata['fallback_url'] = fallback;
+      }
+      if (dash != null) {
+        metadata['dash_url'] = dash;
+      }
+      if (hls != null) {
+        metadata['hls_url'] = hls;
+      }
+      if (isGif != null) {
+        metadata['is_gif'] = isGif;
+      }
+      addAsset(
+        'video',
+        fallback,
+        metadata: metadata.isEmpty ? null : metadata,
+      );
     }
 
     return assets;
