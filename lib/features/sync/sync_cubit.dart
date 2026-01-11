@@ -197,7 +197,7 @@ class SyncCubit extends Cubit<SyncState> {
       ));
       return;
     }
-    if (state.username == null && sessionResult.username != null) {
+    if (!state.sessionValid || state.username == null) {
       emit(state.copyWith(
         username: sessionResult.username,
         sessionValid: true,
