@@ -115,12 +115,13 @@ class PathTemplateEngine {
       if (raw.isEmpty) {
         continue;
       }
+      final unsafeRaw = raw == '.' || raw == '..' || raw.contains('..');
       var segment = raw;
       tokens.forEach((key, value) {
         segment = segment.replaceAll('{$key}', value);
       });
       segment = _sanitizeSegment(segment);
-      if (segment == '.' || segment == '..' || segment.contains('..')) {
+      if (unsafeRaw || segment == '.' || segment == '..' || segment.contains('..')) {
         warnings.add('Template contained unsafe path segments.');
         segment = segment.replaceAll('..', '_');
       }
