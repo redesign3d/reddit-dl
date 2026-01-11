@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:dio/dio.dart';
+
 import '../../data/logs_repository.dart';
 import '../../features/logs/log_record.dart';
 import 'tool_detector.dart';
@@ -15,6 +17,7 @@ class ExternalToolRunner {
     required ToolInfo tool,
     required List<String> args,
     String? workingDirectory,
+    CancelToken? cancelToken,
   }) async {
     if (!tool.isAvailable || tool.path == null) {
       return ExternalToolResult(
@@ -29,6 +32,12 @@ class ExternalToolRunner {
       args,
       workingDirectory: workingDirectory,
       runInShell: Platform.isWindows,
+    );
+
+    unawaited(
+      cancelToken?.whenCancel.then((_) {
+        process.kill();
+      }),
     );
 
     final stdoutLines = <String>[];
@@ -65,6 +74,13 @@ class ExternalToolRunner {
     });
 
     final exitCode = await process.exitCode;
+    if (cancelToken?.isCancelled ?? false) {
+      throw DioException(
+        requestOptions: RequestOptions(path: tool.path!),
+        type: DioExceptionType.cancel,
+        message: 'Tool run cancelled.',
+      );
+    }
     await stdoutSubscription.cancel();
     await stderrSubscription.cancel();
 
