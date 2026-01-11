@@ -25,12 +25,48 @@ class SettingsCubit extends Cubit<SettingsState> {
     updateSettings(state.settings.copyWith(downloadRoot: value));
   }
 
+  void updateMediaPathTemplate(String value) {
+    updateSettings(state.settings.copyWith(mediaPathTemplate: value));
+  }
+
+  void updateMediaLayoutMode(MediaLayoutMode mode) {
+    updateSettings(state.settings.copyWith(mediaLayoutMode: mode));
+  }
+
+  void updateTextRoot(String value) {
+    updateSettings(state.settings.copyWith(textRoot: value));
+  }
+
+  void updateCommentsRoot(String value) {
+    updateSettings(state.settings.copyWith(commentsRoot: value));
+  }
+
   void updateOverwritePolicy(OverwritePolicy policy) {
     updateSettings(state.settings.copyWith(overwritePolicy: policy));
   }
 
+  void updateConcurrency(int value) {
+    updateSettings(state.settings.copyWith(concurrency: value));
+  }
+
+  void updateRateLimit(int value) {
+    updateSettings(state.settings.copyWith(rateLimitPerMinute: value));
+  }
+
+  void updateMaxDownloadAttempts(int value) {
+    updateSettings(state.settings.copyWith(maxDownloadAttempts: value));
+  }
+
   void updateDownloadNsfw(bool value) {
     updateSettings(state.settings.copyWith(downloadNsfw: value));
+  }
+
+  void updateGalleryDlPathOverride(String value) {
+    updateSettings(state.settings.copyWith(galleryDlPathOverride: value));
+  }
+
+  void updateYtDlpPathOverride(String value) {
+    updateSettings(state.settings.copyWith(ytDlpPathOverride: value));
   }
 
   void updateRememberSession(bool value) {
