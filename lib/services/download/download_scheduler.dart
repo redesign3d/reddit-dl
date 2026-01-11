@@ -21,13 +21,17 @@ class DownloadScheduler {
     required LogsRepository logsRepository,
     required SessionRepository sessionRepository,
     required DownloadTelemetry telemetry,
+    Dio? dio,
+    OverwritePolicyEvaluator? policyEvaluator,
+    HttpMediaDownloader? downloader,
   })  : _queueRepository = queueRepository,
         _settingsRepository = settingsRepository,
         _logsRepository = logsRepository,
         _sessionRepository = sessionRepository,
         _telemetry = telemetry {
     _settings = AppSettings.defaults();
-    _dio = Dio(
+    _dio = dio ??
+        Dio(
       BaseOptions(
         validateStatus: (status) => status != null && status < 500,
         headers: {
@@ -37,8 +41,8 @@ class DownloadScheduler {
       ),
     );
     _dio.interceptors.add(CookieManager(_sessionRepository.cookieJar));
-    _policyEvaluator = OverwritePolicyEvaluator(_dio);
-    _downloader = HttpMediaDownloader(_dio, _policyEvaluator);
+    _policyEvaluator = policyEvaluator ?? OverwritePolicyEvaluator(_dio);
+    _downloader = downloader ?? HttpMediaDownloader(_dio, _policyEvaluator);
   }
 
   final QueueRepository _queueRepository;
