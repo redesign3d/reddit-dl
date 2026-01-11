@@ -32,15 +32,35 @@ void main() {
     expect(result!.media.where((asset) => asset.type == 'gallery').length, 1);
   });
 
-  test('parses video post json', () {
-    final jsonData = jsonDecode(_videoJson);
+  test('parses video post json (fallback only)', () {
+    final jsonData = jsonDecode(_videoFallbackJson);
     final result = parser.parse(
       jsonData,
       permalink: 'https://www.reddit.com/r/test/comments/vid/video',
       hint: ListingKindHint.post,
     );
     expect(result, isNotNull);
-    expect(result!.media.where((asset) => asset.type == 'video').length, 1);
+    final assets = result!.media.where((asset) => asset.type == 'video').toList();
+    expect(assets.length, 1);
+    expect(assets.first.metadata?['fallback_url'],
+        'https://v.redd.it/video/DASH_720.mp4');
+    expect(assets.first.metadata?['dash_url'], isNull);
+  });
+
+  test('parses video post json with dash manifest', () {
+    final jsonData = jsonDecode(_videoDashJson);
+    final result = parser.parse(
+      jsonData,
+      permalink: 'https://www.reddit.com/r/test/comments/vid/video',
+      hint: ListingKindHint.post,
+    );
+    expect(result, isNotNull);
+    final assets = result!.media.where((asset) => asset.type == 'video').toList();
+    expect(assets.length, 1);
+    expect(assets.first.metadata?['fallback_url'],
+        'https://v.redd.it/video/DASH_720.mp4');
+    expect(assets.first.metadata?['dash_url'],
+        'https://v.redd.it/video/DASHPlaylist.mpd');
   });
 }
 
@@ -102,7 +122,7 @@ const _galleryJson = '''
 ]
 ''';
 
-const _videoJson = '''
+const _videoFallbackJson = '''
 [
   {
     "data": {
@@ -118,6 +138,34 @@ const _videoJson = '''
             "media": {
               "reddit_video": {
                 "fallback_url": "https://v.redd.it/video/DASH_720.mp4"
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  { "data": { "children": [] } }
+]
+''';
+
+const _videoDashJson = '''
+[
+  {
+    "data": {
+      "children": [
+        {
+          "kind": "t3",
+          "data": {
+            "subreddit": "test",
+            "author": "charlie",
+            "created_utc": 1700000200,
+            "title": "Video",
+            "selftext": "",
+            "media": {
+              "reddit_video": {
+                "fallback_url": "https://v.redd.it/video/DASH_720.mp4",
+                "dash_url": "https://v.redd.it/video/DASHPlaylist.mpd"
               }
             }
           }
