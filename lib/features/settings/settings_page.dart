@@ -19,6 +19,7 @@ import '../../ui/tokens.dart';
 import '../../utils/reveal_in_file_manager.dart';
 import '../library/library_cubit.dart';
 import '../sync/sync_cubit.dart';
+import '../ffmpeg/ffmpeg_cubit.dart';
 import '../tools/tools_cubit.dart';
 import 'settings_cubit.dart';
 
@@ -606,6 +607,95 @@ class _SettingsPageState extends State<SettingsPage> {
                                 ?.copyWith(color: colors.destructive),
                           ),
                         ],
+                      ],
+                    ),
+                  );
+                },
+              ),
+              SizedBox(height: AppTokens.space.s16),
+              BlocBuilder<FfmpegCubit, FfmpegState>(
+                builder: (context, ffmpegState) {
+                  final statusText = ffmpegState.isInstalled
+                      ? 'Installed'
+                      : ffmpegState.isInstalling
+                          ? 'Installing...'
+                          : 'Not installed';
+                  return AppCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text('ffmpeg runtime',
+                                style: Theme.of(context).textTheme.titleLarge),
+                            const Spacer(),
+                            if (ffmpegState.isInstalling)
+                              const SizedBox(
+                                height: 16,
+                                width: 16,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                          ],
+                        ),
+                        SizedBox(height: AppTokens.space.s6),
+                        Text(
+                          statusText,
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(color: colors.mutedForeground),
+                        ),
+                        if (ffmpegState.ffmpegPath != null) ...[
+                          SizedBox(height: AppTokens.space.s6),
+                          Text(
+                            'ffmpeg: ${ffmpegState.ffmpegPath}',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(color: colors.mutedForeground),
+                          ),
+                        ],
+                        if (ffmpegState.ffprobePath != null) ...[
+                          SizedBox(height: AppTokens.space.s6),
+                          Text(
+                            'ffprobe: ${ffmpegState.ffprobePath}',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(color: colors.mutedForeground),
+                          ),
+                        ],
+                        if (ffmpegState.errorMessage != null) ...[
+                          SizedBox(height: AppTokens.space.s8),
+                          Text(
+                            ffmpegState.errorMessage!,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(color: colors.destructive),
+                          ),
+                        ],
+                        SizedBox(height: AppTokens.space.s12),
+                        Wrap(
+                          spacing: AppTokens.space.s8,
+                          runSpacing: AppTokens.space.s8,
+                          children: [
+                            AppButton(
+                              label: ffmpegState.isInstalling
+                                  ? 'Installing...'
+                                  : 'Install ffmpeg runtime',
+                              onPressed: ffmpegState.isInstalling
+                                  ? null
+                                  : () => context.read<FfmpegCubit>().install(),
+                            ),
+                            AppButton(
+                              label: 'Refresh status',
+                              variant: AppButtonVariant.secondary,
+                              onPressed: () =>
+                                  context.read<FfmpegCubit>().refresh(),
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   );

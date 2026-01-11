@@ -24,6 +24,7 @@ import 'features/settings/settings_page.dart';
 import 'features/sync/sync_cubit.dart';
 import 'features/sync/sync_page.dart';
 import 'features/tools/tools_cubit.dart';
+import 'features/ffmpeg/ffmpeg_cubit.dart';
 import 'navigation/app_section.dart';
 import 'navigation/navigation_cubit.dart';
 import 'ui/app_theme.dart';
@@ -31,6 +32,7 @@ import 'ui/components/app_button.dart';
 import 'ui/components/app_scaffold.dart';
 import 'services/download/download_scheduler.dart';
 import 'services/download/download_telemetry.dart';
+import 'services/ffmpeg_runtime_manager.dart';
 import 'services/tools/external_tool_runner.dart';
 import 'services/tools/tool_detector.dart';
 
@@ -85,6 +87,7 @@ class _AppState extends State<App> {
         RepositoryProvider(
           create: (context) => SyncRepository(context.read<AppDatabase>()),
         ),
+        RepositoryProvider(create: (_) => FfmpegRuntimeManager()),
         RepositoryProvider(create: (_) => ToolDetector()),
         RepositoryProvider(
           create: (context) =>
@@ -145,6 +148,12 @@ class _AppState extends State<App> {
               context.read<SettingsRepository>(),
               context.read<LogsRepository>(),
               context.read<ToolDetector>(),
+            ),
+          ),
+          BlocProvider(
+            create: (context) => FfmpegCubit(
+              context.read<FfmpegRuntimeManager>(),
+              context.read<LogsRepository>(),
             ),
           ),
         ],
