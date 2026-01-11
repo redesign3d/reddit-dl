@@ -168,6 +168,9 @@ class _QueueItemCard extends StatelessWidget {
         }
         if (selection == 'retry') {
           await context.read<QueueCubit>().retryJob(item.job.id);
+          if (!context.mounted) {
+            return;
+          }
           AppToast.show(context, 'Retry queued.');
         }
         if (selection == 'reveal') {

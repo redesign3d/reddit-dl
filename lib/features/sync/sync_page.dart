@@ -38,6 +38,9 @@ class _SyncPageState extends State<SyncPage> {
             message: 'Sync flow not implemented yet.',
           ),
         );
+    if (!context.mounted) {
+      return;
+    }
     setState(() {
       _lastSyncedAt = DateTime.now();
     });

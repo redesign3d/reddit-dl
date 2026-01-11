@@ -31,6 +31,7 @@ class AppSelect<T> extends StatelessWidget {
     final colors = context.appColors;
     return DropdownButtonFormField<T>(
       value: value,
+      isExpanded: true,
       decoration: InputDecoration(
         labelText: label,
         enabledBorder: OutlineInputBorder(

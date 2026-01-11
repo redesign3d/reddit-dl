@@ -29,6 +29,9 @@ class _ImportPageState extends State<ImportPage> {
     if (file == null) {
       return;
     }
+    if (!context.mounted) {
+      return;
+    }
     await _importFile(context, file.path, file.name);
   }
 
@@ -39,10 +42,16 @@ class _ImportPageState extends State<ImportPage> {
   ) async {
     try {
       final bytes = await File(path).readAsBytes();
+      if (!context.mounted) {
+        return;
+      }
       await context
           .read<ImportCubit>()
           .importZipBytes(bytes, filename: filename);
     } catch (error) {
+      if (!context.mounted) {
+        return;
+      }
       await context
           .read<ImportCubit>()
           .setError('Failed to read ZIP file: $error');
@@ -62,6 +71,9 @@ class _ImportPageState extends State<ImportPage> {
       return;
     }
     await _importFile(context, file.path, file.name);
+    if (!context.mounted) {
+      return;
+    }
     context.read<ImportCubit>().setDragging(false);
   }
 
