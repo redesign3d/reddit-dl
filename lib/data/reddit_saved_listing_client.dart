@@ -34,6 +34,14 @@ class RedditSavedListingClient {
       'https://old.reddit.com/',
       cancelToken: cancelToken,
     );
+    final status = response.statusCode ?? 0;
+    if (status == 429) {
+      final retryAfter = _retryAfter(response.headers);
+      throw RateLimitException(retryAfterSeconds: retryAfter);
+    }
+    if (status >= 400) {
+      throw RedditListingException('Session check failed ($status).');
+    }
     final html = response.data ?? '';
     final username = _parser.parseUsername(html);
     return SessionCheckResult(

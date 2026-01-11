@@ -63,53 +63,77 @@ class SyncCubit extends Cubit<SyncState> {
 
     final client =
         RedditSavedListingClient(cookieJar: _sessionRepository.cookieJar);
-    try {
-      final result = await client.checkSession();
-      if (!result.isValid) {
+    while (true) {
+      try {
+        final result = await client.checkSession();
+        if (!result.isValid) {
+          emit(state.copyWith(
+            phase: SyncPhase.error,
+            sessionValid: false,
+            errorMessage: 'Session invalid. Please log in again.',
+          ));
+          await _logs.add(
+            LogRecord(
+              timestamp: DateTime.now(),
+              scope: 'sync',
+              level: 'warn',
+              message: 'Session check failed.',
+            ),
+          );
+          return;
+        }
         emit(state.copyWith(
-          phase: SyncPhase.error,
-          sessionValid: false,
-          errorMessage: 'Session invalid. Please log in again.',
+          phase: SyncPhase.ready,
+          sessionValid: true,
+          loginVisible: false,
+          username: result.username,
+          errorMessage: null,
         ));
         await _logs.add(
           LogRecord(
             timestamp: DateTime.now(),
             scope: 'sync',
-            level: 'warn',
-            message: 'Session check failed.',
+            level: 'info',
+            message: 'Session validated for u/${result.username ?? 'unknown'}.',
+          ),
+        );
+        return;
+      } on RateLimitException catch (error) {
+        await _handleRateLimit(error);
+      } on DioException catch (error) {
+        if (CancelToken.isCancel(error)) {
+          return;
+        }
+        emit(state.copyWith(
+          phase: SyncPhase.error,
+          sessionValid: false,
+          errorMessage: 'Session check failed: $error',
+        ));
+        await _logs.add(
+          LogRecord(
+            timestamp: DateTime.now(),
+            scope: 'sync',
+            level: 'error',
+            message: 'Session check failed: $error',
+          ),
+        );
+        return;
+      } catch (error) {
+        emit(state.copyWith(
+          phase: SyncPhase.error,
+          sessionValid: false,
+          errorMessage: 'Session check failed: $error',
+        ));
+        await _logs.add(
+          LogRecord(
+            timestamp: DateTime.now(),
+            scope: 'sync',
+            level: 'error',
+            message: 'Session check failed: $error',
           ),
         );
         return;
       }
-      emit(state.copyWith(
-        phase: SyncPhase.ready,
-        sessionValid: true,
-        loginVisible: false,
-        username: result.username,
-        errorMessage: null,
-      ));
-      await _logs.add(
-        LogRecord(
-          timestamp: DateTime.now(),
-          scope: 'sync',
-          level: 'info',
-          message: 'Session validated for u/${result.username ?? 'unknown'}.',
-        ),
-      );
-    } catch (error) {
-      emit(state.copyWith(
-        phase: SyncPhase.error,
-        sessionValid: false,
-        errorMessage: 'Session check failed: $error',
-      ));
-      await _logs.add(
-        LogRecord(
-          timestamp: DateTime.now(),
-          scope: 'sync',
-          level: 'error',
-          message: 'Session check failed: $error',
-        ),
-      );
     }
   }
 
@@ -164,7 +188,23 @@ class SyncCubit extends Cubit<SyncState> {
     final resolver =
         RedditJsonResolver(cookieJar: _sessionRepository.cookieJar);
 
-    final effectiveUsername = _effectiveUsername();
+    final sessionResult = await _checkSessionWithRetry(client);
+    if (!sessionResult.isValid) {
+      emit(state.copyWith(
+        phase: SyncPhase.error,
+        sessionValid: false,
+        errorMessage: 'Session expired. Please log in again.',
+      ));
+      return;
+    }
+    if (state.username == null && sessionResult.username != null) {
+      emit(state.copyWith(
+        username: sessionResult.username,
+        sessionValid: true,
+      ));
+    }
+
+    final effectiveUsername = _effectiveUsername() ?? sessionResult.username;
     if (effectiveUsername == null || effectiveUsername.isEmpty) {
       emit(state.copyWith(
         phase: SyncPhase.error,
@@ -383,6 +423,24 @@ class SyncCubit extends Cubit<SyncState> {
           url: url,
           cancelToken: _cancelToken,
         );
+      } on RateLimitException catch (error) {
+        await _handleRateLimit(error);
+      } on DioException catch (error) {
+        if (CancelToken.isCancel(error)) {
+          throw SyncCancelledException();
+        }
+        rethrow;
+      }
+    }
+  }
+
+  Future<SessionCheckResult> _checkSessionWithRetry(
+    RedditSavedListingClient client,
+  ) async {
+    while (true) {
+      _throwIfCancelled();
+      try {
+        return await client.checkSession(cancelToken: _cancelToken);
       } on RateLimitException catch (error) {
         await _handleRateLimit(error);
       } on DioException catch (error) {
