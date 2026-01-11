@@ -224,15 +224,15 @@ class ThreadCommentsMarkdownExporter {
           created == null
               ? 'Unknown'
               : '${created.year}-${created.month.toString().padLeft(2, '0')}-${created.day.toString().padLeft(2, '0')}';
-      buffer.writeln(
-        '${indent}- **u/${comment.author}** • $createdText • score ${comment.score}',
-      );
+      final author = comment.author;
+      final score = comment.score;
+      buffer.writeln('$indent- **u/$author** • $createdText • score $score');
       final lines =
           comment.body.trim().isEmpty
               ? const ['_No text body provided._']
               : comment.body.trim().split('\n');
       for (final line in lines) {
-        buffer.writeln('${indent}  > $line');
+        buffer.writeln('$indent  > $line');
       }
       buffer.writeln();
     }
@@ -248,7 +248,6 @@ class ThreadCommentsMarkdownExporter {
       case CommentSort.controversial:
         return 'controversial';
       case CommentSort.best:
-      default:
         return 'best';
     }
   }

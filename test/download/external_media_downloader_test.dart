@@ -95,9 +95,10 @@ class FakeToolDetector extends ToolDetector {
 }
 
 class FakeToolRunner extends ExternalToolRunner {
-  FakeToolRunner({this.exitCode = 0})
-    : _db = AppDatabase.inMemory(),
-      super(LogsRepository(_db));
+  FakeToolRunner({int exitCode = 0})
+    : this._withDb(AppDatabase.inMemory(), exitCode);
+
+  FakeToolRunner._withDb(this._db, this.exitCode) : super(LogsRepository(_db));
 
   final int exitCode;
   List<String>? lastArgs;

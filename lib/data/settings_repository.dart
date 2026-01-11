@@ -286,6 +286,7 @@ CommentSort _parseCommentSort(String? value) {
     case 'controversial':
       return CommentSort.controversial;
     case 'best':
+      return CommentSort.best;
     default:
       return CommentSort.best;
   }
@@ -300,7 +301,6 @@ String _commentSortValue(CommentSort sort) {
     case CommentSort.controversial:
       return 'controversial';
     case CommentSort.best:
-    default:
       return 'best';
   }
 }
