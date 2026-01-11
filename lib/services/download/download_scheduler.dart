@@ -354,12 +354,11 @@ class DownloadScheduler {
         return;
       }
       try {
-        final result = await _exportWithRetry(
-          jobId: jobId,
-          action: () => _textPostExporter.export(
-            item: item,
-            engine: engine,
-            policy: _policyFromSnapshot(record.job.policySnapshot),
+      final result = await _exportWithRetry(
+        action: () => _textPostExporter.export(
+          item: item,
+          engine: engine,
+          policy: _policyFromSnapshot(record.job.policySnapshot),
           ),
         );
         if (result.isCompleted) {
@@ -396,12 +395,11 @@ class DownloadScheduler {
         return;
       }
       try {
-        final result = await _exportWithRetry(
-          jobId: jobId,
-          action: () => _savedCommentExporter.export(
-            item: item,
-            engine: engine,
-            policy: _policyFromSnapshot(record.job.policySnapshot),
+      final result = await _exportWithRetry(
+        action: () => _savedCommentExporter.export(
+          item: item,
+          engine: engine,
+          policy: _policyFromSnapshot(record.job.policySnapshot),
           ),
         );
         if (result.isCompleted) {
@@ -438,12 +436,11 @@ class DownloadScheduler {
         return;
       }
       try {
-        final result = await _exportWithRetry(
-          jobId: jobId,
-          action: () => _threadCommentsExporter.export(
-            item: item,
-            engine: engine,
-            policy: _policyFromSnapshot(record.job.policySnapshot),
+      final result = await _exportWithRetry(
+        action: () => _threadCommentsExporter.export(
+          item: item,
+          engine: engine,
+          policy: _policyFromSnapshot(record.job.policySnapshot),
             sort: _settings.postCommentsSort,
             maxCount: _settings.postCommentsMaxCount,
             timeframeDays: _settings.postCommentsTimeframeDays,
@@ -534,7 +531,6 @@ class DownloadScheduler {
   }
 
   Future<ExportResult> _exportWithRetry({
-    required int jobId,
     required Future<ExportResult> Function() action,
   }) async {
     var attempt = 0;
