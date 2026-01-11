@@ -77,6 +77,30 @@ class PathTemplateEngine {
     return _resolveRoot(settings.commentsRoot);
   }
 
+  PathTemplateResult resolveTextPath({
+    required SavedItem item,
+    required String filename,
+  }) {
+    return _resolveTextLikePath(
+      item: item,
+      root: resolveTextRoot(),
+      filename: filename,
+      emptyError: 'Text export root is not set.',
+    );
+  }
+
+  PathTemplateResult resolveCommentsPath({
+    required SavedItem item,
+    required String filename,
+  }) {
+    return _resolveTextLikePath(
+      item: item,
+      root: resolveCommentsRoot(),
+      filename: filename,
+      emptyError: 'Comments export root is not set.',
+    );
+  }
+
   Map<String, String> _buildTokens(SavedItem item) {
     final created = _createdDate(item);
     final postId = _extractPostId(item.permalink);
@@ -149,6 +173,47 @@ class PathTemplateEngine {
       return p.join(directoryPath, safeFolder, filename);
     }
     return p.join(directoryPath, filename);
+  }
+
+  PathTemplateResult _resolveTextLikePath({
+    required SavedItem item,
+    required String root,
+    required String filename,
+    required String emptyError,
+  }) {
+    final warnings = <String>[];
+
+    if (settings.downloadRoot.trim().isEmpty) {
+      return PathTemplateResult.invalid('Download root is not set.');
+    }
+
+    if (root.trim().isEmpty) {
+      return PathTemplateResult.invalid(emptyError);
+    }
+
+    final tokens = _buildTokens(item);
+    final template = settings.mediaPathTemplate.trim();
+    final relativeDir = _applyTemplate(template, tokens, warnings);
+    if (relativeDir.isEmpty) {
+      return PathTemplateResult.invalid('Media path template is empty.');
+    }
+
+    final directoryPath = _safeJoin(root, relativeDir, warnings);
+    if (directoryPath == null) {
+      return PathTemplateResult.invalid('Invalid path template.');
+    }
+
+    final safeFilename = _sanitizeSegment(filename);
+    final resolvedFilename = safeFilename.isEmpty ? 'export.md' : safeFilename;
+    final filePath = p.join(directoryPath, resolvedFilename);
+
+    _warnIfTooLong(filePath, warnings);
+
+    return PathTemplateResult(
+      directoryPath: directoryPath,
+      filePath: filePath,
+      warnings: warnings,
+    );
   }
 
   String _buildFilename(
