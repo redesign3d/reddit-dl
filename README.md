@@ -1,16 +1,53 @@
-# reddit_dl
+# reddit-dl
 
-A new Flutter project.
+Archive your Reddit Saved content on desktop without developer tokens. Import a
+Reddit data ZIP, sync via old.reddit.com, and download media into a structured,
+offline-first library.
 
-## Getting Started
+## Features
+- ZIP backfill import (saved_posts.csv + saved_comments.csv).
+- old.reddit.com session sync with permalink + `.json` enrichment.
+- Media downloads: images, GIFs, Reddit video (DASH merge), external tools.
+- Tokenized folder templates + arr-like layout modes.
+- Markdown export for text posts, saved comments, and thread comments.
+- Tray support so downloads continue when the window closes.
 
-This project is a starting point for a Flutter application.
+## Build
+```sh
+flutter pub get
+flutter run -d macos
+flutter run -d windows
+flutter run -d linux
+```
 
-A few resources to get you started if this is your first Flutter project:
+Release builds:
+```sh
+flutter build macos --release
+flutter build windows --release
+flutter build linux --release
+```
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## External tools
+The app will detect tools on PATH or via manual overrides in Settings.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+macOS:
+- `brew install yt-dlp`
+- `pipx install gallery-dl`
+
+Windows:
+- `winget install yt-dlp.yt-dlp`
+- `pipx install gallery-dl`
+
+Linux:
+- `apt install yt-dlp` (or distro equivalent)
+- `pipx install gallery-dl`
+
+ffmpeg is managed by the app and downloaded on first use.
+
+## Platform notes
+- Linux WebView: install WebKitGTK and GTK3 if login shows a blank view.
+- Windows: long paths can cause failures; enable long paths if needed.
+- macOS: downloads are limited to user-selected folders via picker.
+
+## Versioning
+SemVer + build number in `pubspec.yaml` (example: `0.1.0+1`).
