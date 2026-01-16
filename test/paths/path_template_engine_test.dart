@@ -85,7 +85,7 @@ void main() {
 
   test('warns when path length exceeds limit', () {
     final settings = AppSettings.defaults().copyWith(
-      downloadRoot: '/downloads/${List.filled(30, 'long').join()}',
+      downloadRoot: '/downloads/${List.filled(260, 'a').join()}',
       mediaPathTemplate: '{title_slug}',
     );
     final engine = PathTemplateEngine(settings);
