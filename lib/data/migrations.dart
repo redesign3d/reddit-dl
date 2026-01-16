@@ -14,6 +14,7 @@ MigrationStrategy buildMigrationStrategy(AppDatabase database) {
     },
     beforeOpen: (details) async {
       await database.customStatement('PRAGMA foreign_keys = ON');
+      await ensureLogEntriesPrimaryKey(database);
     },
   );
 }
