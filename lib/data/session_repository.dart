@@ -12,6 +12,10 @@ class SessionRepository {
 
   bool get rememberSession => _remember;
   CookieJar get cookieJar => _cookieJar;
+  Future<String> cookieStoragePath() async {
+    final dir = await _ensureCookieStorageDir();
+    return dir.path;
+  }
 
   Future<void> initialize({required bool remember}) async {
     if (_remember == remember) {

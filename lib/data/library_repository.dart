@@ -29,4 +29,17 @@ class LibraryRepository {
       return subreddits;
     });
   }
+
+  Future<SavedItem?> fetchLatest() async {
+    final query =
+        _db.select(_db.savedItems)
+          ..orderBy([
+            (row) => OrderingTerm(
+              expression: row.createdUtc,
+              mode: OrderingMode.desc,
+            ),
+          ])
+          ..limit(1);
+    return query.getSingleOrNull();
+  }
 }
