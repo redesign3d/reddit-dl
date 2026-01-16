@@ -1,0 +1,61 @@
+name: Build
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Install Linux deps
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+      - name: Pub get
+        run: flutter pub get
+      - name: Build macOS
+        if: runner.os == 'macOS'
+        run: flutter build macos --release
+      - name: Build Windows
+        if: runner.os == 'Windows'
+        run: flutter build windows --release
+      - name: Build Linux
+        if: runner.os == 'Linux'
+        run: flutter build linux --release
+      - name: Archive macOS
+        if: runner.os == 'macOS'
+        run: |
+          cd build/macos/Build/Products/Release
+          zip -r "$GITHUB_WORKSPACE/build/reddit-dl-macos.zip" reddit_dl.app
+      - name: Archive Linux
+        if: runner.os == 'Linux'
+        run: |
+          cd build/linux/x64/release/bundle
+          zip -r "$GITHUB_WORKSPACE/build/reddit-dl-linux.zip" .
+      - name: Archive Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $path = "build\\windows\\x64\\runner\\Release"
+          Compress-Archive -Path "$path\\*" -DestinationPath "build\\reddit-dl-windows.zip"
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: reddit-dl-${{ runner.os }}
+          path: |
+            build/reddit-dl-windows.zip
+            build/reddit-dl-macos.zip
+            build/reddit-dl-linux.zip
