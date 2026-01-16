@@ -207,11 +207,16 @@ class QueueRepository {
     )).write(const DownloadJobsCompanion(status: Value('queued')));
   }
 
-  Future<void> resetRunningToQueued() async {
-    await (_db.update(_db.downloadJobs)..where(
+  Future<int> markStuckJobsPaused(String reason) async {
+    return (_db.update(_db.downloadJobs)..where(
       (tbl) =>
           tbl.status.isIn(['running', 'merging', 'running_tool', 'exporting']),
-    )).write(const DownloadJobsCompanion(status: Value('queued')));
+    )).write(
+      DownloadJobsCompanion(
+        status: const Value('paused'),
+        lastError: Value(reason),
+      ),
+    );
   }
 }
 

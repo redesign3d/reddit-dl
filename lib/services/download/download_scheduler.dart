@@ -109,7 +109,7 @@ class DownloadScheduler {
   bool _isDisposed = false;
 
   void start() {
-    _queueRepository.resetRunningToQueued();
+    unawaited(_recoverStuckJobs());
     _settingsSubscription = _settingsRepository.watch().listen(_handleSettings);
     _queueSubscription = _queueRepository.watchQueue().listen(_handleQueue);
   }
@@ -121,6 +121,20 @@ class DownloadScheduler {
     }
     await _settingsSubscription?.cancel();
     await _queueSubscription?.cancel();
+  }
+
+  Future<void> _recoverStuckJobs() async {
+    final reason =
+        'App restarted; job paused. Partial files may remain (resume not supported).';
+    final count = await _queueRepository.markStuckJobsPaused(reason);
+    if (count > 0) {
+      await _log(
+        null,
+        'download',
+        'warn',
+        'Recovered $count stuck job(s) after restart.',
+      );
+    }
   }
 
   void _handleSettings(AppSettings settings) {
