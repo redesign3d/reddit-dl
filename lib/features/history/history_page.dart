@@ -169,6 +169,9 @@ class _HistoryCard extends StatelessWidget {
                       message: 'Reveal output for job ${job.id}: $path',
                     ),
                   );
+                  if (!context.mounted) {
+                    return;
+                  }
                   AppToast.show(
                     context,
                     success ? 'Opened file manager.' : 'Reveal failed.',
@@ -200,6 +203,9 @@ class _HistoryCard extends StatelessWidget {
                       message: 'Copied log context for job ${job.id}.',
                     ),
                   );
+                  if (!context.mounted) {
+                    return;
+                  }
                   AppToast.show(context, 'Log context copied.');
                 },
               ),
@@ -219,6 +225,9 @@ class _HistoryCard extends StatelessWidget {
                         message: 'Retry requested for job ${job.id}.',
                       ),
                     );
+                    if (!context.mounted) {
+                      return;
+                    }
                     AppToast.show(context, 'Retry queued.');
                   },
                 ),
