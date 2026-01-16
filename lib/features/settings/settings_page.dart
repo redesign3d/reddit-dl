@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:path_provider/path_provider.dart';
 
+import '../../app_version.dart';
 import '../../data/settings_repository.dart';
 import '../../services/path_template_engine.dart';
 import '../../services/tools/tool_detector.dart';
@@ -881,6 +882,30 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   );
                 },
+              ),
+              SizedBox(height: AppTokens.space.s16),
+              AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'About',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    SizedBox(height: AppTokens.space.s8),
+                    Text(
+                      'reddit-dl $appVersionLabel',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    SizedBox(height: AppTokens.space.s6),
+                    Text(
+                      'Builds are unsigned. See README for platform caveats.',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colors.mutedForeground,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           );

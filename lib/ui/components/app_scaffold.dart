@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../app_version.dart';
 import '../../navigation/app_section.dart';
 import '../tokens.dart';
 
@@ -76,7 +77,7 @@ class AppScaffold extends StatelessWidget {
                 Padding(
                   padding: EdgeInsets.all(AppTokens.space.s12),
                   child: Text(
-                    'v0.1 • local preview',
+                    appVersionLabel,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: colors.mutedForeground,
                     ),
