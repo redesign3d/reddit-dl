@@ -29,6 +29,8 @@ import 'features/settings/settings_cubit.dart';
 import 'features/settings/settings_page.dart';
 import 'features/sync/sync_cubit.dart';
 import 'features/sync/sync_page.dart';
+import 'features/wanted/wanted_cubit.dart';
+import 'features/wanted/wanted_page.dart';
 import 'features/tools/tools_cubit.dart';
 import 'features/ffmpeg/ffmpeg_cubit.dart';
 import 'navigation/app_section.dart';
@@ -165,6 +167,14 @@ class _AppState extends State<App> {
           BlocProvider(
             create:
                 (context) => HistoryCubit(context.read<HistoryRepository>()),
+          ),
+          BlocProvider(
+            create:
+                (context) => WantedCubit(
+                  queueRepository: context.read<QueueRepository>(),
+                  libraryRepository: context.read<LibraryRepository>(),
+                  settingsRepository: context.read<SettingsRepository>(),
+                ),
           ),
           BlocProvider(
             create:
@@ -323,6 +333,8 @@ class _AppShellState extends State<AppShell> {
         ];
       case AppSection.history:
         return [];
+      case AppSection.wanted:
+        return [];
       case AppSection.import:
         return [
           AppButton(
@@ -393,6 +405,8 @@ class _AppShellState extends State<AppShell> {
         return const QueuePage();
       case AppSection.history:
         return const HistoryPage();
+      case AppSection.wanted:
+        return const WantedPage();
       case AppSection.logs:
         return const LogsPage();
       case AppSection.import:

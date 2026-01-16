@@ -4,6 +4,7 @@ enum AppSection {
   library,
   queue,
   history,
+  wanted,
   logs,
   import,
   sync,
@@ -20,6 +21,8 @@ extension AppSectionMeta on AppSection {
         return 'Queue';
       case AppSection.history:
         return 'History';
+      case AppSection.wanted:
+        return 'Wanted';
       case AppSection.logs:
         return 'Logs';
       case AppSection.import:
@@ -41,6 +44,8 @@ extension AppSectionMeta on AppSection {
         return Icons.downloading_outlined;
       case AppSection.history:
         return Icons.history_outlined;
+      case AppSection.wanted:
+        return Icons.flag_outlined;
       case AppSection.logs:
         return Icons.article_outlined;
       case AppSection.import:

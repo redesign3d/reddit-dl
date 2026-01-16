@@ -42,4 +42,21 @@ class LibraryRepository {
           ..limit(1);
     return query.getSingleOrNull();
   }
+
+  Stream<List<SavedItem>> watchItemsWithoutMedia() {
+    final count = _db.mediaAssets.id.count();
+    final query =
+        _db.select(_db.savedItems).join([
+            leftOuterJoin(
+              _db.mediaAssets,
+              _db.mediaAssets.savedItemId.equalsExp(_db.savedItems.id),
+            ),
+          ])
+          ..addColumns([count])
+          ..groupBy([_db.savedItems.id])
+          ..having(count.equals(0));
+    return query.watch().map(
+      (rows) => rows.map((row) => row.readTable(_db.savedItems)).toList(),
+    );
+  }
 }
