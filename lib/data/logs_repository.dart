@@ -44,6 +44,30 @@ class LogsRepository {
         .toList();
   }
 
+  Future<List<LogRecord>> fetchByJobId(int jobId) async {
+    final prefix = '[job $jobId]';
+    final query =
+        _db.select(_db.logEntries)
+          ..where((tbl) => tbl.message.like('$prefix%'))
+          ..orderBy([
+            (row) => OrderingTerm(
+              expression: row.timestamp,
+              mode: OrderingMode.desc,
+            ),
+          ]);
+    final rows = await query.get();
+    return rows
+        .map(
+          (row) => LogRecord(
+            timestamp: row.timestamp,
+            scope: row.scope,
+            level: row.level,
+            message: row.message,
+          ),
+        )
+        .toList();
+  }
+
   Future<void> add(LogRecord entry) async {
     await _db
         .into(_db.logEntries)

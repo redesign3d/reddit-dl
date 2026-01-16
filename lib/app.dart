@@ -7,6 +7,7 @@ import 'package:window_manager/window_manager.dart';
 
 import 'data/app_database.dart';
 import 'data/import_repository.dart';
+import 'data/history_repository.dart';
 import 'data/library_repository.dart';
 import 'data/logs_repository.dart';
 import 'data/queue_repository.dart';
@@ -16,6 +17,8 @@ import 'data/sync_repository.dart';
 import 'features/import/import_cubit.dart';
 import 'features/import/import_page.dart';
 import 'features/import/zip_import_parser.dart';
+import 'features/history/history_cubit.dart';
+import 'features/history/history_page.dart';
 import 'features/library/library_cubit.dart';
 import 'features/library/library_page.dart';
 import 'features/logs/logs_cubit.dart';
@@ -105,6 +108,9 @@ class _AppState extends State<App> {
         RepositoryProvider(
           create: (context) => LibraryRepository(context.read<AppDatabase>()),
         ),
+        RepositoryProvider(
+          create: (context) => HistoryRepository(context.read<AppDatabase>()),
+        ),
         RepositoryProvider.value(value: _queueRepository),
         RepositoryProvider.value(value: _sessionRepository),
         RepositoryProvider(
@@ -155,6 +161,10 @@ class _AppState extends State<App> {
                   context.read<SyncRepository>(),
                   context.read<LogsRepository>(),
                 ),
+          ),
+          BlocProvider(
+            create:
+                (context) => HistoryCubit(context.read<HistoryRepository>()),
           ),
           BlocProvider(
             create:
@@ -311,6 +321,8 @@ class _AppShellState extends State<AppShell> {
             onPressed: () => context.read<QueueCubit>().togglePauseAll(),
           ),
         ];
+      case AppSection.history:
+        return [];
       case AppSection.import:
         return [
           AppButton(
@@ -379,6 +391,8 @@ class _AppShellState extends State<AppShell> {
         return const LibraryPage();
       case AppSection.queue:
         return const QueuePage();
+      case AppSection.history:
+        return const HistoryPage();
       case AppSection.logs:
         return const LogsPage();
       case AppSection.import:

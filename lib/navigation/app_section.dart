@@ -1,6 +1,15 @@
 import 'package:flutter/material.dart';
 
-enum AppSection { library, queue, logs, import, sync, diagnostics, settings }
+enum AppSection {
+  library,
+  queue,
+  history,
+  logs,
+  import,
+  sync,
+  diagnostics,
+  settings,
+}
 
 extension AppSectionMeta on AppSection {
   String get label {
@@ -9,6 +18,8 @@ extension AppSectionMeta on AppSection {
         return 'Library';
       case AppSection.queue:
         return 'Queue';
+      case AppSection.history:
+        return 'History';
       case AppSection.logs:
         return 'Logs';
       case AppSection.import:
@@ -28,6 +39,8 @@ extension AppSectionMeta on AppSection {
         return Icons.inventory_2_outlined;
       case AppSection.queue:
         return Icons.downloading_outlined;
+      case AppSection.history:
+        return Icons.history_outlined;
       case AppSection.logs:
         return Icons.article_outlined;
       case AppSection.import:
