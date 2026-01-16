@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum AppSection { library, queue, logs, import, sync, settings }
+enum AppSection { library, queue, logs, import, sync, diagnostics, settings }
 
 extension AppSectionMeta on AppSection {
   String get label {
@@ -15,6 +15,8 @@ extension AppSectionMeta on AppSection {
         return 'Import';
       case AppSection.sync:
         return 'Sync';
+      case AppSection.diagnostics:
+        return 'Diagnostics';
       case AppSection.settings:
         return 'Settings';
     }
@@ -32,6 +34,8 @@ extension AppSectionMeta on AppSection {
         return Icons.unarchive_outlined;
       case AppSection.sync:
         return Icons.sync_outlined;
+      case AppSection.diagnostics:
+        return Icons.health_and_safety_outlined;
       case AppSection.settings:
         return Icons.tune_outlined;
     }

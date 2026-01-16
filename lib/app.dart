@@ -40,6 +40,8 @@ import 'services/ffmpeg_runtime_manager.dart';
 import 'services/tools/external_tool_runner.dart';
 import 'services/tools/tool_detector.dart';
 import 'services/tray_controller.dart';
+import 'features/diagnostics/diagnostics_cubit.dart';
+import 'features/diagnostics/diagnostics_page.dart';
 
 class App extends StatefulWidget {
   const App({super.key, this.database});
@@ -168,6 +170,17 @@ class _AppState extends State<App> {
                 (context) => FfmpegCubit(
                   context.read<FfmpegRuntimeManager>(),
                   context.read<LogsRepository>(),
+                ),
+          ),
+          BlocProvider(
+            create:
+                (context) => DiagnosticsCubit(
+                  settingsRepository: context.read<SettingsRepository>(),
+                  sessionRepository: context.read<SessionRepository>(),
+                  logsRepository: context.read<LogsRepository>(),
+                  toolDetector: context.read<ToolDetector>(),
+                  ffmpegRuntime: context.read<FfmpegRuntimeManager>(),
+                  libraryRepository: context.read<LibraryRepository>(),
                 ),
           ),
         ],
@@ -349,6 +362,14 @@ class _AppShellState extends State<AppShell> {
                 ),
           ),
         ];
+      case AppSection.diagnostics:
+        return [
+          AppButton(
+            label: 'Refresh',
+            variant: AppButtonVariant.secondary,
+            onPressed: () => context.read<DiagnosticsCubit>().refresh(),
+          ),
+        ];
     }
   }
 
@@ -364,6 +385,8 @@ class _AppShellState extends State<AppShell> {
         return const ImportPage();
       case AppSection.sync:
         return const SyncPage();
+      case AppSection.diagnostics:
+        return const DiagnosticsPage();
       case AppSection.settings:
         return const SettingsPage();
     }
