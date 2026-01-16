@@ -62,6 +62,46 @@ void main() {
     expect(result.isValid, isTrue);
     expect(result.filePath, contains('/image/image.png'));
   });
+
+  test('truncates long title slugs', () {
+    final settings = AppSettings.defaults().copyWith(
+      downloadRoot: '/downloads',
+      mediaPathTemplate: '{title_slug}',
+    );
+    final engine = PathTemplateEngine(settings);
+    final longTitle = List.filled(200, 'a').join();
+    final item = _buildItem(title: longTitle);
+    final asset = _buildAsset();
+
+    final result = engine.resolve(item: item, asset: asset);
+    expect(result.isValid, isTrue);
+    final segment = result.directoryPath.split('/').last;
+    expect(segment.length, lessThanOrEqualTo(80));
+    expect(
+      result.warnings.any((warning) => warning.contains('title_slug')),
+      isTrue,
+    );
+  });
+
+  test('warns when path length exceeds limit', () {
+    final settings = AppSettings.defaults().copyWith(
+      downloadRoot: '/downloads/${List.filled(30, 'long').join()}',
+      mediaPathTemplate: '{title_slug}',
+    );
+    final engine = PathTemplateEngine(settings);
+    final item = _buildItem(title: 'Long path warning');
+    final asset = _buildAsset(
+      sourceUrl:
+          'https://example.com/${List.filled(200, 'file').join()}-image.jpg',
+    );
+
+    final result = engine.resolve(item: item, asset: asset);
+    expect(result.isValid, isTrue);
+    expect(
+      result.warnings.any((warning) => warning.contains('Path length exceeds')),
+      isTrue,
+    );
+  });
 }
 
 SavedItem _buildItem({

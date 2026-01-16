@@ -20,7 +20,7 @@ class PathTemplateEngine {
       return PathTemplateResult.invalid('Download root is not set.');
     }
 
-    final tokens = _buildTokens(item);
+    final tokens = _buildTokens(item, warnings);
     final template = settings.mediaPathTemplate.trim();
     final relativeDir = _applyTemplate(template, tokens, warnings);
     if (relativeDir.isEmpty) {
@@ -34,7 +34,11 @@ class PathTemplateEngine {
     }
 
     final filename = _buildFilename(asset, mediaIndex, filenameOverride);
-    final safeFilename = _sanitizeSegment(filename);
+    final safeFilename = _sanitizeSegment(
+      filename,
+      warnings,
+      label: 'filename',
+    );
     final filePath = _applyLayout(directoryPath, safeFilename, warnings);
 
     _warnIfTooLong(filePath, warnings);
@@ -99,11 +103,11 @@ class PathTemplateEngine {
     );
   }
 
-  Map<String, String> _buildTokens(SavedItem item) {
+  Map<String, String> _buildTokens(SavedItem item, List<String> warnings) {
     final created = _createdDate(item);
     final postId = _extractPostId(item.permalink);
     final commentId = _extractCommentId(item.permalink);
-    final titleSlug = _slugify(item.title);
+    final titleSlug = _slugify(item.title, warnings);
     return {
       'type': item.kind,
       'subreddit': item.subreddit,
@@ -142,7 +146,7 @@ class PathTemplateEngine {
       tokens.forEach((key, value) {
         segment = segment.replaceAll('{$key}', value);
       });
-      segment = _sanitizeSegment(segment);
+      segment = _sanitizeSegment(segment, warnings, label: 'segment');
       if (unsafeRaw ||
           segment == '.' ||
           segment == '..' ||
@@ -164,7 +168,11 @@ class PathTemplateEngine {
     List<String> warnings,
   ) {
     if (settings.mediaLayoutMode == MediaLayoutMode.folderPerMedia) {
-      final folderName = _sanitizeSegment(p.basenameWithoutExtension(filename));
+      final folderName = _sanitizeSegment(
+        p.basenameWithoutExtension(filename),
+        warnings,
+        label: 'media folder',
+      );
       if (folderName.isEmpty) {
         warnings.add('Media folder name fallback applied.');
       }
@@ -190,7 +198,7 @@ class PathTemplateEngine {
       return PathTemplateResult.invalid(emptyError);
     }
 
-    final tokens = _buildTokens(item);
+    final tokens = _buildTokens(item, warnings);
     final template = settings.mediaPathTemplate.trim();
     final relativeDir = _applyTemplate(template, tokens, warnings);
     if (relativeDir.isEmpty) {
@@ -202,7 +210,11 @@ class PathTemplateEngine {
       return PathTemplateResult.invalid('Invalid path template.');
     }
 
-    final safeFilename = _sanitizeSegment(filename);
+    final safeFilename = _sanitizeSegment(
+      filename,
+      warnings,
+      label: 'export filename',
+    );
     final resolvedFilename = safeFilename.isEmpty ? 'export.md' : safeFilename;
     final filePath = p.join(directoryPath, resolvedFilename);
 
@@ -234,7 +246,11 @@ class PathTemplateEngine {
     return 'media-${asset.id == 0 ? mediaIndex + 1 : asset.id}';
   }
 
-  String _sanitizeSegment(String value) {
+  String _sanitizeSegment(
+    String value,
+    List<String> warnings, {
+    String? label,
+  }) {
     var sanitized =
         value
             .replaceAll(RegExp(r'[<>:"/\\\\|?*]'), '_')
@@ -242,6 +258,11 @@ class PathTemplateEngine {
             .trim();
     sanitized = sanitized.replaceAll(RegExp(r'\s+'), ' ');
     sanitized = sanitized.replaceAll('..', '_');
+    if (sanitized.length > _maxSegmentLength) {
+      sanitized = sanitized.substring(0, _maxSegmentLength);
+      final target = label ?? 'segment';
+      warnings.add('$target truncated to $_maxSegmentLength characters.');
+    }
     if (sanitized.isEmpty) {
       return 'unknown';
     }
@@ -252,12 +273,16 @@ class PathTemplateEngine {
     return sanitized;
   }
 
-  String _slugify(String value) {
+  String _slugify(String value, List<String> warnings) {
     final lower = value.toLowerCase();
     var slug = lower.replaceAll(RegExp(r'[^a-z0-9]+'), '-');
     slug = slug
         .replaceAll(RegExp(r'-+'), '-')
         .replaceAll(RegExp(r'^-+|-+$'), '');
+    if (slug.length > _maxSlugLength) {
+      slug = slug.substring(0, _maxSlugLength);
+      warnings.add('title_slug truncated to $_maxSlugLength characters.');
+    }
     if (slug.isEmpty) {
       return 'untitled';
     }
@@ -316,8 +341,10 @@ class PathTemplateEngine {
   }
 
   void _warnIfTooLong(String path, List<String> warnings) {
-    if (path.length > 240) {
-      warnings.add('Path length exceeds 240 characters.');
+    if (path.length > _maxPathLength) {
+      warnings.add(
+        'Path length exceeds $_maxPathLength characters (Windows limit).',
+      );
     }
   }
 }
@@ -383,3 +410,7 @@ const _windowsReserved = {
   'lpt8',
   'lpt9',
 };
+
+const int _maxPathLength = 240;
+const int _maxSegmentLength = 120;
+const int _maxSlugLength = 80;
