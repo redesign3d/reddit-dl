@@ -179,11 +179,14 @@ class _NavItem extends StatelessWidget {
               children: [
                 Icon(section.icon, color: foreground),
                 SizedBox(width: AppTokens.space.s8),
-                Text(
-                  section.label,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(color: foreground),
+                Expanded(
+                  child: Text(
+                    section.label,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: foreground),
+                  ),
                 ),
               ],
             ),
