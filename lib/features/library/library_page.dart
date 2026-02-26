@@ -616,6 +616,12 @@ class _LibraryDetailsPanel extends StatelessWidget {
                             onPressed: () => _retryJob(context, job.id),
                           ),
                         AppButton(
+                          label: 'Export markdown',
+                          variant: AppButtonVariant.secondary,
+                          onPressed: () =>
+                              _exportMarkdownForItems(context, [item!]),
+                        ),
+                        AppButton(
                           label: 'Reveal output',
                           variant: AppButtonVariant.ghost,
                           onPressed: () => _revealOutput(context, item!, job),
