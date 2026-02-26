@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:drift/drift.dart';
 
 import 'package:reddit_dl/data/app_database.dart';
+import 'package:reddit_dl/data/download_resume_state.dart';
 import 'package:reddit_dl/data/logs_repository.dart';
 import 'package:reddit_dl/data/queue_repository.dart';
 import 'package:reddit_dl/data/session_repository.dart';
@@ -329,6 +330,10 @@ class FakeDownloader extends HttpMediaDownloader {
     required OverwritePolicy policy,
     required void Function(double progress) onProgress,
     void Function(Headers headers)? onHeaders,
+    DownloadResumeStateStore? resumeStateStore,
+    int? relatedJobId,
+    int? relatedMediaAssetId,
+    void Function(String level, String message)? log,
     CancelToken? cancelToken,
   }) async {
     if (!shouldComplete) {

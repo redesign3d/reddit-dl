@@ -1,8 +1,9 @@
 import 'package:drift/drift.dart';
 
+import 'download_resume_state.dart';
 import 'app_database.dart';
 
-class QueueRepository {
+class QueueRepository implements DownloadResumeStateStore {
   QueueRepository(this._db);
 
   final AppDatabase _db;
@@ -270,6 +271,10 @@ class QueueRepository {
 
     await _db.batch((batch) {
       batch.deleteWhere(
+        _db.downloadJobAssets,
+        (tbl) => tbl.jobId.isIn(completedJobIds),
+      );
+      batch.deleteWhere(
         _db.downloadOutputs,
         (tbl) => tbl.jobId.isIn(completedJobIds),
       );
@@ -370,6 +375,89 @@ class QueueRepository {
               ..limit(1))
             .getSingleOrNull();
     return row?.path;
+  }
+
+  @override
+  Future<DownloadResumeState?> fetchResumeState({
+    required int jobId,
+    required int mediaAssetId,
+  }) async {
+    final row =
+        await (_db.select(_db.downloadJobAssets)..where(
+              (tbl) =>
+                  tbl.jobId.equals(jobId) &
+                  tbl.mediaAssetId.equals(mediaAssetId),
+            ))
+            .getSingleOrNull();
+    if (row == null) {
+      return null;
+    }
+    return DownloadResumeState(
+      jobId: row.jobId,
+      mediaAssetId: row.mediaAssetId,
+      url: row.url,
+      localTempPath: row.localTempPath,
+      expectedFinalPath: row.expectedFinalPath,
+      etag: row.etag,
+      lastModified: row.lastModified,
+      totalBytes: row.totalBytes,
+      downloadedBytes: row.downloadedBytes,
+    );
+  }
+
+  @override
+  Future<void> upsertResumeState(DownloadResumeState state) async {
+    final now = DateTime.now();
+    await _db
+        .into(_db.downloadJobAssets)
+        .insert(
+          DownloadJobAssetsCompanion.insert(
+            jobId: state.jobId,
+            mediaAssetId: state.mediaAssetId,
+            url: state.url,
+            localTempPath: state.localTempPath,
+            expectedFinalPath: state.expectedFinalPath,
+            etag: Value(state.etag),
+            lastModified: Value(state.lastModified),
+            totalBytes: Value(state.totalBytes),
+            downloadedBytes: Value(state.downloadedBytes),
+            updatedAt: Value(now),
+          ),
+          onConflict: DoUpdate(
+            (_) => DownloadJobAssetsCompanion(
+              url: Value(state.url),
+              localTempPath: Value(state.localTempPath),
+              expectedFinalPath: Value(state.expectedFinalPath),
+              etag: Value(state.etag),
+              lastModified: Value(state.lastModified),
+              totalBytes: Value(state.totalBytes),
+              downloadedBytes: Value(state.downloadedBytes),
+              updatedAt: Value(now),
+            ),
+            target: [
+              _db.downloadJobAssets.jobId,
+              _db.downloadJobAssets.mediaAssetId,
+            ],
+          ),
+        );
+  }
+
+  @override
+  Future<void> clearResumeState({
+    required int jobId,
+    required int mediaAssetId,
+  }) async {
+    await (_db.delete(_db.downloadJobAssets)..where(
+          (tbl) =>
+              tbl.jobId.equals(jobId) & tbl.mediaAssetId.equals(mediaAssetId),
+        ))
+        .go();
+  }
+
+  Future<void> clearResumeStatesForJob(int jobId) async {
+    await (_db.delete(
+      _db.downloadJobAssets,
+    )..where((tbl) => tbl.jobId.equals(jobId))).go();
   }
 
   OrderingTerm _fifoOrdering() {

@@ -8,9 +8,16 @@ offline-first library.
 - ZIP backfill import (saved_posts.csv + saved_comments.csv).
 - old.reddit.com session sync with permalink + `.json` enrichment.
 - Media downloads: images, GIFs, Reddit video (DASH merge), external tools.
+- Resumable HTTP downloads with per-asset resume metadata and `.part` files.
 - Tokenized folder templates + arr-like layout modes.
 - Markdown export for text posts, saved comments, and thread comments.
 - Tray support so downloads continue when the window closes.
+
+## Download resume behavior
+- HTTP media downloads write to `<target>.part` and atomically rename on success.
+- Resume uses saved `etag` / `last-modified` validators when available.
+- If validators mismatch or Range is unsupported, partial data is discarded and
+  the asset restarts cleanly.
 
 ## Build
 ```sh
