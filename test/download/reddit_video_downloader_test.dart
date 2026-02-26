@@ -7,6 +7,7 @@ import 'package:http_mock_adapter/http_mock_adapter.dart';
 import 'package:path/path.dart' as p;
 
 import 'package:reddit_dl/data/app_database.dart';
+import 'package:reddit_dl/data/download_resume_state.dart';
 import 'package:reddit_dl/data/settings_repository.dart';
 import 'package:reddit_dl/services/download/ffmpeg_executor.dart';
 import 'package:reddit_dl/services/download/http_media_downloader.dart';
@@ -261,6 +262,10 @@ class FakeHttpMediaDownloader extends HttpMediaDownloader {
     required OverwritePolicy policy,
     required void Function(double progress) onProgress,
     void Function(Headers headers)? onHeaders,
+    DownloadResumeStateStore? resumeStateStore,
+    int? relatedJobId,
+    int? relatedMediaAssetId,
+    void Function(String level, String message)? log,
     CancelToken? cancelToken,
   }) async {
     called = true;
