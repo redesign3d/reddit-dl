@@ -22,6 +22,7 @@ class LogsRepository {
               scope: row.scope,
               level: row.level,
               message: row.message,
+              relatedJobId: row.relatedJobId,
             ),
           )
           .toList(),
@@ -42,19 +43,45 @@ class LogsRepository {
             scope: row.scope,
             level: row.level,
             message: row.message,
+            relatedJobId: row.relatedJobId,
           ),
         )
         .toList();
   }
 
-  Future<List<LogRecord>> fetchByJobId(int jobId) async {
-    final prefix = '[job $jobId]';
+  Stream<List<LogRecord>> watchByJobId(int jobId, {int limit = 50}) {
     final query = _db.select(_db.logEntries)
-      ..where((tbl) => tbl.message.like('$prefix%'))
+      ..where((tbl) => tbl.relatedJobId.equals(jobId))
+      ..orderBy([
+        (row) =>
+            OrderingTerm(expression: row.timestamp, mode: OrderingMode.desc),
+      ])
+      ..limit(limit);
+    return query.watch().map(
+      (rows) => rows
+          .map(
+            (row) => LogRecord(
+              timestamp: row.timestamp,
+              scope: row.scope,
+              level: row.level,
+              message: row.message,
+              relatedJobId: row.relatedJobId,
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  Future<List<LogRecord>> fetchByJobId(int jobId, {int? limit}) async {
+    final query = _db.select(_db.logEntries)
+      ..where((tbl) => tbl.relatedJobId.equals(jobId))
       ..orderBy([
         (row) =>
             OrderingTerm(expression: row.timestamp, mode: OrderingMode.desc),
       ]);
+    if (limit != null && limit > 0) {
+      query.limit(limit);
+    }
     final rows = await query.get();
     return rows
         .map(
@@ -63,6 +90,7 @@ class LogsRepository {
             scope: row.scope,
             level: row.level,
             message: row.message,
+            relatedJobId: row.relatedJobId,
           ),
         )
         .toList();
@@ -77,6 +105,7 @@ class LogsRepository {
             scope: entry.scope,
             level: entry.level,
             message: entry.message,
+            relatedJobId: Value(entry.relatedJobId),
           ),
         );
   }
@@ -126,6 +155,7 @@ class LogsRepository {
                 scope: entry.scope,
                 level: entry.level,
                 message: entry.message,
+                relatedJobId: Value(entry.relatedJobId),
               ),
             )
             .toList(),

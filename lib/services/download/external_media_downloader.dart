@@ -27,6 +27,7 @@ class ExternalMediaDownloader {
     required AppSettings settings,
     required OverwritePolicy policy,
     required void Function(double progress) onProgress,
+    int? relatedJobId,
     CancelToken? cancelToken,
     DownloadLog? log,
     void Function(String phase)? onPhase,
@@ -78,6 +79,7 @@ class ExternalMediaDownloader {
       tool: toolInfo,
       args: args,
       workingDirectory: outputDir.path,
+      relatedJobId: relatedJobId,
       cancelToken: cancelToken,
     );
     if (!result.isSuccess) {

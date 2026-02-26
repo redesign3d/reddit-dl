@@ -4,10 +4,12 @@ class LogRecord {
     required this.scope,
     required this.level,
     required this.message,
+    this.relatedJobId,
   });
 
   final DateTime timestamp;
   final String scope;
   final String level;
   final String message;
+  final int? relatedJobId;
 }

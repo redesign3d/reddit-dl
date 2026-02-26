@@ -114,6 +114,7 @@ class FakeToolRunner extends ExternalToolRunner {
     required ToolInfo tool,
     required List<String> args,
     String? workingDirectory,
+    int? relatedJobId,
     CancelToken? cancelToken,
   }) async {
     lastArgs = args;
