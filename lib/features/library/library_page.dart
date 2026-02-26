@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../data/app_database.dart';
+import '../../data/library_repository.dart';
 import '../../data/queue_repository.dart';
 import '../../data/settings_repository.dart';
 import '../../ui/components/app_button.dart';

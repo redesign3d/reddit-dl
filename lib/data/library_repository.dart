@@ -87,10 +87,10 @@ class LibraryRepository {
     final searchQuery = filters.searchQuery.trim().toLowerCase();
     if (searchQuery.isNotEmpty) {
       final pattern = '%$searchQuery%';
-      final bodyMarkdown = tbl.bodyMarkdown.coalesce([const Constant('')]);
       final searchExpression =
           tbl.title.lower().like(pattern) |
-          bodyMarkdown.lower().like(pattern) |
+          (tbl.bodyMarkdown.isNotNull() &
+              tbl.bodyMarkdown.lower().like(pattern)) |
           tbl.author.lower().like(pattern) |
           tbl.subreddit.lower().like(pattern) |
           tbl.permalink.lower().like(pattern);
