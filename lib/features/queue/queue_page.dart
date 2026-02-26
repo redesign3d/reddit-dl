@@ -431,6 +431,13 @@ class _QueueItemDetailsDrawer extends StatelessWidget {
         _QueueJobLogsSection(jobId: jobId),
         SizedBox(height: AppTokens.space.s12),
         Text(
+          'Produced outputs',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        SizedBox(height: AppTokens.space.s6),
+        _QueueOutputsSection(jobId: jobId),
+        SizedBox(height: AppTokens.space.s12),
+        Text(
           'Technical details',
           style: Theme.of(context).textTheme.titleMedium,
         ),
@@ -517,6 +524,87 @@ class _QueueJobLogsSection extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _QueueOutputsSection extends StatelessWidget {
+  const _QueueOutputsSection({required this.jobId});
+
+  final int jobId;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    return StreamBuilder<List<DownloadOutput>>(
+      stream: context.read<QueueRepository>().watchOutputsForJob(jobId),
+      builder: (context, snapshot) {
+        final outputs = snapshot.data ?? const <DownloadOutput>[];
+        if (outputs.isEmpty) {
+          return Text(
+            'No outputs recorded yet.',
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: colors.mutedForeground),
+          );
+        }
+
+        return Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppTokens.radii.md),
+            border: Border.all(color: colors.border),
+          ),
+          child: Column(
+            children: outputs
+                .map(
+                  (output) => InkWell(
+                    onTap: () => _revealOutputPath(context, output.path),
+                    child: Padding(
+                      padding: EdgeInsets.all(AppTokens.space.s8),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(Icons.insert_drive_file, size: 16),
+                          SizedBox(width: AppTokens.space.s8),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  output.kind,
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(color: colors.mutedForeground),
+                                ),
+                                SizedBox(height: AppTokens.space.s4),
+                                Text(
+                                  output.path,
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                )
+                .toList(growable: false),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _revealOutputPath(BuildContext context, String path) async {
+    final success = await revealInFileManager(path);
+    if (!context.mounted) {
+      return;
+    }
+    AppToast.show(
+      context,
+      success ? 'Opened file manager.' : 'Unable to reveal output path.',
     );
   }
 }

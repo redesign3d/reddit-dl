@@ -389,6 +389,18 @@ class QueueRepository implements DownloadResumeStateStore {
     return row?.path;
   }
 
+  Stream<List<DownloadOutput>> watchOutputsForJob(int jobId, {int limit = 20}) {
+    final query = _db.select(_db.downloadOutputs)
+      ..where((tbl) => tbl.jobId.equals(jobId))
+      ..orderBy([
+        (tbl) =>
+            OrderingTerm(expression: tbl.createdAt, mode: OrderingMode.desc),
+        (tbl) => OrderingTerm(expression: tbl.id, mode: OrderingMode.desc),
+      ])
+      ..limit(limit);
+    return query.watch();
+  }
+
   @override
   Future<DownloadResumeState?> fetchResumeState({
     required int jobId,
