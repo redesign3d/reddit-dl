@@ -124,8 +124,7 @@ class DownloadScheduler {
   }
 
   Future<void> _recoverStuckJobs() async {
-    final reason =
-        'App restarted; job paused. Partial files may remain (resume not supported).';
+    final reason = 'App restarted; job paused. Partial downloads can resume.';
     final count = await _queueRepository.markStuckJobsPaused(reason);
     if (count > 0) {
       await _log(
@@ -319,6 +318,10 @@ class DownloadScheduler {
               asset: asset,
               targetFile: targetFile,
               policy: _policyFromSnapshot(record.job.policySnapshot),
+              resumeStateStore: _queueRepository,
+              relatedJobId: jobId,
+              relatedMediaAssetId: asset.id,
+              log: (level, message) => _log(jobId, 'download', level, message),
               cancelToken: token,
               onHeaders: _telemetry.updateFromHeaders,
               onProgress: updateOverall,
@@ -338,6 +341,12 @@ class DownloadScheduler {
             kind: _assetOutputKind(asset.type, isExternal: isExternal),
           );
         } else if (result.isSkipped) {
+          if (!isExternal && !isVideo) {
+            await _queueRepository.clearResumeState(
+              jobId: jobId,
+              mediaAssetId: asset.id,
+            );
+          }
           skipped += 1;
           await _log(jobId, 'download', 'info', result.message ?? 'Skipped.');
         } else {
@@ -525,6 +534,7 @@ class DownloadScheduler {
         jobId,
         skipped > 0 ? 'All tasks skipped.' : 'No outputs produced.',
       );
+      await _queueRepository.clearResumeStatesForJob(jobId);
       await _log(
         jobId,
         'download',
@@ -533,6 +543,7 @@ class DownloadScheduler {
       );
     } else {
       await _queueRepository.markJobCompleted(jobId, outputPath);
+      await _queueRepository.clearResumeStatesForJob(jobId);
       await _log(
         jobId,
         'download',
