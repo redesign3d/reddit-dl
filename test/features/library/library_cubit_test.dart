@@ -51,6 +51,46 @@ void main() {
       expect(cubit.state.selectedItemIds.single, cubit.state.items.single.id);
     },
   );
+
+  test(
+    'selected item id stays stable when selected item remains visible',
+    () async {
+      final db = AppDatabase.inMemory();
+      addTearDown(() async => db.close());
+      final repository = LibraryRepository(db);
+      await _insertItem(
+        db,
+        permalink: 'https://www.reddit.com/r/test/comments/1/alpha',
+        title: 'Alpha title',
+      );
+      await _insertItem(
+        db,
+        permalink: 'https://www.reddit.com/r/test/comments/2/beta',
+        title: 'Beta title',
+      );
+
+      final cubit = LibraryCubit(repository);
+      addTearDown(() async => cubit.close());
+      await _waitUntil(
+        () => !cubit.state.isPageLoading && cubit.state.items.length == 2,
+      );
+
+      final beta = cubit.state.items.firstWhere(
+        (item) => item.title.contains('Beta'),
+      );
+      cubit.selectItem(beta.id);
+      expect(cubit.state.selectedItemId, beta.id);
+
+      cubit.updateSearch('beta');
+      await _waitUntil(
+        () => !cubit.state.isPageLoading && cubit.state.items.length == 1,
+        timeout: const Duration(seconds: 3),
+      );
+
+      expect(cubit.state.selectedItemId, beta.id);
+      expect(cubit.state.selectedItem?.id, beta.id);
+    },
+  );
 }
 
 Future<int> _insertItem(

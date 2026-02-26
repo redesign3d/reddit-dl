@@ -26,6 +26,8 @@ class LibraryCubit extends Cubit<LibraryState> {
           isPageLoading: true,
           selectedItemIds: <int>{},
           selectedItemId: null,
+          mediaCountByItemId: <int, int>{},
+          latestDownloadStatusByItemId: <int, String>{},
           hasIndexed: false,
         ),
       ) {
@@ -78,6 +80,9 @@ class LibraryCubit extends Cubit<LibraryState> {
   }
 
   void selectItem(int? itemId) {
+    if (state.selectedItemId == itemId) {
+      return;
+    }
     emit(state.copyWith(selectedItemId: itemId));
   }
 
@@ -88,18 +93,31 @@ class LibraryCubit extends Cubit<LibraryState> {
     } else {
       selectedIds.remove(itemId);
     }
+    final nextSelectedItemId = selected
+        ? itemId
+        : _resolveSelectionAfterToggle(
+            removedItemId: itemId,
+            selectedIds: selectedIds,
+          );
     emit(
       state.copyWith(
         selectedItemIds: selectedIds,
-        selectedItemId: selected ? itemId : state.selectedItemId,
+        selectedItemId: nextSelectedItemId,
       ),
     );
   }
 
   void selectAllVisible() {
+    final visibleIds = state.items.map((item) => item.id).toSet();
+    final nextSelectedItemId =
+        state.selectedItemId != null &&
+            visibleIds.contains(state.selectedItemId)
+        ? state.selectedItemId
+        : (state.items.isEmpty ? null : state.items.first.id);
     emit(
       state.copyWith(
-        selectedItemIds: state.items.map((item) => item.id).toSet(),
+        selectedItemIds: visibleIds,
+        selectedItemId: nextSelectedItemId,
       ),
     );
   }
@@ -169,6 +187,7 @@ class LibraryCubit extends Cubit<LibraryState> {
               selectedItemId: nextSelectedId,
             ),
           );
+          unawaited(_refreshPageMetadata(items: items, token: token));
         });
   }
 
@@ -195,6 +214,40 @@ class LibraryCubit extends Cubit<LibraryState> {
     emit(state.copyWith(totalCount: totalCount, hasIndexed: indexedCount > 0));
   }
 
+  Future<void> _refreshPageMetadata({
+    required List<SavedItem> items,
+    required int token,
+  }) async {
+    if (items.isEmpty) {
+      if (token != _activeQueryToken || isClosed) {
+        return;
+      }
+      emit(
+        state.copyWith(
+          mediaCountByItemId: const <int, int>{},
+          latestDownloadStatusByItemId: const <int, String>{},
+        ),
+      );
+      return;
+    }
+
+    final itemIds = items.map((item) => item.id).toList(growable: false);
+    final results = await Future.wait<dynamic>([
+      _repository.fetchMediaCountsForSavedItemIds(itemIds),
+      _repository.fetchLatestDownloadStatusForSavedItemIds(itemIds),
+    ]);
+    if (token != _activeQueryToken || isClosed) {
+      return;
+    }
+
+    emit(
+      state.copyWith(
+        mediaCountByItemId: results[0] as Map<int, int>,
+        latestDownloadStatusByItemId: results[1] as Map<int, String>,
+      ),
+    );
+  }
+
   LibraryQueryFilters _currentFilters() {
     return LibraryQueryFilters(
       searchQuery: state.searchQuery,
@@ -216,6 +269,24 @@ class LibraryCubit extends Cubit<LibraryState> {
       return selectedItemId;
     }
     return items.first.id;
+  }
+
+  int? _resolveSelectionAfterToggle({
+    required int removedItemId,
+    required Set<int> selectedIds,
+  }) {
+    if (state.selectedItemId != removedItemId) {
+      return state.selectedItemId;
+    }
+    if (selectedIds.isEmpty) {
+      return null;
+    }
+    for (final item in state.items) {
+      if (selectedIds.contains(item.id)) {
+        return item.id;
+      }
+    }
+    return selectedIds.first;
   }
 
   @override
@@ -243,6 +314,8 @@ class LibraryState extends Equatable {
     required this.isPageLoading,
     required this.selectedItemIds,
     required this.selectedItemId,
+    required this.mediaCountByItemId,
+    required this.latestDownloadStatusByItemId,
     required this.hasIndexed,
   });
 
@@ -260,6 +333,8 @@ class LibraryState extends Equatable {
   final bool isPageLoading;
   final Set<int> selectedItemIds;
   final int? selectedItemId;
+  final Map<int, int> mediaCountByItemId;
+  final Map<int, String> latestDownloadStatusByItemId;
   final bool hasIndexed;
 
   static const _unset = Object();
@@ -279,6 +354,8 @@ class LibraryState extends Equatable {
     bool? isPageLoading,
     Set<int>? selectedItemIds,
     Object? selectedItemId = _unset,
+    Map<int, int>? mediaCountByItemId,
+    Map<int, String>? latestDownloadStatusByItemId,
     bool? hasIndexed,
   }) {
     return LibraryState(
@@ -302,6 +379,9 @@ class LibraryState extends Equatable {
       selectedItemId: selectedItemId == _unset
           ? this.selectedItemId
           : selectedItemId as int?,
+      mediaCountByItemId: mediaCountByItemId ?? this.mediaCountByItemId,
+      latestDownloadStatusByItemId:
+          latestDownloadStatusByItemId ?? this.latestDownloadStatusByItemId,
       hasIndexed: hasIndexed ?? this.hasIndexed,
     );
   }
@@ -311,6 +391,19 @@ class LibraryState extends Equatable {
   bool get hasNextPage => (pageIndex + 1) * pageSize < totalCount;
 
   bool get hasSelection => selectedItemIds.isNotEmpty;
+
+  SavedItem? get selectedItem {
+    final selectedId = selectedItemId;
+    if (selectedId == null) {
+      return items.isEmpty ? null : items.first;
+    }
+    for (final item in items) {
+      if (item.id == selectedId) {
+        return item;
+      }
+    }
+    return items.isEmpty ? null : items.first;
+  }
 
   int get pageCount {
     if (totalCount == 0) {
@@ -335,6 +428,14 @@ class LibraryState extends Equatable {
     isPageLoading,
     selectedItemIds.toList()..sort(),
     selectedItemId,
+    mediaCountByItemId.entries
+        .map((entry) => '${entry.key}:${entry.value}')
+        .toList()
+      ..sort(),
+    latestDownloadStatusByItemId.entries
+        .map((entry) => '${entry.key}:${entry.value}')
+        .toList()
+      ..sort(),
     hasIndexed,
   ];
 }
