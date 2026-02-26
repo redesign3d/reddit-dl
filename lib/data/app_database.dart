@@ -11,6 +11,7 @@ part 'app_database.g.dart';
     SavedItems,
     MediaAssets,
     DownloadJobs,
+    DownloadJobAssets,
     DownloadOutputs,
     LogEntries,
     Settings,
@@ -23,7 +24,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.inMemory() : super(NativeDatabase.memory());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => buildMigrationStrategy(this);
@@ -73,6 +74,26 @@ class DownloadJobs extends Table {
   TextColumn get outputPath => text()();
   DateTimeColumn get startedAt => dateTime().nullable()();
   DateTimeColumn get completedAt => dateTime().nullable()();
+}
+
+@TableIndex(
+  name: 'download_job_assets_job_asset',
+  columns: {#jobId, #mediaAssetId},
+  unique: true,
+)
+@TableIndex(name: 'download_job_assets_job_id', columns: {#jobId})
+class DownloadJobAssets extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get jobId => integer().references(DownloadJobs, #id)();
+  IntColumn get mediaAssetId => integer().references(MediaAssets, #id)();
+  TextColumn get url => text()();
+  TextColumn get localTempPath => text()();
+  TextColumn get expectedFinalPath => text()();
+  TextColumn get etag => text().nullable()();
+  TextColumn get lastModified => text().nullable()();
+  IntColumn get totalBytes => integer().nullable()();
+  IntColumn get downloadedBytes => integer().withDefault(const Constant(0))();
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 }
 
 @TableIndex(name: 'download_outputs_job_id', columns: {#jobId})

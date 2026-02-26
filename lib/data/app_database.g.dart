@@ -2009,6 +2009,678 @@ class DownloadJobsCompanion extends UpdateCompanion<DownloadJob> {
   }
 }
 
+class $DownloadJobAssetsTable extends DownloadJobAssets
+    with TableInfo<$DownloadJobAssetsTable, DownloadJobAsset> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DownloadJobAssetsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _jobIdMeta = const VerificationMeta('jobId');
+  @override
+  late final GeneratedColumn<int> jobId = GeneratedColumn<int>(
+    'job_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES download_jobs (id)',
+    ),
+  );
+  static const VerificationMeta _mediaAssetIdMeta = const VerificationMeta(
+    'mediaAssetId',
+  );
+  @override
+  late final GeneratedColumn<int> mediaAssetId = GeneratedColumn<int>(
+    'media_asset_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES media_assets (id)',
+    ),
+  );
+  static const VerificationMeta _urlMeta = const VerificationMeta('url');
+  @override
+  late final GeneratedColumn<String> url = GeneratedColumn<String>(
+    'url',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _localTempPathMeta = const VerificationMeta(
+    'localTempPath',
+  );
+  @override
+  late final GeneratedColumn<String> localTempPath = GeneratedColumn<String>(
+    'local_temp_path',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _expectedFinalPathMeta = const VerificationMeta(
+    'expectedFinalPath',
+  );
+  @override
+  late final GeneratedColumn<String> expectedFinalPath =
+      GeneratedColumn<String>(
+        'expected_final_path',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      );
+  static const VerificationMeta _etagMeta = const VerificationMeta('etag');
+  @override
+  late final GeneratedColumn<String> etag = GeneratedColumn<String>(
+    'etag',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _lastModifiedMeta = const VerificationMeta(
+    'lastModified',
+  );
+  @override
+  late final GeneratedColumn<String> lastModified = GeneratedColumn<String>(
+    'last_modified',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _totalBytesMeta = const VerificationMeta(
+    'totalBytes',
+  );
+  @override
+  late final GeneratedColumn<int> totalBytes = GeneratedColumn<int>(
+    'total_bytes',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _downloadedBytesMeta = const VerificationMeta(
+    'downloadedBytes',
+  );
+  @override
+  late final GeneratedColumn<int> downloadedBytes = GeneratedColumn<int>(
+    'downloaded_bytes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    jobId,
+    mediaAssetId,
+    url,
+    localTempPath,
+    expectedFinalPath,
+    etag,
+    lastModified,
+    totalBytes,
+    downloadedBytes,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'download_job_assets';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<DownloadJobAsset> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('job_id')) {
+      context.handle(
+        _jobIdMeta,
+        jobId.isAcceptableOrUnknown(data['job_id']!, _jobIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_jobIdMeta);
+    }
+    if (data.containsKey('media_asset_id')) {
+      context.handle(
+        _mediaAssetIdMeta,
+        mediaAssetId.isAcceptableOrUnknown(
+          data['media_asset_id']!,
+          _mediaAssetIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_mediaAssetIdMeta);
+    }
+    if (data.containsKey('url')) {
+      context.handle(
+        _urlMeta,
+        url.isAcceptableOrUnknown(data['url']!, _urlMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_urlMeta);
+    }
+    if (data.containsKey('local_temp_path')) {
+      context.handle(
+        _localTempPathMeta,
+        localTempPath.isAcceptableOrUnknown(
+          data['local_temp_path']!,
+          _localTempPathMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_localTempPathMeta);
+    }
+    if (data.containsKey('expected_final_path')) {
+      context.handle(
+        _expectedFinalPathMeta,
+        expectedFinalPath.isAcceptableOrUnknown(
+          data['expected_final_path']!,
+          _expectedFinalPathMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_expectedFinalPathMeta);
+    }
+    if (data.containsKey('etag')) {
+      context.handle(
+        _etagMeta,
+        etag.isAcceptableOrUnknown(data['etag']!, _etagMeta),
+      );
+    }
+    if (data.containsKey('last_modified')) {
+      context.handle(
+        _lastModifiedMeta,
+        lastModified.isAcceptableOrUnknown(
+          data['last_modified']!,
+          _lastModifiedMeta,
+        ),
+      );
+    }
+    if (data.containsKey('total_bytes')) {
+      context.handle(
+        _totalBytesMeta,
+        totalBytes.isAcceptableOrUnknown(data['total_bytes']!, _totalBytesMeta),
+      );
+    }
+    if (data.containsKey('downloaded_bytes')) {
+      context.handle(
+        _downloadedBytesMeta,
+        downloadedBytes.isAcceptableOrUnknown(
+          data['downloaded_bytes']!,
+          _downloadedBytesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  DownloadJobAsset map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return DownloadJobAsset(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      jobId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}job_id'],
+      )!,
+      mediaAssetId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}media_asset_id'],
+      )!,
+      url: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}url'],
+      )!,
+      localTempPath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}local_temp_path'],
+      )!,
+      expectedFinalPath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}expected_final_path'],
+      )!,
+      etag: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}etag'],
+      ),
+      lastModified: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}last_modified'],
+      ),
+      totalBytes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}total_bytes'],
+      ),
+      downloadedBytes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}downloaded_bytes'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $DownloadJobAssetsTable createAlias(String alias) {
+    return $DownloadJobAssetsTable(attachedDatabase, alias);
+  }
+}
+
+class DownloadJobAsset extends DataClass
+    implements Insertable<DownloadJobAsset> {
+  final int id;
+  final int jobId;
+  final int mediaAssetId;
+  final String url;
+  final String localTempPath;
+  final String expectedFinalPath;
+  final String? etag;
+  final String? lastModified;
+  final int? totalBytes;
+  final int downloadedBytes;
+  final DateTime updatedAt;
+  const DownloadJobAsset({
+    required this.id,
+    required this.jobId,
+    required this.mediaAssetId,
+    required this.url,
+    required this.localTempPath,
+    required this.expectedFinalPath,
+    this.etag,
+    this.lastModified,
+    this.totalBytes,
+    required this.downloadedBytes,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['job_id'] = Variable<int>(jobId);
+    map['media_asset_id'] = Variable<int>(mediaAssetId);
+    map['url'] = Variable<String>(url);
+    map['local_temp_path'] = Variable<String>(localTempPath);
+    map['expected_final_path'] = Variable<String>(expectedFinalPath);
+    if (!nullToAbsent || etag != null) {
+      map['etag'] = Variable<String>(etag);
+    }
+    if (!nullToAbsent || lastModified != null) {
+      map['last_modified'] = Variable<String>(lastModified);
+    }
+    if (!nullToAbsent || totalBytes != null) {
+      map['total_bytes'] = Variable<int>(totalBytes);
+    }
+    map['downloaded_bytes'] = Variable<int>(downloadedBytes);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  DownloadJobAssetsCompanion toCompanion(bool nullToAbsent) {
+    return DownloadJobAssetsCompanion(
+      id: Value(id),
+      jobId: Value(jobId),
+      mediaAssetId: Value(mediaAssetId),
+      url: Value(url),
+      localTempPath: Value(localTempPath),
+      expectedFinalPath: Value(expectedFinalPath),
+      etag: etag == null && nullToAbsent ? const Value.absent() : Value(etag),
+      lastModified: lastModified == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastModified),
+      totalBytes: totalBytes == null && nullToAbsent
+          ? const Value.absent()
+          : Value(totalBytes),
+      downloadedBytes: Value(downloadedBytes),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory DownloadJobAsset.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return DownloadJobAsset(
+      id: serializer.fromJson<int>(json['id']),
+      jobId: serializer.fromJson<int>(json['jobId']),
+      mediaAssetId: serializer.fromJson<int>(json['mediaAssetId']),
+      url: serializer.fromJson<String>(json['url']),
+      localTempPath: serializer.fromJson<String>(json['localTempPath']),
+      expectedFinalPath: serializer.fromJson<String>(json['expectedFinalPath']),
+      etag: serializer.fromJson<String?>(json['etag']),
+      lastModified: serializer.fromJson<String?>(json['lastModified']),
+      totalBytes: serializer.fromJson<int?>(json['totalBytes']),
+      downloadedBytes: serializer.fromJson<int>(json['downloadedBytes']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'jobId': serializer.toJson<int>(jobId),
+      'mediaAssetId': serializer.toJson<int>(mediaAssetId),
+      'url': serializer.toJson<String>(url),
+      'localTempPath': serializer.toJson<String>(localTempPath),
+      'expectedFinalPath': serializer.toJson<String>(expectedFinalPath),
+      'etag': serializer.toJson<String?>(etag),
+      'lastModified': serializer.toJson<String?>(lastModified),
+      'totalBytes': serializer.toJson<int?>(totalBytes),
+      'downloadedBytes': serializer.toJson<int>(downloadedBytes),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  DownloadJobAsset copyWith({
+    int? id,
+    int? jobId,
+    int? mediaAssetId,
+    String? url,
+    String? localTempPath,
+    String? expectedFinalPath,
+    Value<String?> etag = const Value.absent(),
+    Value<String?> lastModified = const Value.absent(),
+    Value<int?> totalBytes = const Value.absent(),
+    int? downloadedBytes,
+    DateTime? updatedAt,
+  }) => DownloadJobAsset(
+    id: id ?? this.id,
+    jobId: jobId ?? this.jobId,
+    mediaAssetId: mediaAssetId ?? this.mediaAssetId,
+    url: url ?? this.url,
+    localTempPath: localTempPath ?? this.localTempPath,
+    expectedFinalPath: expectedFinalPath ?? this.expectedFinalPath,
+    etag: etag.present ? etag.value : this.etag,
+    lastModified: lastModified.present ? lastModified.value : this.lastModified,
+    totalBytes: totalBytes.present ? totalBytes.value : this.totalBytes,
+    downloadedBytes: downloadedBytes ?? this.downloadedBytes,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  DownloadJobAsset copyWithCompanion(DownloadJobAssetsCompanion data) {
+    return DownloadJobAsset(
+      id: data.id.present ? data.id.value : this.id,
+      jobId: data.jobId.present ? data.jobId.value : this.jobId,
+      mediaAssetId: data.mediaAssetId.present
+          ? data.mediaAssetId.value
+          : this.mediaAssetId,
+      url: data.url.present ? data.url.value : this.url,
+      localTempPath: data.localTempPath.present
+          ? data.localTempPath.value
+          : this.localTempPath,
+      expectedFinalPath: data.expectedFinalPath.present
+          ? data.expectedFinalPath.value
+          : this.expectedFinalPath,
+      etag: data.etag.present ? data.etag.value : this.etag,
+      lastModified: data.lastModified.present
+          ? data.lastModified.value
+          : this.lastModified,
+      totalBytes: data.totalBytes.present
+          ? data.totalBytes.value
+          : this.totalBytes,
+      downloadedBytes: data.downloadedBytes.present
+          ? data.downloadedBytes.value
+          : this.downloadedBytes,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DownloadJobAsset(')
+          ..write('id: $id, ')
+          ..write('jobId: $jobId, ')
+          ..write('mediaAssetId: $mediaAssetId, ')
+          ..write('url: $url, ')
+          ..write('localTempPath: $localTempPath, ')
+          ..write('expectedFinalPath: $expectedFinalPath, ')
+          ..write('etag: $etag, ')
+          ..write('lastModified: $lastModified, ')
+          ..write('totalBytes: $totalBytes, ')
+          ..write('downloadedBytes: $downloadedBytes, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    jobId,
+    mediaAssetId,
+    url,
+    localTempPath,
+    expectedFinalPath,
+    etag,
+    lastModified,
+    totalBytes,
+    downloadedBytes,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DownloadJobAsset &&
+          other.id == this.id &&
+          other.jobId == this.jobId &&
+          other.mediaAssetId == this.mediaAssetId &&
+          other.url == this.url &&
+          other.localTempPath == this.localTempPath &&
+          other.expectedFinalPath == this.expectedFinalPath &&
+          other.etag == this.etag &&
+          other.lastModified == this.lastModified &&
+          other.totalBytes == this.totalBytes &&
+          other.downloadedBytes == this.downloadedBytes &&
+          other.updatedAt == this.updatedAt);
+}
+
+class DownloadJobAssetsCompanion extends UpdateCompanion<DownloadJobAsset> {
+  final Value<int> id;
+  final Value<int> jobId;
+  final Value<int> mediaAssetId;
+  final Value<String> url;
+  final Value<String> localTempPath;
+  final Value<String> expectedFinalPath;
+  final Value<String?> etag;
+  final Value<String?> lastModified;
+  final Value<int?> totalBytes;
+  final Value<int> downloadedBytes;
+  final Value<DateTime> updatedAt;
+  const DownloadJobAssetsCompanion({
+    this.id = const Value.absent(),
+    this.jobId = const Value.absent(),
+    this.mediaAssetId = const Value.absent(),
+    this.url = const Value.absent(),
+    this.localTempPath = const Value.absent(),
+    this.expectedFinalPath = const Value.absent(),
+    this.etag = const Value.absent(),
+    this.lastModified = const Value.absent(),
+    this.totalBytes = const Value.absent(),
+    this.downloadedBytes = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  DownloadJobAssetsCompanion.insert({
+    this.id = const Value.absent(),
+    required int jobId,
+    required int mediaAssetId,
+    required String url,
+    required String localTempPath,
+    required String expectedFinalPath,
+    this.etag = const Value.absent(),
+    this.lastModified = const Value.absent(),
+    this.totalBytes = const Value.absent(),
+    this.downloadedBytes = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  }) : jobId = Value(jobId),
+       mediaAssetId = Value(mediaAssetId),
+       url = Value(url),
+       localTempPath = Value(localTempPath),
+       expectedFinalPath = Value(expectedFinalPath);
+  static Insertable<DownloadJobAsset> custom({
+    Expression<int>? id,
+    Expression<int>? jobId,
+    Expression<int>? mediaAssetId,
+    Expression<String>? url,
+    Expression<String>? localTempPath,
+    Expression<String>? expectedFinalPath,
+    Expression<String>? etag,
+    Expression<String>? lastModified,
+    Expression<int>? totalBytes,
+    Expression<int>? downloadedBytes,
+    Expression<DateTime>? updatedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (jobId != null) 'job_id': jobId,
+      if (mediaAssetId != null) 'media_asset_id': mediaAssetId,
+      if (url != null) 'url': url,
+      if (localTempPath != null) 'local_temp_path': localTempPath,
+      if (expectedFinalPath != null) 'expected_final_path': expectedFinalPath,
+      if (etag != null) 'etag': etag,
+      if (lastModified != null) 'last_modified': lastModified,
+      if (totalBytes != null) 'total_bytes': totalBytes,
+      if (downloadedBytes != null) 'downloaded_bytes': downloadedBytes,
+      if (updatedAt != null) 'updated_at': updatedAt,
+    });
+  }
+
+  DownloadJobAssetsCompanion copyWith({
+    Value<int>? id,
+    Value<int>? jobId,
+    Value<int>? mediaAssetId,
+    Value<String>? url,
+    Value<String>? localTempPath,
+    Value<String>? expectedFinalPath,
+    Value<String?>? etag,
+    Value<String?>? lastModified,
+    Value<int?>? totalBytes,
+    Value<int>? downloadedBytes,
+    Value<DateTime>? updatedAt,
+  }) {
+    return DownloadJobAssetsCompanion(
+      id: id ?? this.id,
+      jobId: jobId ?? this.jobId,
+      mediaAssetId: mediaAssetId ?? this.mediaAssetId,
+      url: url ?? this.url,
+      localTempPath: localTempPath ?? this.localTempPath,
+      expectedFinalPath: expectedFinalPath ?? this.expectedFinalPath,
+      etag: etag ?? this.etag,
+      lastModified: lastModified ?? this.lastModified,
+      totalBytes: totalBytes ?? this.totalBytes,
+      downloadedBytes: downloadedBytes ?? this.downloadedBytes,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (jobId.present) {
+      map['job_id'] = Variable<int>(jobId.value);
+    }
+    if (mediaAssetId.present) {
+      map['media_asset_id'] = Variable<int>(mediaAssetId.value);
+    }
+    if (url.present) {
+      map['url'] = Variable<String>(url.value);
+    }
+    if (localTempPath.present) {
+      map['local_temp_path'] = Variable<String>(localTempPath.value);
+    }
+    if (expectedFinalPath.present) {
+      map['expected_final_path'] = Variable<String>(expectedFinalPath.value);
+    }
+    if (etag.present) {
+      map['etag'] = Variable<String>(etag.value);
+    }
+    if (lastModified.present) {
+      map['last_modified'] = Variable<String>(lastModified.value);
+    }
+    if (totalBytes.present) {
+      map['total_bytes'] = Variable<int>(totalBytes.value);
+    }
+    if (downloadedBytes.present) {
+      map['downloaded_bytes'] = Variable<int>(downloadedBytes.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DownloadJobAssetsCompanion(')
+          ..write('id: $id, ')
+          ..write('jobId: $jobId, ')
+          ..write('mediaAssetId: $mediaAssetId, ')
+          ..write('url: $url, ')
+          ..write('localTempPath: $localTempPath, ')
+          ..write('expectedFinalPath: $expectedFinalPath, ')
+          ..write('etag: $etag, ')
+          ..write('lastModified: $lastModified, ')
+          ..write('totalBytes: $totalBytes, ')
+          ..write('downloadedBytes: $downloadedBytes, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $DownloadOutputsTable extends DownloadOutputs
     with TableInfo<$DownloadOutputsTable, DownloadOutput> {
   @override
@@ -3129,6 +3801,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $SavedItemsTable savedItems = $SavedItemsTable(this);
   late final $MediaAssetsTable mediaAssets = $MediaAssetsTable(this);
   late final $DownloadJobsTable downloadJobs = $DownloadJobsTable(this);
+  late final $DownloadJobAssetsTable downloadJobAssets =
+      $DownloadJobAssetsTable(this);
   late final $DownloadOutputsTable downloadOutputs = $DownloadOutputsTable(
     this,
   );
@@ -3150,6 +3824,14 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     'download_jobs_status',
     'CREATE INDEX download_jobs_status ON download_jobs (status)',
   );
+  late final Index downloadJobAssetsJobAsset = Index(
+    'download_job_assets_job_asset',
+    'CREATE UNIQUE INDEX download_job_assets_job_asset ON download_job_assets (job_id, media_asset_id)',
+  );
+  late final Index downloadJobAssetsJobId = Index(
+    'download_job_assets_job_id',
+    'CREATE INDEX download_job_assets_job_id ON download_job_assets (job_id)',
+  );
   late final Index downloadOutputsJobId = Index(
     'download_outputs_job_id',
     'CREATE INDEX download_outputs_job_id ON download_outputs (job_id)',
@@ -3166,6 +3848,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     savedItems,
     mediaAssets,
     downloadJobs,
+    downloadJobAssets,
     downloadOutputs,
     logEntries,
     settings,
@@ -3173,6 +3856,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     savedItemsSubreddit,
     savedItemsOver18,
     downloadJobsStatus,
+    downloadJobAssetsJobAsset,
+    downloadJobAssetsJobId,
     downloadOutputsJobId,
     downloadOutputsSavedItemId,
   ];
@@ -3928,6 +4613,30 @@ final class $$MediaAssetsTableReferences
       manager.$state.copyWith(prefetchedData: [item]),
     );
   }
+
+  static MultiTypedResultKey<$DownloadJobAssetsTable, List<DownloadJobAsset>>
+  _downloadJobAssetsRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.downloadJobAssets,
+        aliasName: $_aliasNameGenerator(
+          db.mediaAssets.id,
+          db.downloadJobAssets.mediaAssetId,
+        ),
+      );
+
+  $$DownloadJobAssetsTableProcessedTableManager get downloadJobAssetsRefs {
+    final manager = $$DownloadJobAssetsTableTableManager(
+      $_db,
+      $_db.downloadJobAssets,
+    ).filter((f) => f.mediaAssetId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _downloadJobAssetsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$MediaAssetsTableFilterComposer
@@ -3995,6 +4704,31 @@ class $$MediaAssetsTableFilterComposer
           ),
     );
     return composer;
+  }
+
+  Expression<bool> downloadJobAssetsRefs(
+    Expression<bool> Function($$DownloadJobAssetsTableFilterComposer f) f,
+  ) {
+    final $$DownloadJobAssetsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.downloadJobAssets,
+      getReferencedColumn: (t) => t.mediaAssetId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$DownloadJobAssetsTableFilterComposer(
+            $db: $db,
+            $table: $db.downloadJobAssets,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
   }
 }
 
@@ -4124,6 +4858,32 @@ class $$MediaAssetsTableAnnotationComposer
     );
     return composer;
   }
+
+  Expression<T> downloadJobAssetsRefs<T extends Object>(
+    Expression<T> Function($$DownloadJobAssetsTableAnnotationComposer a) f,
+  ) {
+    final $$DownloadJobAssetsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.downloadJobAssets,
+          getReferencedColumn: (t) => t.mediaAssetId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$DownloadJobAssetsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.downloadJobAssets,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
 }
 
 class $$MediaAssetsTableTableManager
@@ -4139,7 +4899,7 @@ class $$MediaAssetsTableTableManager
           $$MediaAssetsTableUpdateCompanionBuilder,
           (MediaAsset, $$MediaAssetsTableReferences),
           MediaAsset,
-          PrefetchHooks Function({bool savedItemId})
+          PrefetchHooks Function({bool savedItemId, bool downloadJobAssetsRefs})
         > {
   $$MediaAssetsTableTableManager(_$AppDatabase db, $MediaAssetsTable table)
     : super(
@@ -4200,47 +4960,74 @@ class $$MediaAssetsTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({savedItemId = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [],
-              addJoins:
-                  <
-                    T extends TableManagerState<
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic
-                    >
-                  >(state) {
-                    if (savedItemId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.savedItemId,
-                                referencedTable: $$MediaAssetsTableReferences
-                                    ._savedItemIdTable(db),
-                                referencedColumn: $$MediaAssetsTableReferences
-                                    ._savedItemIdTable(db)
-                                    .id,
-                              )
-                              as T;
-                    }
+          prefetchHooksCallback:
+              ({savedItemId = false, downloadJobAssetsRefs = false}) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (downloadJobAssetsRefs) db.downloadJobAssets,
+                  ],
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (savedItemId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.savedItemId,
+                                    referencedTable:
+                                        $$MediaAssetsTableReferences
+                                            ._savedItemIdTable(db),
+                                    referencedColumn:
+                                        $$MediaAssetsTableReferences
+                                            ._savedItemIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
 
-                    return state;
+                        return state;
+                      },
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (downloadJobAssetsRefs)
+                        await $_getPrefetchedData<
+                          MediaAsset,
+                          $MediaAssetsTable,
+                          DownloadJobAsset
+                        >(
+                          currentTable: table,
+                          referencedTable: $$MediaAssetsTableReferences
+                              ._downloadJobAssetsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$MediaAssetsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).downloadJobAssetsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.mediaAssetId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
                   },
-              getPrefetchedDataCallback: (items) async {
-                return [];
+                );
               },
-            );
-          },
         ),
       );
 }
@@ -4257,7 +5044,7 @@ typedef $$MediaAssetsTableProcessedTableManager =
       $$MediaAssetsTableUpdateCompanionBuilder,
       (MediaAsset, $$MediaAssetsTableReferences),
       MediaAsset,
-      PrefetchHooks Function({bool savedItemId})
+      PrefetchHooks Function({bool savedItemId, bool downloadJobAssetsRefs})
     >;
 typedef $$DownloadJobsTableCreateCompanionBuilder =
     DownloadJobsCompanion Function({
@@ -4306,6 +5093,30 @@ final class $$DownloadJobsTableReferences
     if (item == null) return manager;
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static MultiTypedResultKey<$DownloadJobAssetsTable, List<DownloadJobAsset>>
+  _downloadJobAssetsRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.downloadJobAssets,
+        aliasName: $_aliasNameGenerator(
+          db.downloadJobs.id,
+          db.downloadJobAssets.jobId,
+        ),
+      );
+
+  $$DownloadJobAssetsTableProcessedTableManager get downloadJobAssetsRefs {
+    final manager = $$DownloadJobAssetsTableTableManager(
+      $_db,
+      $_db.downloadJobAssets,
+    ).filter((f) => f.jobId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _downloadJobAssetsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
     );
   }
 
@@ -4408,6 +5219,31 @@ class $$DownloadJobsTableFilterComposer
           ),
     );
     return composer;
+  }
+
+  Expression<bool> downloadJobAssetsRefs(
+    Expression<bool> Function($$DownloadJobAssetsTableFilterComposer f) f,
+  ) {
+    final $$DownloadJobAssetsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.downloadJobAssets,
+      getReferencedColumn: (t) => t.jobId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$DownloadJobAssetsTableFilterComposer(
+            $db: $db,
+            $table: $db.downloadJobAssets,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
   }
 
   Expression<bool> downloadOutputsRefs(
@@ -4579,6 +5415,32 @@ class $$DownloadJobsTableAnnotationComposer
     return composer;
   }
 
+  Expression<T> downloadJobAssetsRefs<T extends Object>(
+    Expression<T> Function($$DownloadJobAssetsTableAnnotationComposer a) f,
+  ) {
+    final $$DownloadJobAssetsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.downloadJobAssets,
+          getReferencedColumn: (t) => t.jobId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$DownloadJobAssetsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.downloadJobAssets,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
+
   Expression<T> downloadOutputsRefs<T extends Object>(
     Expression<T> Function($$DownloadOutputsTableAnnotationComposer a) f,
   ) {
@@ -4618,7 +5480,11 @@ class $$DownloadJobsTableTableManager
           $$DownloadJobsTableUpdateCompanionBuilder,
           (DownloadJob, $$DownloadJobsTableReferences),
           DownloadJob,
-          PrefetchHooks Function({bool savedItemId, bool downloadOutputsRefs})
+          PrefetchHooks Function({
+            bool savedItemId,
+            bool downloadJobAssetsRefs,
+            bool downloadOutputsRefs,
+          })
         > {
   $$DownloadJobsTableTableManager(_$AppDatabase db, $DownloadJobsTable table)
     : super(
@@ -4688,10 +5554,15 @@ class $$DownloadJobsTableTableManager
               )
               .toList(),
           prefetchHooksCallback:
-              ({savedItemId = false, downloadOutputsRefs = false}) {
+              ({
+                savedItemId = false,
+                downloadJobAssetsRefs = false,
+                downloadOutputsRefs = false,
+              }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
+                    if (downloadJobAssetsRefs) db.downloadJobAssets,
                     if (downloadOutputsRefs) db.downloadOutputs,
                   ],
                   addJoins:
@@ -4730,6 +5601,27 @@ class $$DownloadJobsTableTableManager
                       },
                   getPrefetchedDataCallback: (items) async {
                     return [
+                      if (downloadJobAssetsRefs)
+                        await $_getPrefetchedData<
+                          DownloadJob,
+                          $DownloadJobsTable,
+                          DownloadJobAsset
+                        >(
+                          currentTable: table,
+                          referencedTable: $$DownloadJobsTableReferences
+                              ._downloadJobAssetsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$DownloadJobsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).downloadJobAssetsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.jobId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                       if (downloadOutputsRefs)
                         await $_getPrefetchedData<
                           DownloadJob,
@@ -4771,7 +5663,557 @@ typedef $$DownloadJobsTableProcessedTableManager =
       $$DownloadJobsTableUpdateCompanionBuilder,
       (DownloadJob, $$DownloadJobsTableReferences),
       DownloadJob,
-      PrefetchHooks Function({bool savedItemId, bool downloadOutputsRefs})
+      PrefetchHooks Function({
+        bool savedItemId,
+        bool downloadJobAssetsRefs,
+        bool downloadOutputsRefs,
+      })
+    >;
+typedef $$DownloadJobAssetsTableCreateCompanionBuilder =
+    DownloadJobAssetsCompanion Function({
+      Value<int> id,
+      required int jobId,
+      required int mediaAssetId,
+      required String url,
+      required String localTempPath,
+      required String expectedFinalPath,
+      Value<String?> etag,
+      Value<String?> lastModified,
+      Value<int?> totalBytes,
+      Value<int> downloadedBytes,
+      Value<DateTime> updatedAt,
+    });
+typedef $$DownloadJobAssetsTableUpdateCompanionBuilder =
+    DownloadJobAssetsCompanion Function({
+      Value<int> id,
+      Value<int> jobId,
+      Value<int> mediaAssetId,
+      Value<String> url,
+      Value<String> localTempPath,
+      Value<String> expectedFinalPath,
+      Value<String?> etag,
+      Value<String?> lastModified,
+      Value<int?> totalBytes,
+      Value<int> downloadedBytes,
+      Value<DateTime> updatedAt,
+    });
+
+final class $$DownloadJobAssetsTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $DownloadJobAssetsTable,
+          DownloadJobAsset
+        > {
+  $$DownloadJobAssetsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $DownloadJobsTable _jobIdTable(_$AppDatabase db) =>
+      db.downloadJobs.createAlias(
+        $_aliasNameGenerator(db.downloadJobAssets.jobId, db.downloadJobs.id),
+      );
+
+  $$DownloadJobsTableProcessedTableManager get jobId {
+    final $_column = $_itemColumn<int>('job_id')!;
+
+    final manager = $$DownloadJobsTableTableManager(
+      $_db,
+      $_db.downloadJobs,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_jobIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $MediaAssetsTable _mediaAssetIdTable(_$AppDatabase db) =>
+      db.mediaAssets.createAlias(
+        $_aliasNameGenerator(
+          db.downloadJobAssets.mediaAssetId,
+          db.mediaAssets.id,
+        ),
+      );
+
+  $$MediaAssetsTableProcessedTableManager get mediaAssetId {
+    final $_column = $_itemColumn<int>('media_asset_id')!;
+
+    final manager = $$MediaAssetsTableTableManager(
+      $_db,
+      $_db.mediaAssets,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_mediaAssetIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$DownloadJobAssetsTableFilterComposer
+    extends Composer<_$AppDatabase, $DownloadJobAssetsTable> {
+  $$DownloadJobAssetsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get url => $composableBuilder(
+    column: $table.url,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get localTempPath => $composableBuilder(
+    column: $table.localTempPath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get expectedFinalPath => $composableBuilder(
+    column: $table.expectedFinalPath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get etag => $composableBuilder(
+    column: $table.etag,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get lastModified => $composableBuilder(
+    column: $table.lastModified,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get totalBytes => $composableBuilder(
+    column: $table.totalBytes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get downloadedBytes => $composableBuilder(
+    column: $table.downloadedBytes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$DownloadJobsTableFilterComposer get jobId {
+    final $$DownloadJobsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.jobId,
+      referencedTable: $db.downloadJobs,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$DownloadJobsTableFilterComposer(
+            $db: $db,
+            $table: $db.downloadJobs,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$MediaAssetsTableFilterComposer get mediaAssetId {
+    final $$MediaAssetsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.mediaAssetId,
+      referencedTable: $db.mediaAssets,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$MediaAssetsTableFilterComposer(
+            $db: $db,
+            $table: $db.mediaAssets,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$DownloadJobAssetsTableOrderingComposer
+    extends Composer<_$AppDatabase, $DownloadJobAssetsTable> {
+  $$DownloadJobAssetsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get url => $composableBuilder(
+    column: $table.url,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get localTempPath => $composableBuilder(
+    column: $table.localTempPath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get expectedFinalPath => $composableBuilder(
+    column: $table.expectedFinalPath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get etag => $composableBuilder(
+    column: $table.etag,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get lastModified => $composableBuilder(
+    column: $table.lastModified,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get totalBytes => $composableBuilder(
+    column: $table.totalBytes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get downloadedBytes => $composableBuilder(
+    column: $table.downloadedBytes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$DownloadJobsTableOrderingComposer get jobId {
+    final $$DownloadJobsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.jobId,
+      referencedTable: $db.downloadJobs,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$DownloadJobsTableOrderingComposer(
+            $db: $db,
+            $table: $db.downloadJobs,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$MediaAssetsTableOrderingComposer get mediaAssetId {
+    final $$MediaAssetsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.mediaAssetId,
+      referencedTable: $db.mediaAssets,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$MediaAssetsTableOrderingComposer(
+            $db: $db,
+            $table: $db.mediaAssets,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$DownloadJobAssetsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $DownloadJobAssetsTable> {
+  $$DownloadJobAssetsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get url =>
+      $composableBuilder(column: $table.url, builder: (column) => column);
+
+  GeneratedColumn<String> get localTempPath => $composableBuilder(
+    column: $table.localTempPath,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get expectedFinalPath => $composableBuilder(
+    column: $table.expectedFinalPath,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get etag =>
+      $composableBuilder(column: $table.etag, builder: (column) => column);
+
+  GeneratedColumn<String> get lastModified => $composableBuilder(
+    column: $table.lastModified,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get totalBytes => $composableBuilder(
+    column: $table.totalBytes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get downloadedBytes => $composableBuilder(
+    column: $table.downloadedBytes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  $$DownloadJobsTableAnnotationComposer get jobId {
+    final $$DownloadJobsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.jobId,
+      referencedTable: $db.downloadJobs,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$DownloadJobsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.downloadJobs,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$MediaAssetsTableAnnotationComposer get mediaAssetId {
+    final $$MediaAssetsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.mediaAssetId,
+      referencedTable: $db.mediaAssets,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$MediaAssetsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.mediaAssets,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$DownloadJobAssetsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $DownloadJobAssetsTable,
+          DownloadJobAsset,
+          $$DownloadJobAssetsTableFilterComposer,
+          $$DownloadJobAssetsTableOrderingComposer,
+          $$DownloadJobAssetsTableAnnotationComposer,
+          $$DownloadJobAssetsTableCreateCompanionBuilder,
+          $$DownloadJobAssetsTableUpdateCompanionBuilder,
+          (DownloadJobAsset, $$DownloadJobAssetsTableReferences),
+          DownloadJobAsset,
+          PrefetchHooks Function({bool jobId, bool mediaAssetId})
+        > {
+  $$DownloadJobAssetsTableTableManager(
+    _$AppDatabase db,
+    $DownloadJobAssetsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DownloadJobAssetsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$DownloadJobAssetsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$DownloadJobAssetsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> jobId = const Value.absent(),
+                Value<int> mediaAssetId = const Value.absent(),
+                Value<String> url = const Value.absent(),
+                Value<String> localTempPath = const Value.absent(),
+                Value<String> expectedFinalPath = const Value.absent(),
+                Value<String?> etag = const Value.absent(),
+                Value<String?> lastModified = const Value.absent(),
+                Value<int?> totalBytes = const Value.absent(),
+                Value<int> downloadedBytes = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => DownloadJobAssetsCompanion(
+                id: id,
+                jobId: jobId,
+                mediaAssetId: mediaAssetId,
+                url: url,
+                localTempPath: localTempPath,
+                expectedFinalPath: expectedFinalPath,
+                etag: etag,
+                lastModified: lastModified,
+                totalBytes: totalBytes,
+                downloadedBytes: downloadedBytes,
+                updatedAt: updatedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int jobId,
+                required int mediaAssetId,
+                required String url,
+                required String localTempPath,
+                required String expectedFinalPath,
+                Value<String?> etag = const Value.absent(),
+                Value<String?> lastModified = const Value.absent(),
+                Value<int?> totalBytes = const Value.absent(),
+                Value<int> downloadedBytes = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => DownloadJobAssetsCompanion.insert(
+                id: id,
+                jobId: jobId,
+                mediaAssetId: mediaAssetId,
+                url: url,
+                localTempPath: localTempPath,
+                expectedFinalPath: expectedFinalPath,
+                etag: etag,
+                lastModified: lastModified,
+                totalBytes: totalBytes,
+                downloadedBytes: downloadedBytes,
+                updatedAt: updatedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$DownloadJobAssetsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({jobId = false, mediaAssetId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (jobId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.jobId,
+                                referencedTable:
+                                    $$DownloadJobAssetsTableReferences
+                                        ._jobIdTable(db),
+                                referencedColumn:
+                                    $$DownloadJobAssetsTableReferences
+                                        ._jobIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+                    if (mediaAssetId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.mediaAssetId,
+                                referencedTable:
+                                    $$DownloadJobAssetsTableReferences
+                                        ._mediaAssetIdTable(db),
+                                referencedColumn:
+                                    $$DownloadJobAssetsTableReferences
+                                        ._mediaAssetIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$DownloadJobAssetsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $DownloadJobAssetsTable,
+      DownloadJobAsset,
+      $$DownloadJobAssetsTableFilterComposer,
+      $$DownloadJobAssetsTableOrderingComposer,
+      $$DownloadJobAssetsTableAnnotationComposer,
+      $$DownloadJobAssetsTableCreateCompanionBuilder,
+      $$DownloadJobAssetsTableUpdateCompanionBuilder,
+      (DownloadJobAsset, $$DownloadJobAssetsTableReferences),
+      DownloadJobAsset,
+      PrefetchHooks Function({bool jobId, bool mediaAssetId})
     >;
 typedef $$DownloadOutputsTableCreateCompanionBuilder =
     DownloadOutputsCompanion Function({
@@ -5594,6 +7036,8 @@ class $AppDatabaseManager {
       $$MediaAssetsTableTableManager(_db, _db.mediaAssets);
   $$DownloadJobsTableTableManager get downloadJobs =>
       $$DownloadJobsTableTableManager(_db, _db.downloadJobs);
+  $$DownloadJobAssetsTableTableManager get downloadJobAssets =>
+      $$DownloadJobAssetsTableTableManager(_db, _db.downloadJobAssets);
   $$DownloadOutputsTableTableManager get downloadOutputs =>
       $$DownloadOutputsTableTableManager(_db, _db.downloadOutputs);
   $$LogEntriesTableTableManager get logEntries =>
