@@ -144,6 +144,19 @@ class QueueCubit extends Cubit<QueueState> {
     await _repository.retryJob(jobId);
   }
 
+  Future<void> cancelJob(int jobId) async {
+    await _repository.cancelJob(jobId);
+    await _logs.add(
+      LogRecord(
+        timestamp: DateTime.now(),
+        scope: 'download',
+        level: 'warn',
+        message: 'Canceled job $jobId from Queue UI.',
+        relatedJobId: jobId,
+      ),
+    );
+  }
+
   Future<void> clearCompleted() async {
     await _repository.clearCompleted();
   }

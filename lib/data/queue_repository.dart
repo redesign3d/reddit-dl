@@ -228,6 +228,18 @@ class QueueRepository implements DownloadResumeStateStore {
     );
   }
 
+  Future<void> cancelJob(int jobId) async {
+    await (_db.update(
+      _db.downloadJobs,
+    )..where((tbl) => tbl.id.equals(jobId))).write(
+      DownloadJobsCompanion(
+        status: const Value('skipped'),
+        lastError: const Value('Canceled by user.'),
+        completedAt: Value(DateTime.now()),
+      ),
+    );
+  }
+
   Future<int> retryFailedForSavedItemIds(Iterable<int> savedItemIds) {
     final uniqueIds = savedItemIds.toSet().toList(growable: false);
     if (uniqueIds.isEmpty) {
