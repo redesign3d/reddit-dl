@@ -403,19 +403,37 @@ class RedditVideoDownloader {
   }
 
   List<Uri> _audioCandidates(String fallbackUrl) {
+    return buildDashAudioCandidates(fallbackUrl);
+  }
+
+  static String? extractDashBasePath(String path) {
+    final match = RegExp(r'^(.*)/DASH_[^/]+\.mp4$').firstMatch(path);
+    return match?.group(1);
+  }
+
+  static List<Uri> buildDashAudioCandidates(String fallbackUrl) {
     final uri = Uri.tryParse(fallbackUrl);
     if (uri == null) {
       return const [];
     }
-    final match = RegExp(r'(.*)/DASH_[^/]+\\.mp4').firstMatch(uri.path);
-    if (match == null) {
+    final basePath = extractDashBasePath(uri.path);
+    if (basePath == null) {
       return const [];
     }
-    final base = match.group(1)!;
     return [
-      uri.replace(path: '$base/DASH_audio.mp4', query: ''),
-      uri.replace(path: '$base/DASH_AUDIO_128.mp4', query: ''),
+      _candidateUri(uri, '$basePath/DASH_audio.mp4'),
+      _candidateUri(uri, '$basePath/DASH_AUDIO_128.mp4'),
     ];
+  }
+
+  static Uri _candidateUri(Uri source, String path) {
+    return Uri(
+      scheme: source.scheme,
+      userInfo: source.userInfo.isEmpty ? null : source.userInfo,
+      host: source.host,
+      port: source.hasPort ? source.port : null,
+      path: path,
+    );
   }
 
   Future<bool> _probeUrl(Uri url, {CancelToken? cancelToken}) async {
