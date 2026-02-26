@@ -1,17 +1,25 @@
 import 'dart:math' as math;
+import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../data/app_database.dart';
 import '../../data/library_repository.dart';
+import '../../data/queue_repository.dart';
+import '../../data/settings_repository.dart';
 import '../../ui/components/app_button.dart';
 import '../../ui/components/app_card.dart';
 import '../../ui/components/app_chip.dart';
 import '../../ui/components/app_select.dart';
 import '../../ui/components/app_switch.dart';
 import '../../ui/components/app_text_field.dart';
+import '../../ui/components/app_toast.dart';
 import '../../ui/tokens.dart';
+import '../../utils/reveal_in_file_manager.dart';
+import '../../utils/reveal_path_resolver.dart';
+import '../queue/queue_cubit.dart';
 import 'library_cubit.dart';
 
 const _wideLibraryBreakpoint = 1080.0;
@@ -441,6 +449,73 @@ class _LibraryDetailsPanel extends StatelessWidget {
                 context,
               ).textTheme.bodySmall?.copyWith(color: colors.mutedForeground),
             ),
+            SizedBox(height: AppTokens.space.s12),
+            StreamBuilder<DownloadJob?>(
+              stream: _watchLatestJobForItem(context, item!.id),
+              builder: (context, snapshot) {
+                final job = snapshot.data;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Download status: ${_statusLabel(job)}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colors.mutedForeground,
+                      ),
+                    ),
+                    SizedBox(height: AppTokens.space.s8),
+                    Wrap(
+                      spacing: AppTokens.space.s8,
+                      runSpacing: AppTokens.space.s8,
+                      children: [
+                        AppButton(
+                          label: 'Enqueue download',
+                          variant: AppButtonVariant.secondary,
+                          onPressed: () => _enqueueDownload(context, item!),
+                        ),
+                        if (job != null &&
+                            (job.status == 'failed' || job.status == 'skipped'))
+                          AppButton(
+                            label: 'Retry',
+                            variant: AppButtonVariant.ghost,
+                            onPressed: () => _retryJob(context, job.id),
+                          ),
+                        AppButton(
+                          label: 'Reveal output',
+                          variant: AppButtonVariant.ghost,
+                          onPressed: () => _revealOutput(context, item!, job),
+                        ),
+                      ],
+                    ),
+                  ],
+                );
+              },
+            ),
+            SizedBox(height: AppTokens.space.s12),
+            Wrap(
+              spacing: AppTokens.space.s8,
+              runSpacing: AppTokens.space.s8,
+              children: [
+                AppButton(
+                  label: 'Open permalink',
+                  variant: AppButtonVariant.secondary,
+                  onPressed: () => _openPermalink(context, item!.permalink),
+                ),
+                AppButton(
+                  label: 'Copy permalink',
+                  variant: AppButtonVariant.ghost,
+                  onPressed: () async {
+                    await Clipboard.setData(
+                      ClipboardData(text: item!.permalink),
+                    );
+                    if (!context.mounted) {
+                      return;
+                    }
+                    AppToast.show(context, 'Permalink copied.');
+                  },
+                ),
+              ],
+            ),
             if (item!.bodyMarkdown != null &&
                 item!.bodyMarkdown!.trim().isNotEmpty) ...[
               SizedBox(height: AppTokens.space.s12),
@@ -456,6 +531,111 @@ class _LibraryDetailsPanel extends StatelessWidget {
       ),
     );
   }
+}
+
+Stream<DownloadJob?> _watchLatestJobForItem(
+  BuildContext context,
+  int savedItemId,
+) {
+  final queueRepository = context.read<QueueRepository>();
+  return queueRepository.watchQueue().map((records) {
+    final matches =
+        records
+            .where((record) => record.item.id == savedItemId)
+            .map((record) => record.job)
+            .toList()
+          ..sort((a, b) => b.id.compareTo(a.id));
+    return matches.isEmpty ? null : matches.first;
+  });
+}
+
+String _statusLabel(DownloadJob? job) {
+  if (job == null) {
+    return 'Not queued';
+  }
+  return job.status.toUpperCase();
+}
+
+Future<void> _enqueueDownload(BuildContext context, SavedItem item) async {
+  final created = await context.read<QueueCubit>().enqueueSavedItem(item);
+  if (!context.mounted) {
+    return;
+  }
+  AppToast.show(
+    context,
+    created ? 'Download queued.' : 'Download already queued.',
+  );
+}
+
+Future<void> _retryJob(BuildContext context, int jobId) async {
+  await context.read<QueueRepository>().retryJob(jobId);
+  if (!context.mounted) {
+    return;
+  }
+  AppToast.show(context, 'Retry queued.');
+}
+
+Future<void> _revealOutput(
+  BuildContext context,
+  SavedItem item,
+  DownloadJob? job,
+) async {
+  final path = await resolveRevealPath(
+    queueRepository: context.read<QueueRepository>(),
+    settingsRepository: context.read<SettingsRepository>(),
+    jobId: job?.id,
+    savedItemId: item.id,
+    legacyOutputPath: job?.outputPath,
+  );
+  if (!context.mounted) {
+    return;
+  }
+  if (path == null) {
+    AppToast.show(
+      context,
+      'No output path available. Set Download root in Settings.',
+    );
+    return;
+  }
+  final success = await revealInFileManager(path);
+  if (!context.mounted) {
+    return;
+  }
+  AppToast.show(
+    context,
+    success ? 'Opened file manager.' : 'Unable to reveal path.',
+  );
+}
+
+Future<void> _openPermalink(BuildContext context, String permalink) async {
+  final success = await _openExternal(permalink);
+  if (!context.mounted) {
+    return;
+  }
+  AppToast.show(
+    context,
+    success ? 'Opened permalink.' : 'Unable to open permalink.',
+  );
+}
+
+Future<bool> _openExternal(String target) async {
+  try {
+    if (Platform.isMacOS) {
+      final result = await Process.run('open', [target]);
+      return result.exitCode == 0;
+    }
+    if (Platform.isWindows) {
+      final result = await Process.run('explorer', [target]);
+      return result.exitCode == 0;
+    }
+    if (Platform.isLinux) {
+      final result = await Process.run('xdg-open', [target]);
+      return result.exitCode == 0;
+    }
+  } catch (_) {
+    return false;
+  }
+  return false;
 }
 
 SavedItem? _findSelectedItem(List<SavedItem> items, int? selectedItemId) {
