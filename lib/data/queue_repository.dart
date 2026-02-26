@@ -179,10 +179,11 @@ class QueueRepository {
   }
 
   Future<void> clearCompleted() async {
-    final completedRows = await (_db.selectOnly(_db.downloadJobs)
-          ..addColumns([_db.downloadJobs.id])
-          ..where(_db.downloadJobs.status.equals('completed')))
-        .get();
+    final completedRows =
+        await (_db.selectOnly(_db.downloadJobs)
+              ..addColumns([_db.downloadJobs.id])
+              ..where(_db.downloadJobs.status.equals('completed')))
+            .get();
     final completedJobIds = completedRows
         .map((row) => row.read(_db.downloadJobs.id))
         .whereType<int>()
@@ -249,43 +250,49 @@ class QueueRepository {
     if (normalizedPath.isEmpty) {
       return;
     }
-    await _db.into(_db.downloadOutputs).insert(
-      DownloadOutputsCompanion.insert(
-        jobId: jobId,
-        savedItemId: savedItemId,
-        path: normalizedPath,
-        kind: kind.trim().isEmpty ? 'unknown' : kind.trim(),
-      ),
-    );
+    await _db
+        .into(_db.downloadOutputs)
+        .insert(
+          DownloadOutputsCompanion.insert(
+            jobId: jobId,
+            savedItemId: savedItemId,
+            path: normalizedPath,
+            kind: kind.trim().isEmpty ? 'unknown' : kind.trim(),
+          ),
+        );
   }
 
   Future<String?> fetchLatestOutputPathForJob(int jobId) async {
-    final row = await (_db.select(_db.downloadOutputs)
-          ..where((tbl) => tbl.jobId.equals(jobId))
-          ..orderBy([
-            (tbl) => OrderingTerm(
+    final row =
+        await (_db.select(_db.downloadOutputs)
+              ..where((tbl) => tbl.jobId.equals(jobId))
+              ..orderBy([
+                (tbl) => OrderingTerm(
                   expression: tbl.createdAt,
                   mode: OrderingMode.desc,
                 ),
-            (tbl) => OrderingTerm(expression: tbl.id, mode: OrderingMode.desc),
-          ])
-          ..limit(1))
-        .getSingleOrNull();
+                (tbl) =>
+                    OrderingTerm(expression: tbl.id, mode: OrderingMode.desc),
+              ])
+              ..limit(1))
+            .getSingleOrNull();
     return row?.path;
   }
 
   Future<String?> fetchLatestOutputPathForSavedItem(int savedItemId) async {
-    final row = await (_db.select(_db.downloadOutputs)
-          ..where((tbl) => tbl.savedItemId.equals(savedItemId))
-          ..orderBy([
-            (tbl) => OrderingTerm(
+    final row =
+        await (_db.select(_db.downloadOutputs)
+              ..where((tbl) => tbl.savedItemId.equals(savedItemId))
+              ..orderBy([
+                (tbl) => OrderingTerm(
                   expression: tbl.createdAt,
                   mode: OrderingMode.desc,
                 ),
-            (tbl) => OrderingTerm(expression: tbl.id, mode: OrderingMode.desc),
-          ])
-          ..limit(1))
-        .getSingleOrNull();
+                (tbl) =>
+                    OrderingTerm(expression: tbl.id, mode: OrderingMode.desc),
+              ])
+              ..limit(1))
+            .getSingleOrNull();
     return row?.path;
   }
 

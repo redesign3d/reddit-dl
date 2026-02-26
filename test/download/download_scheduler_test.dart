@@ -80,6 +80,14 @@ void main() {
     expect(job.outputPath, isNotEmpty);
     final files = tempDir.listSync(recursive: true).whereType<File>().toList();
     expect(files, isNotEmpty);
+
+    final outputs = await (db.select(
+      db.downloadOutputs,
+    )..where((tbl) => tbl.jobId.equals(jobResult.job.id))).get();
+    expect(outputs, hasLength(1));
+    expect(outputs.single.savedItemId, itemId);
+    expect(outputs.single.path, job.outputPath);
+    expect(outputs.single.kind, 'media_image');
   });
 
   test('scheduler skips nsfw when disabled', () async {

@@ -299,6 +299,9 @@ class _LibraryItemCard extends StatelessWidget {
             ),
           ],
         );
+        if (!context.mounted) {
+          return;
+        }
         if (selection == 'copy') {
           Clipboard.setData(ClipboardData(text: item.permalink));
           if (context.mounted) {

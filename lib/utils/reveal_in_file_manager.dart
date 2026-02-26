@@ -67,7 +67,10 @@ RevealCommand? buildRevealCommand({
       if (isDirectory) {
         return RevealCommand(executable: 'explorer', arguments: [path]);
       }
-      return RevealCommand(executable: 'explorer', arguments: ['/select,$path']);
+      return RevealCommand(
+        executable: 'explorer',
+        arguments: ['/select,$path'],
+      );
     case RevealPlatform.linux:
       final directoryPath = isDirectory ? path : File(path).parent.path;
       return RevealCommand(executable: 'xdg-open', arguments: [directoryPath]);

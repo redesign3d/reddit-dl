@@ -334,7 +334,7 @@ class DownloadScheduler {
             jobId: jobId,
             savedItemId: item.id,
             path: recordedPath,
-            kind: _assetOutputKind(asset, isExternal: isExternal),
+            kind: _assetOutputKind(asset.type, isExternal: isExternal),
           );
         } else if (result.isSkipped) {
           skipped += 1;
@@ -640,14 +640,14 @@ class DownloadScheduler {
     }
   }
 
-  String _assetOutputKind(MediaAsset asset, {required bool isExternal}) {
+  String _assetOutputKind(String assetType, {required bool isExternal}) {
     if (isExternal) {
       return 'external_media';
     }
-    if (asset.type == 'video') {
+    if (assetType == 'video') {
       return 'video';
     }
-    return 'media_${asset.type}';
+    return 'media_$assetType';
   }
 
   Future<void> _recordOutput({
