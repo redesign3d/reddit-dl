@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http_mock_adapter/http_mock_adapter.dart';
+import 'package:path/path.dart' as p;
 
 import 'package:reddit_dl/data/app_database.dart';
 import 'package:reddit_dl/data/settings_repository.dart';
@@ -188,7 +189,7 @@ void main() {
     expect(ffmpegExecutor.lastArgs, isNotNull);
     expect(
       ffmpegExecutor.lastArgs,
-      contains('${tempDir.path}/video_audio.m4a'),
+      contains(p.join(tempDir.path, 'video_audio.m4a')),
     );
     expect(result.isCompleted, isTrue);
   });
