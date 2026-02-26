@@ -12,6 +12,7 @@ import '../../ui/components/app_switch.dart';
 import '../../ui/components/app_text_field.dart';
 import '../../ui/components/app_toast.dart';
 import '../../ui/tokens.dart';
+import '../library/library_cubit.dart';
 import '../settings/settings_cubit.dart';
 import 'sync_cubit.dart';
 
@@ -602,8 +603,12 @@ class _SyncStepContent extends StatelessWidget {
             children: [
               AppButton(
                 label: 'Open Library filtered to new items',
-                onPressed: () =>
-                    context.read<NavigationCubit>().select(AppSection.library),
+                onPressed: () {
+                  context.read<LibraryCubit>().focusOnItemIds(
+                    summary.insertedItemIds,
+                  );
+                  context.read<NavigationCubit>().select(AppSection.library);
+                },
               ),
               AppButton(
                 label: 'Retry failed',

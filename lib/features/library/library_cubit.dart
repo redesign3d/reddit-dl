@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:drift/drift.dart' show Value;
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -26,6 +27,7 @@ class LibraryCubit extends Cubit<LibraryState> {
           isPageLoading: true,
           selectedItemIds: <int>{},
           selectedItemId: null,
+          focusedItemIds: null,
           mediaCountByItemId: <int, int>{},
           latestDownloadStatusByItemId: <int, String>{},
           hasIndexed: false,
@@ -47,7 +49,7 @@ class LibraryCubit extends Cubit<LibraryState> {
   int _activeQueryToken = 0;
 
   void updateSearch(String query) {
-    emit(state.copyWith(searchQuery: query));
+    emit(state.copyWith(searchQuery: query, focusedItemIds: const Value(null)));
     _searchDebounce?.cancel();
     _searchDebounce = Timer(const Duration(milliseconds: 300), () {
       _reloadPage(resetPage: true);
@@ -55,27 +57,62 @@ class LibraryCubit extends Cubit<LibraryState> {
   }
 
   void updateIncludeSubreddit(String? subreddit) {
-    emit(state.copyWith(includeSubreddit: subreddit));
+    emit(
+      state.copyWith(
+        includeSubreddit: subreddit,
+        focusedItemIds: const Value(null),
+      ),
+    );
     _reloadPage(resetPage: true);
   }
 
   void updateExcludeSubreddit(String? subreddit) {
-    emit(state.copyWith(excludeSubreddit: subreddit));
+    emit(
+      state.copyWith(
+        excludeSubreddit: subreddit,
+        focusedItemIds: const Value(null),
+      ),
+    );
     _reloadPage(resetPage: true);
   }
 
   void updateKindFilter(LibraryItemKind filter) {
-    emit(state.copyWith(kindFilter: filter));
+    emit(state.copyWith(kindFilter: filter, focusedItemIds: const Value(null)));
     _reloadPage(resetPage: true);
   }
 
   void toggleShowNsfw(bool value) {
-    emit(state.copyWith(showNsfw: value));
+    emit(state.copyWith(showNsfw: value, focusedItemIds: const Value(null)));
     _reloadPage(resetPage: true);
   }
 
   void updateResolutionFilter(LibraryResolutionFilter filter) {
-    emit(state.copyWith(resolutionFilter: filter));
+    emit(
+      state.copyWith(
+        resolutionFilter: filter,
+        focusedItemIds: const Value(null),
+      ),
+    );
+    _reloadPage(resetPage: true);
+  }
+
+  void focusOnItemIds(Iterable<int> itemIds) {
+    final ids = itemIds.toSet();
+    emit(
+      state.copyWith(
+        focusedItemIds: Value(ids.isEmpty ? null : ids),
+        pageIndex: 0,
+        isPageLoading: true,
+      ),
+    );
+    _reloadPage(resetPage: true);
+  }
+
+  void clearFocusedItemIds() {
+    if (state.focusedItemIds == null) {
+      return;
+    }
+    emit(state.copyWith(focusedItemIds: const Value(null)));
     _reloadPage(resetPage: true);
   }
 
@@ -256,6 +293,7 @@ class LibraryCubit extends Cubit<LibraryState> {
       kind: state.kindFilter,
       includeNsfw: state.showNsfw,
       resolutionStatus: state.resolutionFilter,
+      includeItemIds: state.focusedItemIds,
     );
   }
 
@@ -314,6 +352,7 @@ class LibraryState extends Equatable {
     required this.isPageLoading,
     required this.selectedItemIds,
     required this.selectedItemId,
+    required this.focusedItemIds,
     required this.mediaCountByItemId,
     required this.latestDownloadStatusByItemId,
     required this.hasIndexed,
@@ -333,6 +372,7 @@ class LibraryState extends Equatable {
   final bool isPageLoading;
   final Set<int> selectedItemIds;
   final int? selectedItemId;
+  final Set<int>? focusedItemIds;
   final Map<int, int> mediaCountByItemId;
   final Map<int, String> latestDownloadStatusByItemId;
   final bool hasIndexed;
@@ -354,6 +394,7 @@ class LibraryState extends Equatable {
     bool? isPageLoading,
     Set<int>? selectedItemIds,
     Object? selectedItemId = _unset,
+    Object? focusedItemIds = _unset,
     Map<int, int>? mediaCountByItemId,
     Map<int, String>? latestDownloadStatusByItemId,
     bool? hasIndexed,
@@ -379,6 +420,9 @@ class LibraryState extends Equatable {
       selectedItemId: selectedItemId == _unset
           ? this.selectedItemId
           : selectedItemId as int?,
+      focusedItemIds: focusedItemIds == _unset
+          ? this.focusedItemIds
+          : focusedItemIds as Set<int>?,
       mediaCountByItemId: mediaCountByItemId ?? this.mediaCountByItemId,
       latestDownloadStatusByItemId:
           latestDownloadStatusByItemId ?? this.latestDownloadStatusByItemId,
@@ -391,6 +435,8 @@ class LibraryState extends Equatable {
   bool get hasNextPage => (pageIndex + 1) * pageSize < totalCount;
 
   bool get hasSelection => selectedItemIds.isNotEmpty;
+
+  bool get hasFocusedItemIds => focusedItemIds != null;
 
   SavedItem? get selectedItem {
     final selectedId = selectedItemId;
@@ -428,6 +474,7 @@ class LibraryState extends Equatable {
     isPageLoading,
     selectedItemIds.toList()..sort(),
     selectedItemId,
+    focusedItemIds == null ? null : (focusedItemIds!.toList()..sort()),
     mediaCountByItemId.entries
         .map((entry) => '${entry.key}:${entry.value}')
         .toList()

@@ -146,6 +146,27 @@ class _LibraryFiltersPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Filters', style: Theme.of(context).textTheme.titleLarge),
+          if (state.hasFocusedItemIds) ...[
+            SizedBox(height: AppTokens.space.s8),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Showing only newly synced items.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: context.appColors.mutedForeground,
+                    ),
+                  ),
+                ),
+                AppButton(
+                  label: 'Clear',
+                  variant: AppButtonVariant.ghost,
+                  onPressed: () =>
+                      context.read<LibraryCubit>().clearFocusedItemIds(),
+                ),
+              ],
+            ),
+          ],
           SizedBox(height: AppTokens.space.s12),
           AppTextField(
             label: 'Search',
