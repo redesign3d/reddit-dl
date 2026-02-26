@@ -96,6 +96,7 @@ class ExternalMediaDownloader {
     final newFiles = after.difference(before).toList()..sort();
     if (newFiles.isNotEmpty) {
       await log?.call('info', 'Downloaded ${newFiles.length} file(s).');
+      return MediaDownloadResult.completed(newFiles.first);
     }
 
     return MediaDownloadResult.completed(outputDir.path);

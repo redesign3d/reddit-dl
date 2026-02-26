@@ -256,6 +256,13 @@ class DownloadScheduler {
         return;
       }
       final asset = assets[i];
+      final hint = asset.toolHint.toLowerCase();
+      final isExternal =
+          asset.type == 'external' ||
+          hint.contains('gallery') ||
+          hint.contains('ytdlp') ||
+          hint.contains('yt-dlp');
+      final isVideo = asset.type == 'video';
       final pathResult = engine.resolve(
         item: item,
         asset: asset,
@@ -279,12 +286,6 @@ class DownloadScheduler {
         final result = await _downloadWithRetry(
           targetPath: targetFile.path,
           action: () {
-            final hint = asset.toolHint.toLowerCase();
-            final isExternal =
-                asset.type == 'external' ||
-                hint.contains('gallery') ||
-                hint.contains('ytdlp') ||
-                hint.contains('yt-dlp');
             if (isExternal) {
               return _externalDownloader.download(
                 asset: asset,
@@ -299,7 +300,7 @@ class DownloadScheduler {
                     _log(jobId, 'download', level, message),
               );
             }
-            if (asset.type == 'video') {
+            if (isVideo) {
               return _videoDownloader.download(
                 asset: asset,
                 targetFile: targetFile,
@@ -325,9 +326,16 @@ class DownloadScheduler {
         );
         if (result.isCompleted) {
           completed += 1;
-          outputPath = result.outputPath.isNotEmpty
+          final recordedPath = result.outputPath.trim().isNotEmpty
               ? result.outputPath
-              : outputPath;
+              : (isExternal ? pathResult.directoryPath : targetFile.path);
+          outputPath = recordedPath;
+          await _recordOutput(
+            jobId: jobId,
+            savedItemId: item.id,
+            path: recordedPath,
+            kind: _assetOutputKind(asset, isExternal: isExternal),
+          );
         } else if (result.isSkipped) {
           skipped += 1;
           await _log(jobId, 'download', 'info', result.message ?? 'Skipped.');
@@ -371,9 +379,16 @@ class DownloadScheduler {
         );
         if (result.isCompleted) {
           completed += 1;
-          outputPath = result.outputPath.isNotEmpty
+          final recordedPath = result.outputPath.trim().isNotEmpty
               ? result.outputPath
               : outputPath;
+          outputPath = recordedPath;
+          await _recordOutput(
+            jobId: jobId,
+            savedItemId: item.id,
+            path: recordedPath,
+            kind: 'export_text',
+          );
         } else if (result.isSkipped) {
           skipped += 1;
           await _log(jobId, 'download', 'info', result.message ?? 'Skipped.');
@@ -412,9 +427,16 @@ class DownloadScheduler {
         );
         if (result.isCompleted) {
           completed += 1;
-          outputPath = result.outputPath.isNotEmpty
+          final recordedPath = result.outputPath.trim().isNotEmpty
               ? result.outputPath
               : outputPath;
+          outputPath = recordedPath;
+          await _recordOutput(
+            jobId: jobId,
+            savedItemId: item.id,
+            path: recordedPath,
+            kind: 'export_saved_comment',
+          );
         } else if (result.isSkipped) {
           skipped += 1;
           await _log(jobId, 'download', 'info', result.message ?? 'Skipped.');
@@ -457,9 +479,16 @@ class DownloadScheduler {
         );
         if (result.isCompleted) {
           completed += 1;
-          outputPath = result.outputPath.isNotEmpty
+          final recordedPath = result.outputPath.trim().isNotEmpty
               ? result.outputPath
               : outputPath;
+          outputPath = recordedPath;
+          await _recordOutput(
+            jobId: jobId,
+            savedItemId: item.id,
+            path: recordedPath,
+            kind: 'export_thread_comments',
+          );
         } else if (result.isSkipped) {
           skipped += 1;
           await _log(jobId, 'download', 'info', result.message ?? 'Skipped.');
@@ -608,6 +637,39 @@ class DownloadScheduler {
       case 'skip_if_exists':
       default:
         return OverwritePolicy.skipIfExists;
+    }
+  }
+
+  String _assetOutputKind(MediaAsset asset, {required bool isExternal}) {
+    if (isExternal) {
+      return 'external_media';
+    }
+    if (asset.type == 'video') {
+      return 'video';
+    }
+    return 'media_${asset.type}';
+  }
+
+  Future<void> _recordOutput({
+    required int jobId,
+    required int savedItemId,
+    required String path,
+    required String kind,
+  }) async {
+    try {
+      await _queueRepository.recordJobOutput(
+        jobId: jobId,
+        savedItemId: savedItemId,
+        path: path,
+        kind: kind,
+      );
+    } catch (error) {
+      await _log(
+        jobId,
+        'download',
+        'warn',
+        'Failed to record output path "$path": $error',
+      );
     }
   }
 
