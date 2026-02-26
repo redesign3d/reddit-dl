@@ -5,8 +5,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../data/app_database.dart';
+import '../../data/logs_repository.dart';
 import '../../data/queue_repository.dart';
 import '../../data/settings_repository.dart';
+import '../logs/log_record.dart';
 import '../../ui/components/app_button.dart';
 import '../../ui/components/app_card.dart';
 import '../../ui/components/app_chip.dart';
@@ -305,6 +307,7 @@ class _QueueItemCardState extends State<_QueueItemCard> {
               _QueueItemDetailsDrawer(
                 item: widget.item,
                 phase: _phaseLabel(status),
+                jobId: widget.item.job.id,
                 onRetry: () =>
                     context.read<QueueCubit>().retryJob(widget.item.job.id),
                 onReveal: () => _revealLatestOutput(context),
@@ -399,12 +402,14 @@ class _QueueItemDetailsDrawer extends StatelessWidget {
   const _QueueItemDetailsDrawer({
     required this.item,
     required this.phase,
+    required this.jobId,
     required this.onRetry,
     required this.onReveal,
   });
 
   final QueueRecord item;
   final String phase;
+  final int jobId;
   final Future<void> Function() onRetry;
   final Future<void> Function() onReveal;
 
@@ -420,6 +425,10 @@ class _QueueItemDetailsDrawer extends StatelessWidget {
             context,
           ).textTheme.bodySmall?.copyWith(color: colors.mutedForeground),
         ),
+        SizedBox(height: AppTokens.space.s12),
+        Text('Recent logs', style: Theme.of(context).textTheme.titleMedium),
+        SizedBox(height: AppTokens.space.s6),
+        _QueueJobLogsSection(jobId: jobId),
         SizedBox(height: AppTokens.space.s12),
         Text(
           'Technical details',
@@ -458,6 +467,56 @@ class _QueueItemDetailsDrawer extends StatelessWidget {
           ],
         ),
       ],
+    );
+  }
+}
+
+class _QueueJobLogsSection extends StatelessWidget {
+  const _QueueJobLogsSection({required this.jobId});
+
+  final int jobId;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    return StreamBuilder<List<LogRecord>>(
+      stream: context.read<LogsRepository>().watchByJobId(jobId, limit: 20),
+      builder: (context, snapshot) {
+        final entries = snapshot.data ?? const <LogRecord>[];
+        if (entries.isEmpty) {
+          return Text(
+            'No logs for this job yet.',
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: colors.mutedForeground),
+          );
+        }
+
+        return Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppTokens.radii.md),
+            border: Border.all(color: colors.border),
+          ),
+          padding: EdgeInsets.all(AppTokens.space.s8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: entries
+                .map(
+                  (entry) => Padding(
+                    padding: EdgeInsets.only(bottom: AppTokens.space.s6),
+                    child: Text(
+                      '${entry.timestamp.toLocal().toIso8601String()} [${entry.level.toUpperCase()}] ${entry.message}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colors.mutedForeground,
+                        fontFamily: AppTokens.fontFamilyMono,
+                      ),
+                    ),
+                  ),
+                )
+                .toList(growable: false),
+          ),
+        );
+      },
     );
   }
 }
