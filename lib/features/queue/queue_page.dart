@@ -1,10 +1,9 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../data/queue_repository.dart';
+import '../../data/settings_repository.dart';
 import '../../ui/components/app_button.dart';
 import '../../ui/components/app_card.dart';
 import '../../ui/components/app_chip.dart';
@@ -12,6 +11,7 @@ import '../../ui/components/app_progress.dart';
 import '../../ui/components/app_toast.dart';
 import '../../ui/tokens.dart';
 import '../../utils/reveal_in_file_manager.dart';
+import '../../utils/reveal_path_resolver.dart';
 import 'queue_cubit.dart';
 
 class QueuePage extends StatelessWidget {
@@ -196,16 +196,30 @@ class _QueueItemCard extends StatelessWidget {
           AppToast.show(context, 'Retry queued.');
         }
         if (selection == 'reveal') {
-          final path = item.job.outputPath.isEmpty
-              ? Directory.systemTemp.path
-              : item.job.outputPath;
+          final path = await resolveRevealPath(
+            queueRepository: context.read<QueueRepository>(),
+            settingsRepository: context.read<SettingsRepository>(),
+            jobId: item.job.id,
+            savedItemId: item.item.id,
+            legacyOutputPath: item.job.outputPath,
+          );
+          if (!context.mounted) {
+            return;
+          }
+          if (path == null) {
+            AppToast.show(
+              context,
+              'No output path available. Set Download root in Settings.',
+            );
+            return;
+          }
           final success = await revealInFileManager(path);
           if (!context.mounted) {
             return;
           }
           AppToast.show(
             context,
-            success ? 'Opened file manager (mock path).' : 'Reveal failed.',
+            success ? 'Opened file manager.' : 'Reveal failed.',
           );
         }
       },
