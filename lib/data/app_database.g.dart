@@ -2009,6 +2009,409 @@ class DownloadJobsCompanion extends UpdateCompanion<DownloadJob> {
   }
 }
 
+class $DownloadOutputsTable extends DownloadOutputs
+    with TableInfo<$DownloadOutputsTable, DownloadOutput> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DownloadOutputsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _jobIdMeta = const VerificationMeta('jobId');
+  @override
+  late final GeneratedColumn<int> jobId = GeneratedColumn<int>(
+    'job_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES download_jobs (id)',
+    ),
+  );
+  static const VerificationMeta _savedItemIdMeta = const VerificationMeta(
+    'savedItemId',
+  );
+  @override
+  late final GeneratedColumn<int> savedItemId = GeneratedColumn<int>(
+    'saved_item_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES saved_items (id)',
+    ),
+  );
+  static const VerificationMeta _pathMeta = const VerificationMeta('path');
+  @override
+  late final GeneratedColumn<String> path = GeneratedColumn<String>(
+    'path',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _kindMeta = const VerificationMeta('kind');
+  @override
+  late final GeneratedColumn<String> kind = GeneratedColumn<String>(
+    'kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    jobId,
+    savedItemId,
+    path,
+    kind,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'download_outputs';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<DownloadOutput> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('job_id')) {
+      context.handle(
+        _jobIdMeta,
+        jobId.isAcceptableOrUnknown(data['job_id']!, _jobIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_jobIdMeta);
+    }
+    if (data.containsKey('saved_item_id')) {
+      context.handle(
+        _savedItemIdMeta,
+        savedItemId.isAcceptableOrUnknown(
+          data['saved_item_id']!,
+          _savedItemIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_savedItemIdMeta);
+    }
+    if (data.containsKey('path')) {
+      context.handle(
+        _pathMeta,
+        path.isAcceptableOrUnknown(data['path']!, _pathMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_pathMeta);
+    }
+    if (data.containsKey('kind')) {
+      context.handle(
+        _kindMeta,
+        kind.isAcceptableOrUnknown(data['kind']!, _kindMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_kindMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  DownloadOutput map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return DownloadOutput(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      jobId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}job_id'],
+      )!,
+      savedItemId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}saved_item_id'],
+      )!,
+      path: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}path'],
+      )!,
+      kind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}kind'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $DownloadOutputsTable createAlias(String alias) {
+    return $DownloadOutputsTable(attachedDatabase, alias);
+  }
+}
+
+class DownloadOutput extends DataClass implements Insertable<DownloadOutput> {
+  final int id;
+  final int jobId;
+  final int savedItemId;
+  final String path;
+  final String kind;
+  final DateTime createdAt;
+  const DownloadOutput({
+    required this.id,
+    required this.jobId,
+    required this.savedItemId,
+    required this.path,
+    required this.kind,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['job_id'] = Variable<int>(jobId);
+    map['saved_item_id'] = Variable<int>(savedItemId);
+    map['path'] = Variable<String>(path);
+    map['kind'] = Variable<String>(kind);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  DownloadOutputsCompanion toCompanion(bool nullToAbsent) {
+    return DownloadOutputsCompanion(
+      id: Value(id),
+      jobId: Value(jobId),
+      savedItemId: Value(savedItemId),
+      path: Value(path),
+      kind: Value(kind),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory DownloadOutput.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return DownloadOutput(
+      id: serializer.fromJson<int>(json['id']),
+      jobId: serializer.fromJson<int>(json['jobId']),
+      savedItemId: serializer.fromJson<int>(json['savedItemId']),
+      path: serializer.fromJson<String>(json['path']),
+      kind: serializer.fromJson<String>(json['kind']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'jobId': serializer.toJson<int>(jobId),
+      'savedItemId': serializer.toJson<int>(savedItemId),
+      'path': serializer.toJson<String>(path),
+      'kind': serializer.toJson<String>(kind),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  DownloadOutput copyWith({
+    int? id,
+    int? jobId,
+    int? savedItemId,
+    String? path,
+    String? kind,
+    DateTime? createdAt,
+  }) => DownloadOutput(
+    id: id ?? this.id,
+    jobId: jobId ?? this.jobId,
+    savedItemId: savedItemId ?? this.savedItemId,
+    path: path ?? this.path,
+    kind: kind ?? this.kind,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  DownloadOutput copyWithCompanion(DownloadOutputsCompanion data) {
+    return DownloadOutput(
+      id: data.id.present ? data.id.value : this.id,
+      jobId: data.jobId.present ? data.jobId.value : this.jobId,
+      savedItemId: data.savedItemId.present
+          ? data.savedItemId.value
+          : this.savedItemId,
+      path: data.path.present ? data.path.value : this.path,
+      kind: data.kind.present ? data.kind.value : this.kind,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DownloadOutput(')
+          ..write('id: $id, ')
+          ..write('jobId: $jobId, ')
+          ..write('savedItemId: $savedItemId, ')
+          ..write('path: $path, ')
+          ..write('kind: $kind, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, jobId, savedItemId, path, kind, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DownloadOutput &&
+          other.id == this.id &&
+          other.jobId == this.jobId &&
+          other.savedItemId == this.savedItemId &&
+          other.path == this.path &&
+          other.kind == this.kind &&
+          other.createdAt == this.createdAt);
+}
+
+class DownloadOutputsCompanion extends UpdateCompanion<DownloadOutput> {
+  final Value<int> id;
+  final Value<int> jobId;
+  final Value<int> savedItemId;
+  final Value<String> path;
+  final Value<String> kind;
+  final Value<DateTime> createdAt;
+  const DownloadOutputsCompanion({
+    this.id = const Value.absent(),
+    this.jobId = const Value.absent(),
+    this.savedItemId = const Value.absent(),
+    this.path = const Value.absent(),
+    this.kind = const Value.absent(),
+    this.createdAt = const Value.absent(),
+  });
+  DownloadOutputsCompanion.insert({
+    this.id = const Value.absent(),
+    required int jobId,
+    required int savedItemId,
+    required String path,
+    required String kind,
+    this.createdAt = const Value.absent(),
+  }) : jobId = Value(jobId),
+       savedItemId = Value(savedItemId),
+       path = Value(path),
+       kind = Value(kind);
+  static Insertable<DownloadOutput> custom({
+    Expression<int>? id,
+    Expression<int>? jobId,
+    Expression<int>? savedItemId,
+    Expression<String>? path,
+    Expression<String>? kind,
+    Expression<DateTime>? createdAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (jobId != null) 'job_id': jobId,
+      if (savedItemId != null) 'saved_item_id': savedItemId,
+      if (path != null) 'path': path,
+      if (kind != null) 'kind': kind,
+      if (createdAt != null) 'created_at': createdAt,
+    });
+  }
+
+  DownloadOutputsCompanion copyWith({
+    Value<int>? id,
+    Value<int>? jobId,
+    Value<int>? savedItemId,
+    Value<String>? path,
+    Value<String>? kind,
+    Value<DateTime>? createdAt,
+  }) {
+    return DownloadOutputsCompanion(
+      id: id ?? this.id,
+      jobId: jobId ?? this.jobId,
+      savedItemId: savedItemId ?? this.savedItemId,
+      path: path ?? this.path,
+      kind: kind ?? this.kind,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (jobId.present) {
+      map['job_id'] = Variable<int>(jobId.value);
+    }
+    if (savedItemId.present) {
+      map['saved_item_id'] = Variable<int>(savedItemId.value);
+    }
+    if (path.present) {
+      map['path'] = Variable<String>(path.value);
+    }
+    if (kind.present) {
+      map['kind'] = Variable<String>(kind.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DownloadOutputsCompanion(')
+          ..write('id: $id, ')
+          ..write('jobId: $jobId, ')
+          ..write('savedItemId: $savedItemId, ')
+          ..write('path: $path, ')
+          ..write('kind: $kind, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $LogEntriesTable extends LogEntries
     with TableInfo<$LogEntriesTable, LogEntry> {
   @override
@@ -2726,6 +3129,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $SavedItemsTable savedItems = $SavedItemsTable(this);
   late final $MediaAssetsTable mediaAssets = $MediaAssetsTable(this);
   late final $DownloadJobsTable downloadJobs = $DownloadJobsTable(this);
+  late final $DownloadOutputsTable downloadOutputs = $DownloadOutputsTable(
+    this,
+  );
   late final $LogEntriesTable logEntries = $LogEntriesTable(this);
   late final $SettingsTable settings = $SettingsTable(this);
   late final Index savedItemsPermalink = Index(
@@ -2744,6 +3150,14 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     'download_jobs_status',
     'CREATE INDEX download_jobs_status ON download_jobs (status)',
   );
+  late final Index downloadOutputsJobId = Index(
+    'download_outputs_job_id',
+    'CREATE INDEX download_outputs_job_id ON download_outputs (job_id)',
+  );
+  late final Index downloadOutputsSavedItemId = Index(
+    'download_outputs_saved_item_id',
+    'CREATE INDEX download_outputs_saved_item_id ON download_outputs (saved_item_id)',
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2752,12 +3166,15 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     savedItems,
     mediaAssets,
     downloadJobs,
+    downloadOutputs,
     logEntries,
     settings,
     savedItemsPermalink,
     savedItemsSubreddit,
     savedItemsOver18,
     downloadJobsStatus,
+    downloadOutputsJobId,
+    downloadOutputsSavedItemId,
   ];
 }
 
@@ -2839,6 +3256,29 @@ final class $$SavedItemsTableReferences
     ).filter((f) => f.savedItemId.id.sqlEquals($_itemColumn<int>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_downloadJobsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$DownloadOutputsTable, List<DownloadOutput>>
+  _downloadOutputsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.downloadOutputs,
+    aliasName: $_aliasNameGenerator(
+      db.savedItems.id,
+      db.downloadOutputs.savedItemId,
+    ),
+  );
+
+  $$DownloadOutputsTableProcessedTableManager get downloadOutputsRefs {
+    final manager = $$DownloadOutputsTableTableManager(
+      $_db,
+      $_db.downloadOutputs,
+    ).filter((f) => f.savedItemId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _downloadOutputsRefsTable($_db),
+    );
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -2970,6 +3410,31 @@ class $$SavedItemsTableFilterComposer
           }) => $$DownloadJobsTableFilterComposer(
             $db: $db,
             $table: $db.downloadJobs,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> downloadOutputsRefs(
+    Expression<bool> Function($$DownloadOutputsTableFilterComposer f) f,
+  ) {
+    final $$DownloadOutputsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.downloadOutputs,
+      getReferencedColumn: (t) => t.savedItemId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$DownloadOutputsTableFilterComposer(
+            $db: $db,
+            $table: $db.downloadOutputs,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -3180,6 +3645,31 @@ class $$SavedItemsTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> downloadOutputsRefs<T extends Object>(
+    Expression<T> Function($$DownloadOutputsTableAnnotationComposer a) f,
+  ) {
+    final $$DownloadOutputsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.downloadOutputs,
+      getReferencedColumn: (t) => t.savedItemId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$DownloadOutputsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.downloadOutputs,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$SavedItemsTableTableManager
@@ -3195,7 +3685,11 @@ class $$SavedItemsTableTableManager
           $$SavedItemsTableUpdateCompanionBuilder,
           (SavedItem, $$SavedItemsTableReferences),
           SavedItem,
-          PrefetchHooks Function({bool mediaAssetsRefs, bool downloadJobsRefs})
+          PrefetchHooks Function({
+            bool mediaAssetsRefs,
+            bool downloadJobsRefs,
+            bool downloadOutputsRefs,
+          })
         > {
   $$SavedItemsTableTableManager(_$AppDatabase db, $SavedItemsTable table)
     : super(
@@ -3285,12 +3779,17 @@ class $$SavedItemsTableTableManager
               )
               .toList(),
           prefetchHooksCallback:
-              ({mediaAssetsRefs = false, downloadJobsRefs = false}) {
+              ({
+                mediaAssetsRefs = false,
+                downloadJobsRefs = false,
+                downloadOutputsRefs = false,
+              }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
                     if (mediaAssetsRefs) db.mediaAssets,
                     if (downloadJobsRefs) db.downloadJobs,
+                    if (downloadOutputsRefs) db.downloadOutputs,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -3337,6 +3836,27 @@ class $$SavedItemsTableTableManager
                               ),
                           typedResults: items,
                         ),
+                      if (downloadOutputsRefs)
+                        await $_getPrefetchedData<
+                          SavedItem,
+                          $SavedItemsTable,
+                          DownloadOutput
+                        >(
+                          currentTable: table,
+                          referencedTable: $$SavedItemsTableReferences
+                              ._downloadOutputsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$SavedItemsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).downloadOutputsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.savedItemId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -3357,7 +3877,11 @@ typedef $$SavedItemsTableProcessedTableManager =
       $$SavedItemsTableUpdateCompanionBuilder,
       (SavedItem, $$SavedItemsTableReferences),
       SavedItem,
-      PrefetchHooks Function({bool mediaAssetsRefs, bool downloadJobsRefs})
+      PrefetchHooks Function({
+        bool mediaAssetsRefs,
+        bool downloadJobsRefs,
+        bool downloadOutputsRefs,
+      })
     >;
 typedef $$MediaAssetsTableCreateCompanionBuilder =
     MediaAssetsCompanion Function({
@@ -3784,6 +4308,29 @@ final class $$DownloadJobsTableReferences
       manager.$state.copyWith(prefetchedData: [item]),
     );
   }
+
+  static MultiTypedResultKey<$DownloadOutputsTable, List<DownloadOutput>>
+  _downloadOutputsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.downloadOutputs,
+    aliasName: $_aliasNameGenerator(
+      db.downloadJobs.id,
+      db.downloadOutputs.jobId,
+    ),
+  );
+
+  $$DownloadOutputsTableProcessedTableManager get downloadOutputsRefs {
+    final manager = $$DownloadOutputsTableTableManager(
+      $_db,
+      $_db.downloadOutputs,
+    ).filter((f) => f.jobId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _downloadOutputsRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 }
 
 class $$DownloadJobsTableFilterComposer
@@ -3861,6 +4408,31 @@ class $$DownloadJobsTableFilterComposer
           ),
     );
     return composer;
+  }
+
+  Expression<bool> downloadOutputsRefs(
+    Expression<bool> Function($$DownloadOutputsTableFilterComposer f) f,
+  ) {
+    final $$DownloadOutputsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.downloadOutputs,
+      getReferencedColumn: (t) => t.jobId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$DownloadOutputsTableFilterComposer(
+            $db: $db,
+            $table: $db.downloadOutputs,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
   }
 }
 
@@ -4006,6 +4578,31 @@ class $$DownloadJobsTableAnnotationComposer
     );
     return composer;
   }
+
+  Expression<T> downloadOutputsRefs<T extends Object>(
+    Expression<T> Function($$DownloadOutputsTableAnnotationComposer a) f,
+  ) {
+    final $$DownloadOutputsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.downloadOutputs,
+      getReferencedColumn: (t) => t.jobId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$DownloadOutputsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.downloadOutputs,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$DownloadJobsTableTableManager
@@ -4021,7 +4618,7 @@ class $$DownloadJobsTableTableManager
           $$DownloadJobsTableUpdateCompanionBuilder,
           (DownloadJob, $$DownloadJobsTableReferences),
           DownloadJob,
-          PrefetchHooks Function({bool savedItemId})
+          PrefetchHooks Function({bool savedItemId, bool downloadOutputsRefs})
         > {
   $$DownloadJobsTableTableManager(_$AppDatabase db, $DownloadJobsTable table)
     : super(
@@ -4090,7 +4687,448 @@ class $$DownloadJobsTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({savedItemId = false}) {
+          prefetchHooksCallback:
+              ({savedItemId = false, downloadOutputsRefs = false}) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (downloadOutputsRefs) db.downloadOutputs,
+                  ],
+                  addJoins:
+                      <
+                        T extends TableManagerState<
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic,
+                          dynamic
+                        >
+                      >(state) {
+                        if (savedItemId) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.savedItemId,
+                                    referencedTable:
+                                        $$DownloadJobsTableReferences
+                                            ._savedItemIdTable(db),
+                                    referencedColumn:
+                                        $$DownloadJobsTableReferences
+                                            ._savedItemIdTable(db)
+                                            .id,
+                                  )
+                                  as T;
+                        }
+
+                        return state;
+                      },
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (downloadOutputsRefs)
+                        await $_getPrefetchedData<
+                          DownloadJob,
+                          $DownloadJobsTable,
+                          DownloadOutput
+                        >(
+                          currentTable: table,
+                          referencedTable: $$DownloadJobsTableReferences
+                              ._downloadOutputsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$DownloadJobsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).downloadOutputsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.jobId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
+              },
+        ),
+      );
+}
+
+typedef $$DownloadJobsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $DownloadJobsTable,
+      DownloadJob,
+      $$DownloadJobsTableFilterComposer,
+      $$DownloadJobsTableOrderingComposer,
+      $$DownloadJobsTableAnnotationComposer,
+      $$DownloadJobsTableCreateCompanionBuilder,
+      $$DownloadJobsTableUpdateCompanionBuilder,
+      (DownloadJob, $$DownloadJobsTableReferences),
+      DownloadJob,
+      PrefetchHooks Function({bool savedItemId, bool downloadOutputsRefs})
+    >;
+typedef $$DownloadOutputsTableCreateCompanionBuilder =
+    DownloadOutputsCompanion Function({
+      Value<int> id,
+      required int jobId,
+      required int savedItemId,
+      required String path,
+      required String kind,
+      Value<DateTime> createdAt,
+    });
+typedef $$DownloadOutputsTableUpdateCompanionBuilder =
+    DownloadOutputsCompanion Function({
+      Value<int> id,
+      Value<int> jobId,
+      Value<int> savedItemId,
+      Value<String> path,
+      Value<String> kind,
+      Value<DateTime> createdAt,
+    });
+
+final class $$DownloadOutputsTableReferences
+    extends
+        BaseReferences<_$AppDatabase, $DownloadOutputsTable, DownloadOutput> {
+  $$DownloadOutputsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $DownloadJobsTable _jobIdTable(_$AppDatabase db) =>
+      db.downloadJobs.createAlias(
+        $_aliasNameGenerator(db.downloadOutputs.jobId, db.downloadJobs.id),
+      );
+
+  $$DownloadJobsTableProcessedTableManager get jobId {
+    final $_column = $_itemColumn<int>('job_id')!;
+
+    final manager = $$DownloadJobsTableTableManager(
+      $_db,
+      $_db.downloadJobs,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_jobIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $SavedItemsTable _savedItemIdTable(_$AppDatabase db) =>
+      db.savedItems.createAlias(
+        $_aliasNameGenerator(db.downloadOutputs.savedItemId, db.savedItems.id),
+      );
+
+  $$SavedItemsTableProcessedTableManager get savedItemId {
+    final $_column = $_itemColumn<int>('saved_item_id')!;
+
+    final manager = $$SavedItemsTableTableManager(
+      $_db,
+      $_db.savedItems,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_savedItemIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$DownloadOutputsTableFilterComposer
+    extends Composer<_$AppDatabase, $DownloadOutputsTable> {
+  $$DownloadOutputsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get path => $composableBuilder(
+    column: $table.path,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$DownloadJobsTableFilterComposer get jobId {
+    final $$DownloadJobsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.jobId,
+      referencedTable: $db.downloadJobs,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$DownloadJobsTableFilterComposer(
+            $db: $db,
+            $table: $db.downloadJobs,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$SavedItemsTableFilterComposer get savedItemId {
+    final $$SavedItemsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.savedItemId,
+      referencedTable: $db.savedItems,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SavedItemsTableFilterComposer(
+            $db: $db,
+            $table: $db.savedItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$DownloadOutputsTableOrderingComposer
+    extends Composer<_$AppDatabase, $DownloadOutputsTable> {
+  $$DownloadOutputsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get path => $composableBuilder(
+    column: $table.path,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get kind => $composableBuilder(
+    column: $table.kind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$DownloadJobsTableOrderingComposer get jobId {
+    final $$DownloadJobsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.jobId,
+      referencedTable: $db.downloadJobs,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$DownloadJobsTableOrderingComposer(
+            $db: $db,
+            $table: $db.downloadJobs,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$SavedItemsTableOrderingComposer get savedItemId {
+    final $$SavedItemsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.savedItemId,
+      referencedTable: $db.savedItems,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SavedItemsTableOrderingComposer(
+            $db: $db,
+            $table: $db.savedItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$DownloadOutputsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $DownloadOutputsTable> {
+  $$DownloadOutputsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get path =>
+      $composableBuilder(column: $table.path, builder: (column) => column);
+
+  GeneratedColumn<String> get kind =>
+      $composableBuilder(column: $table.kind, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  $$DownloadJobsTableAnnotationComposer get jobId {
+    final $$DownloadJobsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.jobId,
+      referencedTable: $db.downloadJobs,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$DownloadJobsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.downloadJobs,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$SavedItemsTableAnnotationComposer get savedItemId {
+    final $$SavedItemsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.savedItemId,
+      referencedTable: $db.savedItems,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SavedItemsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.savedItems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$DownloadOutputsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $DownloadOutputsTable,
+          DownloadOutput,
+          $$DownloadOutputsTableFilterComposer,
+          $$DownloadOutputsTableOrderingComposer,
+          $$DownloadOutputsTableAnnotationComposer,
+          $$DownloadOutputsTableCreateCompanionBuilder,
+          $$DownloadOutputsTableUpdateCompanionBuilder,
+          (DownloadOutput, $$DownloadOutputsTableReferences),
+          DownloadOutput,
+          PrefetchHooks Function({bool jobId, bool savedItemId})
+        > {
+  $$DownloadOutputsTableTableManager(
+    _$AppDatabase db,
+    $DownloadOutputsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DownloadOutputsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$DownloadOutputsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$DownloadOutputsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> jobId = const Value.absent(),
+                Value<int> savedItemId = const Value.absent(),
+                Value<String> path = const Value.absent(),
+                Value<String> kind = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => DownloadOutputsCompanion(
+                id: id,
+                jobId: jobId,
+                savedItemId: savedItemId,
+                path: path,
+                kind: kind,
+                createdAt: createdAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int jobId,
+                required int savedItemId,
+                required String path,
+                required String kind,
+                Value<DateTime> createdAt = const Value.absent(),
+              }) => DownloadOutputsCompanion.insert(
+                id: id,
+                jobId: jobId,
+                savedItemId: savedItemId,
+                path: path,
+                kind: kind,
+                createdAt: createdAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$DownloadOutputsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({jobId = false, savedItemId = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [],
@@ -4110,16 +5148,33 @@ class $$DownloadJobsTableTableManager
                       dynamic
                     >
                   >(state) {
+                    if (jobId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.jobId,
+                                referencedTable:
+                                    $$DownloadOutputsTableReferences
+                                        ._jobIdTable(db),
+                                referencedColumn:
+                                    $$DownloadOutputsTableReferences
+                                        ._jobIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
                     if (savedItemId) {
                       state =
                           state.withJoin(
                                 currentTable: table,
                                 currentColumn: table.savedItemId,
-                                referencedTable: $$DownloadJobsTableReferences
-                                    ._savedItemIdTable(db),
-                                referencedColumn: $$DownloadJobsTableReferences
-                                    ._savedItemIdTable(db)
-                                    .id,
+                                referencedTable:
+                                    $$DownloadOutputsTableReferences
+                                        ._savedItemIdTable(db),
+                                referencedColumn:
+                                    $$DownloadOutputsTableReferences
+                                        ._savedItemIdTable(db)
+                                        .id,
                               )
                               as T;
                     }
@@ -4135,19 +5190,19 @@ class $$DownloadJobsTableTableManager
       );
 }
 
-typedef $$DownloadJobsTableProcessedTableManager =
+typedef $$DownloadOutputsTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
-      $DownloadJobsTable,
-      DownloadJob,
-      $$DownloadJobsTableFilterComposer,
-      $$DownloadJobsTableOrderingComposer,
-      $$DownloadJobsTableAnnotationComposer,
-      $$DownloadJobsTableCreateCompanionBuilder,
-      $$DownloadJobsTableUpdateCompanionBuilder,
-      (DownloadJob, $$DownloadJobsTableReferences),
-      DownloadJob,
-      PrefetchHooks Function({bool savedItemId})
+      $DownloadOutputsTable,
+      DownloadOutput,
+      $$DownloadOutputsTableFilterComposer,
+      $$DownloadOutputsTableOrderingComposer,
+      $$DownloadOutputsTableAnnotationComposer,
+      $$DownloadOutputsTableCreateCompanionBuilder,
+      $$DownloadOutputsTableUpdateCompanionBuilder,
+      (DownloadOutput, $$DownloadOutputsTableReferences),
+      DownloadOutput,
+      PrefetchHooks Function({bool jobId, bool savedItemId})
     >;
 typedef $$LogEntriesTableCreateCompanionBuilder =
     LogEntriesCompanion Function({
@@ -4539,6 +5594,8 @@ class $AppDatabaseManager {
       $$MediaAssetsTableTableManager(_db, _db.mediaAssets);
   $$DownloadJobsTableTableManager get downloadJobs =>
       $$DownloadJobsTableTableManager(_db, _db.downloadJobs);
+  $$DownloadOutputsTableTableManager get downloadOutputs =>
+      $$DownloadOutputsTableTableManager(_db, _db.downloadOutputs);
   $$LogEntriesTableTableManager get logEntries =>
       $$LogEntriesTableTableManager(_db, _db.logEntries);
   $$SettingsTableTableManager get settings =>

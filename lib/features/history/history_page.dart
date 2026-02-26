@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -7,12 +5,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/history_repository.dart';
 import '../../data/logs_repository.dart';
 import '../../data/queue_repository.dart';
+import '../../data/settings_repository.dart';
 import '../logs/log_record.dart';
 import '../../ui/components/app_button.dart';
 import '../../ui/components/app_card.dart';
 import '../../ui/components/app_toast.dart';
 import '../../ui/tokens.dart';
 import '../../utils/reveal_in_file_manager.dart';
+import '../../utils/reveal_path_resolver.dart';
 import 'history_cubit.dart';
 
 class HistoryPage extends StatelessWidget {
@@ -146,9 +146,35 @@ class _HistoryCard extends StatelessWidget {
                 label: 'Open folder',
                 variant: AppButtonVariant.secondary,
                 onPressed: () async {
-                  final path = job.outputPath.isEmpty
-                      ? Directory.systemTemp.path
-                      : job.outputPath;
+                  final path = await resolveRevealPath(
+                    queueRepository: context.read<QueueRepository>(),
+                    settingsRepository: context.read<SettingsRepository>(),
+                    jobId: job.id,
+                    savedItemId: item.id,
+                    legacyOutputPath: job.outputPath,
+                  );
+                  if (!context.mounted) {
+                    return;
+                  }
+                  if (path == null) {
+                    await context.read<LogsRepository>().add(
+                      LogRecord(
+                        timestamp: DateTime.now(),
+                        scope: 'history',
+                        level: 'warn',
+                        message:
+                            'Reveal output for job ${job.id}: missing configured output path.',
+                      ),
+                    );
+                    if (!context.mounted) {
+                      return;
+                    }
+                    AppToast.show(
+                      context,
+                      'No output path available. Set Download root in Settings.',
+                    );
+                    return;
+                  }
                   final success = await revealInFileManager(path);
                   if (!context.mounted) {
                     return;

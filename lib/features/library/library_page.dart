@@ -1,10 +1,10 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../data/app_database.dart';
+import '../../data/queue_repository.dart';
+import '../../data/settings_repository.dart';
 import '../../ui/components/app_button.dart';
 import '../../ui/components/app_card.dart';
 import '../../ui/components/app_chip.dart';
@@ -14,6 +14,7 @@ import '../../ui/components/app_text_field.dart';
 import '../../ui/components/app_toast.dart';
 import '../../ui/tokens.dart';
 import '../../utils/reveal_in_file_manager.dart';
+import '../../utils/reveal_path_resolver.dart';
 import '../queue/queue_cubit.dart';
 import 'library_cubit.dart';
 
@@ -298,6 +299,9 @@ class _LibraryItemCard extends StatelessWidget {
             ),
           ],
         );
+        if (!context.mounted) {
+          return;
+        }
         if (selection == 'copy') {
           Clipboard.setData(ClipboardData(text: item.permalink));
           if (context.mounted) {
@@ -305,13 +309,26 @@ class _LibraryItemCard extends StatelessWidget {
           }
         }
         if (selection == 'reveal') {
-          final success = await revealInFileManager(Directory.systemTemp.path);
+          final path = await resolveRevealPath(
+            queueRepository: context.read<QueueRepository>(),
+            settingsRepository: context.read<SettingsRepository>(),
+            savedItemId: item.id,
+          );
+          if (!context.mounted) {
+            return;
+          }
+          if (path == null) {
+            AppToast.show(
+              context,
+              'No output path available. Set Download root in Settings.',
+            );
+            return;
+          }
+          final success = await revealInFileManager(path);
           if (context.mounted) {
             AppToast.show(
               context,
-              success
-                  ? 'Opened file manager (mock path).'
-                  : 'Unable to reveal path.',
+              success ? 'Opened file manager.' : 'Unable to reveal path.',
             );
           }
         }

@@ -11,6 +11,9 @@ MigrationStrategy buildMigrationStrategy(AppDatabase database) {
       if (from < 2) {
         await ensureLogEntriesPrimaryKey(database);
       }
+      if (from < 3) {
+        await migrator.createTable(database.downloadOutputs);
+      }
     },
     beforeOpen: (details) async {
       await database.customStatement('PRAGMA foreign_keys = ON');
