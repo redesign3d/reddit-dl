@@ -27,7 +27,7 @@ class AppSelect<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.appColors;
     return DropdownButtonFormField<T>(
-      value: value,
+      initialValue: value,
       isExpanded: true,
       decoration: InputDecoration(
         labelText: label,
@@ -36,15 +36,14 @@ class AppSelect<T> extends StatelessWidget {
           borderSide: BorderSide(color: colors.border),
         ),
       ),
-      items:
-          options
-              .map(
-                (option) => DropdownMenuItem<T>(
-                  value: option.value,
-                  child: Text(option.label),
-                ),
-              )
-              .toList(),
+      items: options
+          .map(
+            (option) => DropdownMenuItem<T>(
+              value: option.value,
+              child: Text(option.label),
+            ),
+          )
+          .toList(),
       onChanged: onChanged,
     );
   }
