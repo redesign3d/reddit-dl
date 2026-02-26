@@ -17,6 +17,7 @@ class ExternalToolRunner {
     required ToolInfo tool,
     required List<String> args,
     String? workingDirectory,
+    int? relatedJobId,
     CancelToken? cancelToken,
   }) async {
     if (!tool.isAvailable || tool.path == null) {
@@ -54,6 +55,7 @@ class ExternalToolRunner {
               scope: 'tools',
               level: 'info',
               message: line,
+              relatedJobId: relatedJobId,
             ),
           );
         });
@@ -69,6 +71,7 @@ class ExternalToolRunner {
               scope: 'tools',
               level: 'error',
               message: line,
+              relatedJobId: relatedJobId,
             ),
           );
         });

@@ -292,6 +292,7 @@ class DownloadScheduler {
                 targetFile: targetFile,
                 settings: _settings,
                 policy: _policyFromSnapshot(record.job.policySnapshot),
+                relatedJobId: jobId,
                 cancelToken: token,
                 onProgress: updateOverall,
                 onPhase: (phase) =>
@@ -679,13 +680,13 @@ class DownloadScheduler {
     String level,
     String message,
   ) async {
-    final prefix = jobId == null ? '' : '[job $jobId] ';
     await _logsRepository.add(
       LogRecord(
         timestamp: DateTime.now(),
         scope: scope,
         level: level,
-        message: '$prefix$message',
+        message: message,
+        relatedJobId: jobId,
       ),
     );
   }
