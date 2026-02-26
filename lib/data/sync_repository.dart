@@ -63,6 +63,7 @@ class SyncRepository {
 
     final mediaInserted = await _insertMediaAssets(savedItemId, resolved.media);
     return SyncUpsertResult(
+      savedItemId: savedItemId,
       inserted: inserted,
       updated: !inserted,
       mediaInserted: mediaInserted,
@@ -147,11 +148,13 @@ class SyncRepository {
 
 class SyncUpsertResult {
   const SyncUpsertResult({
+    required this.savedItemId,
     required this.inserted,
     required this.updated,
     required this.mediaInserted,
   });
 
+  final int savedItemId;
   final bool inserted;
   final bool updated;
   final int mediaInserted;

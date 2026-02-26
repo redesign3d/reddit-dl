@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
+import 'package:drift/drift.dart' show Value;
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -26,6 +27,7 @@ class SyncCubit extends Cubit<SyncState> {
 
   CancelToken? _cancelToken;
   bool _cancelRequested = false;
+  static const _maxRecentErrors = 8;
 
   Future<void> updateRememberSession(bool remember) async {
     await _sessionRepository.initialize(remember: remember);
@@ -36,6 +38,7 @@ class SyncCubit extends Cubit<SyncState> {
     emit(
       state.copyWith(
         phase: SyncPhase.login,
+        runStage: SyncRunStage.idle,
         loginVisible: true,
         errorMessage: null,
       ),
@@ -57,9 +60,16 @@ class SyncCubit extends Cubit<SyncState> {
   }
 
   Future<void> checkSession({required bool rememberSession}) async {
-    emit(state.copyWith(phase: SyncPhase.login, errorMessage: null));
+    emit(
+      state.copyWith(
+        phase: SyncPhase.login,
+        runStage: SyncRunStage.idle,
+        errorMessage: null,
+      ),
+    );
     await _sessionRepository.initialize(remember: rememberSession);
     await _webViewBridge.syncCookiesFromWebView();
+    final cookieCount = await _countSessionCookies();
 
     final client = RedditSavedListingClient(
       cookieJar: _sessionRepository.cookieJar,
@@ -71,7 +81,10 @@ class SyncCubit extends Cubit<SyncState> {
           emit(
             state.copyWith(
               phase: SyncPhase.error,
+              runStage: SyncRunStage.idle,
               sessionValid: false,
+              sessionCookieCount: cookieCount,
+              savedAccessOk: const Value(null),
               errorMessage: 'Session invalid. Please log in again.',
             ),
           );
@@ -85,12 +98,18 @@ class SyncCubit extends Cubit<SyncState> {
           );
           return;
         }
+        final savedAccess = result.username == null || result.username!.isEmpty
+            ? null
+            : await _probeSavedAccess(client, result.username!);
         emit(
           state.copyWith(
             phase: SyncPhase.ready,
+            runStage: SyncRunStage.idle,
             sessionValid: true,
             loginVisible: false,
-            username: result.username,
+            username: Value(result.username),
+            sessionCookieCount: cookieCount,
+            savedAccessOk: Value(savedAccess),
             errorMessage: null,
           ),
         );
@@ -112,7 +131,10 @@ class SyncCubit extends Cubit<SyncState> {
         emit(
           state.copyWith(
             phase: SyncPhase.error,
+            runStage: SyncRunStage.idle,
             sessionValid: false,
+            sessionCookieCount: cookieCount,
+            savedAccessOk: const Value(null),
             errorMessage: 'Session check failed: $error',
           ),
         );
@@ -129,7 +151,10 @@ class SyncCubit extends Cubit<SyncState> {
         emit(
           state.copyWith(
             phase: SyncPhase.error,
+            runStage: SyncRunStage.idle,
             sessionValid: false,
+            sessionCookieCount: cookieCount,
+            savedAccessOk: const Value(null),
             errorMessage: 'Session check failed: $error',
           ),
         );
@@ -153,11 +178,16 @@ class SyncCubit extends Cubit<SyncState> {
     emit(
       state.copyWith(
         phase: SyncPhase.idle,
+        runStage: SyncRunStage.idle,
         sessionValid: false,
-        username: null,
+        username: const Value(null),
         manualUsername: '',
+        sessionCookieCount: 0,
+        savedAccessOk: const Value(null),
         progress: const SyncProgress(),
-        summary: null,
+        summary: const Value(null),
+        recentErrors: const <String>[],
+        failedPermalinks: const <String>[],
         errorMessage: null,
       ),
     );
@@ -184,8 +214,11 @@ class SyncCubit extends Cubit<SyncState> {
     emit(
       state.copyWith(
         phase: SyncPhase.syncing,
+        runStage: SyncRunStage.scanning,
+        recentErrors: const <String>[],
+        failedPermalinks: const <String>[],
         progress: const SyncProgress(),
-        summary: null,
+        summary: const Value(null),
         errorMessage: null,
         isCancelling: false,
       ),
@@ -216,7 +249,10 @@ class SyncCubit extends Cubit<SyncState> {
     }
     if (!state.sessionValid || state.username == null) {
       emit(
-        state.copyWith(username: sessionResult.username, sessionValid: true),
+        state.copyWith(
+          username: Value(sessionResult.username),
+          sessionValid: true,
+        ),
       );
     }
 
@@ -249,12 +285,17 @@ class SyncCubit extends Cubit<SyncState> {
     var pages = 0;
     var resolvedCount = 0;
     var upsertedCount = 0;
+    var insertedCount = 0;
+    var updatedCount = 0;
     var failures = 0;
     var mediaInserted = 0;
+    final insertedItemIds = <int>{};
+    final failedPermalinks = <String>{};
 
     try {
       while (true) {
         _throwIfCancelled();
+        emit(state.copyWith(runStage: SyncRunStage.scanning));
         final page = await _fetchListingWithRetry(
           client,
           effectiveUsername,
@@ -283,6 +324,7 @@ class SyncCubit extends Cubit<SyncState> {
 
           ResolvedItem resolvedItem;
           try {
+            emit(state.copyWith(runStage: SyncRunStage.resolving));
             resolvedItem = await _resolveWithRetry(
               resolver,
               item.permalink,
@@ -292,7 +334,12 @@ class SyncCubit extends Cubit<SyncState> {
             rethrow;
           } catch (error) {
             failures += 1;
+            failedPermalinks.add(item.permalink);
             await _syncRepository.markResolutionFailed(item.permalink);
+            _appendRecentError(
+              'Failed to resolve ${item.permalink}: $error',
+              failedPermalink: item.permalink,
+            );
             await _logs.add(
               LogRecord(
                 timestamp: DateTime.now(),
@@ -303,11 +350,14 @@ class SyncCubit extends Cubit<SyncState> {
             );
             emit(
               state.copyWith(
+                failedPermalinks: failedPermalinks.toList(growable: false),
                 progress: state.progress.copyWith(
                   pagesScanned: pages,
                   permalinksFound: permalinksFound,
                   resolved: resolvedCount,
                   upserted: upsertedCount,
+                  inserted: insertedCount,
+                  updated: updatedCount,
                   failures: failures,
                   mediaInserted: mediaInserted,
                 ),
@@ -319,16 +369,27 @@ class SyncCubit extends Cubit<SyncState> {
           resolvedCount += 1;
 
           final upsert = await _syncRepository.upsertResolved(resolvedItem);
+          failedPermalinks.remove(item.permalink);
           upsertedCount += upsert.inserted || upsert.updated ? 1 : 0;
+          if (upsert.inserted) {
+            insertedCount += 1;
+            insertedItemIds.add(upsert.savedItemId);
+          }
+          if (upsert.updated) {
+            updatedCount += 1;
+          }
           mediaInserted += upsert.mediaInserted;
 
           emit(
             state.copyWith(
+              failedPermalinks: failedPermalinks.toList(growable: false),
               progress: state.progress.copyWith(
                 pagesScanned: pages,
                 permalinksFound: permalinksFound,
                 resolved: resolvedCount,
                 upserted: upsertedCount,
+                inserted: insertedCount,
+                updated: updatedCount,
                 failures: failures,
                 mediaInserted: mediaInserted,
               ),
@@ -372,18 +433,25 @@ class SyncCubit extends Cubit<SyncState> {
         permalinksFound: seen.length,
         resolved: resolvedCount,
         upserted: upsertedCount,
+        inserted: insertedCount,
+        updated: updatedCount,
         failures: failures,
         mediaInserted: mediaInserted,
+        insertedItemIds: insertedItemIds.toList(growable: false),
       );
       emit(
         state.copyWith(
           phase: SyncPhase.completed,
-          summary: summary,
+          runStage: SyncRunStage.completed,
+          summary: Value(summary),
+          failedPermalinks: failedPermalinks.toList(growable: false),
           progress: state.progress.copyWith(
             pagesScanned: summary.pagesScanned,
             permalinksFound: summary.permalinksFound,
             resolved: summary.resolved,
             upserted: summary.upserted,
+            inserted: summary.inserted,
+            updated: summary.updated,
             failures: summary.failures,
             mediaInserted: summary.mediaInserted,
           ),
@@ -399,7 +467,13 @@ class SyncCubit extends Cubit<SyncState> {
         ),
       );
     } on SyncCancelledException {
-      emit(state.copyWith(phase: SyncPhase.cancelled, isCancelling: false));
+      emit(
+        state.copyWith(
+          phase: SyncPhase.cancelled,
+          runStage: SyncRunStage.idle,
+          isCancelling: false,
+        ),
+      );
       await _logs.add(
         LogRecord(
           timestamp: DateTime.now(),
@@ -409,9 +483,11 @@ class SyncCubit extends Cubit<SyncState> {
         ),
       );
     } catch (error) {
+      _appendRecentError('Sync failed: $error');
       emit(
         state.copyWith(
           phase: SyncPhase.error,
+          runStage: SyncRunStage.idle,
           errorMessage: 'Sync failed: $error',
           isCancelling: false,
         ),
@@ -434,6 +510,161 @@ class SyncCubit extends Cubit<SyncState> {
     _cancelRequested = true;
     _cancelToken?.cancel('Cancelled by user.');
     emit(state.copyWith(isCancelling: true));
+  }
+
+  Future<void> retryFailedResolutions({
+    required bool rememberSession,
+    required int rateLimitPerMinute,
+  }) async {
+    if (state.phase == SyncPhase.syncing) {
+      return;
+    }
+    final retryPermalinks = state.failedPermalinks.toSet().toList(
+      growable: false,
+    );
+    if (retryPermalinks.isEmpty) {
+      return;
+    }
+
+    emit(
+      state.copyWith(
+        phase: SyncPhase.syncing,
+        runStage: SyncRunStage.resolving,
+        summary: const Value(null),
+        recentErrors: const <String>[],
+        errorMessage: null,
+        isCancelling: false,
+        progress: state.progress.copyWith(
+          resolved: 0,
+          upserted: 0,
+          inserted: 0,
+          updated: 0,
+          failures: 0,
+          mediaInserted: 0,
+          retryAfterSeconds: null,
+        ),
+      ),
+    );
+    _cancelRequested = false;
+    _cancelToken?.cancel();
+    _cancelToken = CancelToken();
+
+    await _sessionRepository.initialize(remember: rememberSession);
+    final client = RedditSavedListingClient(
+      cookieJar: _sessionRepository.cookieJar,
+    );
+    final resolver = RedditJsonResolver(
+      cookieJar: _sessionRepository.cookieJar,
+    );
+    final sessionResult = await _checkSessionWithRetry(client);
+    if (!sessionResult.isValid) {
+      emit(
+        state.copyWith(
+          phase: SyncPhase.error,
+          runStage: SyncRunStage.idle,
+          errorMessage: 'Session expired. Please log in again.',
+        ),
+      );
+      return;
+    }
+
+    var resolved = 0;
+    var upserted = 0;
+    var inserted = 0;
+    var updated = 0;
+    var failures = 0;
+    var mediaInserted = 0;
+    final insertedItemIds = <int>{};
+    final remainingFailed = <String>{};
+    try {
+      for (final permalink in retryPermalinks) {
+        _throwIfCancelled();
+        try {
+          final hint = permalink.contains('/comments/')
+              ? ListingKindHint.post
+              : ListingKindHint.comment;
+          final resolvedItem = await _resolveWithRetry(
+            resolver,
+            permalink,
+            hint,
+          );
+          final upsert = await _syncRepository.upsertResolved(resolvedItem);
+          resolved += 1;
+          if (upsert.inserted || upsert.updated) {
+            upserted += 1;
+          }
+          if (upsert.inserted) {
+            inserted += 1;
+            insertedItemIds.add(upsert.savedItemId);
+          }
+          if (upsert.updated) {
+            updated += 1;
+          }
+          mediaInserted += upsert.mediaInserted;
+        } catch (error) {
+          failures += 1;
+          remainingFailed.add(permalink);
+          await _syncRepository.markResolutionFailed(permalink);
+          _appendRecentError(
+            'Retry failed for $permalink: $error',
+            failedPermalink: permalink,
+          );
+        }
+        emit(
+          state.copyWith(
+            failedPermalinks: remainingFailed.toList(growable: false),
+            progress: state.progress.copyWith(
+              resolved: resolved,
+              upserted: upserted,
+              inserted: inserted,
+              updated: updated,
+              failures: failures,
+              mediaInserted: mediaInserted,
+            ),
+          ),
+        );
+        await _respectRateLimit(rateLimitPerMinute);
+      }
+
+      final summary = SyncSummary(
+        pagesScanned: state.progress.pagesScanned,
+        permalinksFound: state.progress.permalinksFound,
+        resolved: resolved,
+        upserted: upserted,
+        inserted: inserted,
+        updated: updated,
+        failures: failures,
+        mediaInserted: mediaInserted,
+        insertedItemIds: insertedItemIds.toList(growable: false),
+      );
+      emit(
+        state.copyWith(
+          phase: SyncPhase.completed,
+          runStage: SyncRunStage.completed,
+          summary: Value(summary),
+          failedPermalinks: remainingFailed.toList(growable: false),
+        ),
+      );
+    } on SyncCancelledException {
+      emit(
+        state.copyWith(
+          phase: SyncPhase.cancelled,
+          runStage: SyncRunStage.idle,
+          isCancelling: false,
+          failedPermalinks: remainingFailed.toList(growable: false),
+        ),
+      );
+    } catch (error) {
+      _appendRecentError('Retry failed: $error');
+      emit(
+        state.copyWith(
+          phase: SyncPhase.error,
+          runStage: SyncRunStage.idle,
+          errorMessage: 'Retry failed: $error',
+          failedPermalinks: remainingFailed.toList(growable: false),
+        ),
+      );
+    }
   }
 
   Future<SavedListingPage> _fetchListingWithRetry(
@@ -559,17 +790,72 @@ class SyncCubit extends Cubit<SyncState> {
     }
     return null;
   }
+
+  Future<int> _countSessionCookies() async {
+    final cookies = await _sessionRepository.loadCookies(
+      Uri.parse('https://old.reddit.com/'),
+    );
+    return cookies.length;
+  }
+
+  Future<bool?> _probeSavedAccess(
+    RedditSavedListingClient client,
+    String username,
+  ) async {
+    try {
+      await client.fetchSavedPage(
+        username: username,
+        cancelToken: _cancelToken,
+      );
+      return true;
+    } on RateLimitException {
+      return true;
+    } on DioException catch (error) {
+      if (CancelToken.isCancel(error)) {
+        throw SyncCancelledException();
+      }
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  void _appendRecentError(String message, {String? failedPermalink}) {
+    final trimmedMessage = message.trim();
+    if (trimmedMessage.isEmpty) {
+      return;
+    }
+    final nextErrors = [trimmedMessage, ...state.recentErrors];
+    if (nextErrors.length > _maxRecentErrors) {
+      nextErrors.removeRange(_maxRecentErrors, nextErrors.length);
+    }
+    final failed = state.failedPermalinks.toSet();
+    if (failedPermalink != null && failedPermalink.trim().isNotEmpty) {
+      failed.add(failedPermalink.trim());
+    }
+    emit(
+      state.copyWith(
+        recentErrors: nextErrors,
+        failedPermalinks: failed.toList(growable: false),
+      ),
+    );
+  }
 }
 
 class SyncState extends Equatable {
   const SyncState({
     required this.phase,
+    required this.runStage,
     required this.loginVisible,
     required this.sessionValid,
     required this.username,
     required this.manualUsername,
+    required this.sessionCookieCount,
+    required this.savedAccessOk,
     required this.progress,
     required this.summary,
+    required this.recentErrors,
+    required this.failedPermalinks,
     required this.errorMessage,
     required this.isCancelling,
   });
@@ -577,47 +863,73 @@ class SyncState extends Equatable {
   factory SyncState.initial() {
     return const SyncState(
       phase: SyncPhase.idle,
+      runStage: SyncRunStage.idle,
       loginVisible: false,
       sessionValid: false,
       username: null,
       manualUsername: '',
+      sessionCookieCount: 0,
+      savedAccessOk: null,
       progress: SyncProgress(),
       summary: null,
+      recentErrors: <String>[],
+      failedPermalinks: <String>[],
       errorMessage: null,
       isCancelling: false,
     );
   }
 
   final SyncPhase phase;
+  final SyncRunStage runStage;
   final bool loginVisible;
   final bool sessionValid;
   final String? username;
   final String manualUsername;
+  final int sessionCookieCount;
+  final bool? savedAccessOk;
   final SyncProgress progress;
   final SyncSummary? summary;
+  final List<String> recentErrors;
+  final List<String> failedPermalinks;
   final String? errorMessage;
   final bool isCancelling;
 
+  static const _unset = Object();
+
   SyncState copyWith({
     SyncPhase? phase,
+    SyncRunStage? runStage,
     bool? loginVisible,
     bool? sessionValid,
-    String? username,
+    Value<String?>? username,
     String? manualUsername,
+    int? sessionCookieCount,
+    Value<bool?>? savedAccessOk,
     SyncProgress? progress,
-    SyncSummary? summary,
-    String? errorMessage,
+    Value<SyncSummary?>? summary,
+    List<String>? recentErrors,
+    List<String>? failedPermalinks,
+    Object? errorMessage = _unset,
     bool? isCancelling,
   }) {
     return SyncState(
       phase: phase ?? this.phase,
+      runStage: runStage ?? this.runStage,
       loginVisible: loginVisible ?? this.loginVisible,
       sessionValid: sessionValid ?? this.sessionValid,
-      username: username ?? this.username,
+      username: username == null ? this.username : username.value,
       manualUsername: manualUsername ?? this.manualUsername,
+      sessionCookieCount: sessionCookieCount ?? this.sessionCookieCount,
+      savedAccessOk: savedAccessOk == null
+          ? this.savedAccessOk
+          : savedAccessOk.value,
       progress: progress ?? this.progress,
-      summary: summary ?? this.summary,
-      errorMessage: errorMessage,
+      summary: summary == null ? this.summary : summary.value,
+      recentErrors: recentErrors ?? this.recentErrors,
+      failedPermalinks: failedPermalinks ?? this.failedPermalinks,
+      errorMessage: errorMessage == _unset
+          ? this.errorMessage
+          : errorMessage as String?,
       isCancelling: isCancelling ?? this.isCancelling,
     );
   }
@@ -625,12 +937,17 @@ class SyncState extends Equatable {
   @override
   List<Object?> get props => [
     phase,
+    runStage,
     loginVisible,
     sessionValid,
     username,
     manualUsername,
+    sessionCookieCount,
+    savedAccessOk,
     progress,
     summary,
+    recentErrors,
+    failedPermalinks,
     errorMessage,
     isCancelling,
   ];
@@ -642,6 +959,8 @@ class SyncProgress extends Equatable {
     this.permalinksFound = 0,
     this.resolved = 0,
     this.upserted = 0,
+    this.inserted = 0,
+    this.updated = 0,
     this.failures = 0,
     this.mediaInserted = 0,
     this.retryAfterSeconds,
@@ -651,6 +970,8 @@ class SyncProgress extends Equatable {
   final int permalinksFound;
   final int resolved;
   final int upserted;
+  final int inserted;
+  final int updated;
   final int failures;
   final int mediaInserted;
   final int? retryAfterSeconds;
@@ -660,6 +981,8 @@ class SyncProgress extends Equatable {
     int? permalinksFound,
     int? resolved,
     int? upserted,
+    int? inserted,
+    int? updated,
     int? failures,
     int? mediaInserted,
     int? retryAfterSeconds,
@@ -669,6 +992,8 @@ class SyncProgress extends Equatable {
       permalinksFound: permalinksFound ?? this.permalinksFound,
       resolved: resolved ?? this.resolved,
       upserted: upserted ?? this.upserted,
+      inserted: inserted ?? this.inserted,
+      updated: updated ?? this.updated,
       failures: failures ?? this.failures,
       mediaInserted: mediaInserted ?? this.mediaInserted,
       retryAfterSeconds: retryAfterSeconds ?? this.retryAfterSeconds,
@@ -681,6 +1006,8 @@ class SyncProgress extends Equatable {
     permalinksFound,
     resolved,
     upserted,
+    inserted,
+    updated,
     failures,
     mediaInserted,
     retryAfterSeconds,
@@ -693,16 +1020,22 @@ class SyncSummary extends Equatable {
     required this.permalinksFound,
     required this.resolved,
     required this.upserted,
+    required this.inserted,
+    required this.updated,
     required this.failures,
     required this.mediaInserted,
+    required this.insertedItemIds,
   });
 
   final int pagesScanned;
   final int permalinksFound;
   final int resolved;
   final int upserted;
+  final int inserted;
+  final int updated;
   final int failures;
   final int mediaInserted;
+  final List<int> insertedItemIds;
 
   @override
   List<Object?> get props => [
@@ -710,11 +1043,35 @@ class SyncSummary extends Equatable {
     permalinksFound,
     resolved,
     upserted,
+    inserted,
+    updated,
     failures,
     mediaInserted,
+    insertedItemIds,
   ];
 }
 
 enum SyncPhase { idle, login, ready, syncing, completed, cancelled, error }
+
+enum SyncRunStage { idle, scanning, resolving, completed }
+
+enum SyncUiStep { login, validateSession, scanSavedPages, resolveJson, summary }
+
+SyncUiStep syncUiStepFromState(SyncState state) {
+  if (state.phase == SyncPhase.completed) {
+    return SyncUiStep.summary;
+  }
+  if (state.phase == SyncPhase.syncing &&
+      state.runStage == SyncRunStage.resolving) {
+    return SyncUiStep.resolveJson;
+  }
+  if (state.phase == SyncPhase.syncing) {
+    return SyncUiStep.scanSavedPages;
+  }
+  if (state.sessionValid) {
+    return SyncUiStep.validateSession;
+  }
+  return SyncUiStep.login;
+}
 
 class SyncCancelledException implements Exception {}
