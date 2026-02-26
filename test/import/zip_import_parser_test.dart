@@ -30,6 +30,25 @@ void main() {
       throwsA(isA<ZipImportException>()),
     );
   });
+
+  test('normalizes supported permalink forms and skips invalid rows', () {
+    final zipBytes = _buildZip({
+      'saved_posts.csv': [
+        'permalink,subreddit,author,title,created_utc',
+        'https://old.reddit.com/r/test/comments/abc/post-1/,test,alice,Post one,1700000000',
+        '/r/test/comments/abc/post-1/.json,test,alice,Post one,1700000000',
+        'https://www.reddit.com/r/test,test,alice,Unsupported row,1700000001',
+      ].join('\n'),
+    });
+
+    final parser = ZipImportParser();
+    final result = parser.parseBytes(zipBytes);
+
+    expect(result.posts, hasLength(2));
+    expect(result.posts.map((post) => post.permalink).toSet(), {
+      'https://www.reddit.com/r/test/comments/abc/post-1',
+    });
+  });
 }
 
 Uint8List _buildZip(Map<String, String> files) {

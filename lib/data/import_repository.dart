@@ -1,6 +1,9 @@
+import 'dart:developer' as developer;
+
 import 'package:drift/drift.dart';
 
 import '../features/import/zip_import_parser.dart';
+import '../features/sync/permalink_utils.dart';
 import 'app_database.dart';
 
 class ImportRepository {
@@ -20,15 +23,22 @@ class ImportRepository {
     final uniqueMap = <String, ImportItem>{};
     var skipped = 0;
     for (final item in allItems) {
-      if (item.permalink.isEmpty) {
+      final permalink = _canonicalPermalink(item.permalink);
+      if (permalink == null) {
+        developer.log(
+          'Skipping ${item.kind.name} import row due to invalid permalink: '
+          '${item.permalink}',
+          name: 'ImportRepository',
+          level: 900,
+        );
         skipped++;
         continue;
       }
-      if (uniqueMap.containsKey(item.permalink)) {
+      if (uniqueMap.containsKey(permalink)) {
         skipped++;
         continue;
       }
-      uniqueMap[item.permalink] = item;
+      uniqueMap[permalink] = item;
     }
 
     final permalinks = uniqueMap.keys.toList();
@@ -42,8 +52,10 @@ class ImportRepository {
     final now = DateTime.now();
 
     final inserts = <SavedItemsCompanion>[];
-    for (final entry in uniqueMap.values) {
-      final exists = existingSet.contains(entry.permalink);
+    for (final importEntry in uniqueMap.entries) {
+      final permalink = importEntry.key;
+      final entry = importEntry.value;
+      final exists = existingSet.contains(permalink);
       if (exists) {
         updated++;
       } else {
@@ -52,12 +64,12 @@ class ImportRepository {
 
       final subreddit = entry.subreddit.isNotEmpty
           ? entry.subreddit
-          : _deriveSubreddit(entry.permalink);
+          : _deriveSubreddit(permalink);
 
       inserts.add(
         SavedItemsCompanion(
           id: const Value.absent(),
-          permalink: Value(entry.permalink),
+          permalink: Value(permalink),
           kind: Value(entry.kind.name),
           subreddit: Value(subreddit),
           author: Value(entry.author),
@@ -76,7 +88,16 @@ class ImportRepository {
     }
 
     await _db.batch((batch) {
-      batch.insertAllOnConflictUpdate(_db.savedItems, inserts);
+      for (final insert in inserts) {
+        batch.insert(
+          _db.savedItems,
+          insert,
+          onConflict: DoUpdate(
+            (_) => insert,
+            target: [_db.savedItems.permalink],
+          ),
+        );
+      }
     });
 
     return ImportResult(
@@ -126,4 +147,22 @@ String _deriveSubreddit(String permalink) {
     return '';
   }
   return match.group(1) ?? '';
+}
+
+String? _canonicalPermalink(String rawPermalink) {
+  final normalized = normalizePermalink(rawPermalink);
+  if (normalized.isEmpty) {
+    return null;
+  }
+  if (!_isSupportedPermalink(normalized)) {
+    return null;
+  }
+  return normalized;
+}
+
+bool _isSupportedPermalink(String permalink) {
+  return RegExp(
+    r'^https://www\.reddit\.com/r/[^/]+/comments/[^/]+(?:/[^/]+)*(?:/)?$',
+    caseSensitive: false,
+  ).hasMatch(permalink);
 }

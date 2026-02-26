@@ -1,8 +1,11 @@
 import 'dart:convert';
+import 'dart:developer' as developer;
 import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
 import 'package:csv/csv.dart';
+
+import '../sync/permalink_utils.dart';
 
 class ZipImportParser {
   ImportArchive parseBytes(Uint8List bytes) {
@@ -67,35 +70,49 @@ class ZipImportParser {
       throw const ZipImportException('CSV missing permalink column.');
     }
 
-    return rows
-        .skip(1)
-        .where((row) => row.isNotEmpty)
-        .map((row) {
-          final permalink = _cell(row, permalinkIndex) ?? '';
-          final subreddit = _cell(row, _indexFor(indices, ['subreddit'])) ?? '';
-          final author =
-              _cell(row, _indexFor(indices, ['author', 'author_name'])) ??
-              'unknown';
-          final title = _cell(row, _indexFor(indices, ['title'])) ?? '';
-          final body =
-              _cell(row, _indexFor(indices, ['body', 'comment', 'selftext'])) ??
-              '';
-          final createdUtc = _parseInt(
-            _cell(row, _indexFor(indices, ['created_utc', 'created'])),
-          );
+    final items = <ImportItem>[];
+    for (var rowIndex = 1; rowIndex < rows.length; rowIndex++) {
+      final row = rows[rowIndex];
+      if (row.isEmpty) {
+        continue;
+      }
 
-          return ImportItem(
-            kind: kind,
-            permalink: permalink,
-            subreddit: subreddit,
-            author: author,
-            title: title,
-            body: body,
-            createdUtc: createdUtc,
-          );
-        })
-        .where((item) => item.permalink.isNotEmpty)
-        .toList();
+      final rawPermalink = _cell(row, permalinkIndex) ?? '';
+      final permalink = _normalizeImportPermalink(rawPermalink);
+      if (permalink == null) {
+        developer.log(
+          'Skipping ${kind.name} row ${rowIndex + 1} due to invalid permalink: '
+          '$rawPermalink',
+          name: 'ZipImportParser',
+          level: 900,
+        );
+        continue;
+      }
+
+      final subreddit = _cell(row, _indexFor(indices, ['subreddit'])) ?? '';
+      final author =
+          _cell(row, _indexFor(indices, ['author', 'author_name'])) ??
+          'unknown';
+      final title = _cell(row, _indexFor(indices, ['title'])) ?? '';
+      final body =
+          _cell(row, _indexFor(indices, ['body', 'comment', 'selftext'])) ?? '';
+      final createdUtc = _parseInt(
+        _cell(row, _indexFor(indices, ['created_utc', 'created'])),
+      );
+
+      items.add(
+        ImportItem(
+          kind: kind,
+          permalink: permalink,
+          subreddit: subreddit,
+          author: author,
+          title: title,
+          body: body,
+          createdUtc: createdUtc,
+        ),
+      );
+    }
+    return items;
   }
 
   int? _indexFor(Map<String, int> indices, List<String> keys) {
@@ -121,6 +138,24 @@ class ZipImportParser {
       return null;
     }
     return int.tryParse(value);
+  }
+
+  String? _normalizeImportPermalink(String raw) {
+    final normalized = normalizePermalink(raw);
+    if (normalized.isEmpty) {
+      return null;
+    }
+    if (!_isSupportedPermalink(normalized)) {
+      return null;
+    }
+    return normalized;
+  }
+
+  bool _isSupportedPermalink(String normalized) {
+    return RegExp(
+      r'^https://www\.reddit\.com/r/[^/]+/comments/[^/]+(?:/[^/]+)*(?:/)?$',
+      caseSensitive: false,
+    ).hasMatch(normalized);
   }
 }
 
