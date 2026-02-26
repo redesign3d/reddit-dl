@@ -9,6 +9,9 @@ import '../../data/app_database.dart';
 import '../../data/library_repository.dart';
 import '../../data/queue_repository.dart';
 import '../../data/settings_repository.dart';
+import '../../services/export/saved_comment_markdown_exporter.dart';
+import '../../services/export/text_post_markdown_exporter.dart';
+import '../../services/path_template_engine.dart';
 import '../../ui/components/app_button.dart';
 import '../../ui/components/app_card.dart';
 import '../../ui/components/app_chip.dart';
@@ -264,6 +267,25 @@ class _LibraryListPanel extends StatelessWidget {
         AppCard(
           child: Row(
             children: [
+              Checkbox(
+                value: state.items.isEmpty
+                    ? false
+                    : state.selectedItemIds.isEmpty
+                    ? false
+                    : state.selectedItemIds.length == state.items.length
+                    ? true
+                    : null,
+                tristate: true,
+                onChanged: state.items.isEmpty
+                    ? null
+                    : (value) {
+                        if (value == true) {
+                          context.read<LibraryCubit>().selectAllVisible();
+                        } else {
+                          context.read<LibraryCubit>().clearSelection();
+                        }
+                      },
+              ),
               Expanded(
                 child: Text(
                   _pageSummary(state),
@@ -290,6 +312,10 @@ class _LibraryListPanel extends StatelessWidget {
             ],
           ),
         ),
+        if (state.hasSelection) ...[
+          SizedBox(height: AppTokens.space.s12),
+          _LibraryBulkActionsBar(state: state),
+        ],
         SizedBox(height: AppTokens.space.s12),
         Expanded(
           child: AppCard(
@@ -313,9 +339,16 @@ class _LibraryListPanel extends StatelessWidget {
                     itemBuilder: (context, index) {
                       final item = state.items[index];
                       final selected = item.id == state.selectedItemId;
+                      final bulkSelected = state.selectedItemIds.contains(
+                        item.id,
+                      );
                       return _LibraryListRow(
                         item: item,
                         selected: selected,
+                        bulkSelected: bulkSelected,
+                        onSelectChanged: (value) => context
+                            .read<LibraryCubit>()
+                            .toggleItemSelection(item.id, value),
                         onTap: () => onItemTap(item),
                       );
                     },
@@ -327,15 +360,98 @@ class _LibraryListPanel extends StatelessWidget {
   }
 }
 
+class _LibraryBulkActionsBar extends StatelessWidget {
+  const _LibraryBulkActionsBar({required this.state});
+
+  final LibraryState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final selectedItems = state.items
+        .where((item) => state.selectedItemIds.contains(item.id))
+        .toList(growable: false);
+    return AppCard(
+      child: Wrap(
+        spacing: AppTokens.space.s8,
+        runSpacing: AppTokens.space.s8,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          Text(
+            '${state.selectedItemIds.length} selected',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          AppButton(
+            label: 'Clear',
+            variant: AppButtonVariant.ghost,
+            onPressed: () => context.read<LibraryCubit>().clearSelection(),
+          ),
+          AppButton(
+            label: 'Select visible',
+            variant: AppButtonVariant.ghost,
+            onPressed: state.items.isEmpty
+                ? null
+                : () => context.read<LibraryCubit>().selectAllVisible(),
+          ),
+          AppButton(
+            label: 'Enqueue selected',
+            variant: AppButtonVariant.secondary,
+            onPressed: selectedItems.isEmpty
+                ? null
+                : () => _bulkEnqueue(context, selectedItems),
+          ),
+          AppButton(
+            label: 'Enqueue visible',
+            variant: AppButtonVariant.secondary,
+            onPressed: state.items.isEmpty
+                ? null
+                : () => _bulkEnqueue(context, state.items),
+          ),
+          AppButton(
+            label: 'Retry failed (selected)',
+            variant: AppButtonVariant.ghost,
+            onPressed: selectedItems.isEmpty
+                ? null
+                : () => _bulkRetryFailed(
+                    context,
+                    selectedItems.map((item) => item.id),
+                  ),
+          ),
+          AppButton(
+            label: 'Retry failed (visible)',
+            variant: AppButtonVariant.ghost,
+            onPressed: state.items.isEmpty
+                ? null
+                : () => _bulkRetryFailed(
+                    context,
+                    state.items.map((item) => item.id),
+                  ),
+          ),
+          AppButton(
+            label: 'Export markdown',
+            variant: AppButtonVariant.ghost,
+            onPressed: selectedItems.isEmpty
+                ? null
+                : () => _exportMarkdownForItems(context, selectedItems),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _LibraryListRow extends StatelessWidget {
   const _LibraryListRow({
     required this.item,
     required this.selected,
+    required this.bulkSelected,
+    required this.onSelectChanged,
     required this.onTap,
   });
 
   final SavedItem item;
   final bool selected;
+  final bool bulkSelected;
+  final ValueChanged<bool> onSelectChanged;
   final VoidCallback onTap;
 
   @override
@@ -352,6 +468,10 @@ class _LibraryListRow extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Checkbox(
+                value: bulkSelected,
+                onChanged: (value) => onSelectChanged(value ?? false),
+              ),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -567,8 +687,71 @@ Future<void> _enqueueDownload(BuildContext context, SavedItem item) async {
   );
 }
 
+Future<void> _bulkEnqueue(BuildContext context, List<SavedItem> items) async {
+  final result = await context.read<QueueCubit>().enqueueSavedItems(items);
+  if (!context.mounted) {
+    return;
+  }
+  AppToast.show(
+    context,
+    '${result.createdCount} queued, ${result.skippedCount} already active.',
+  );
+}
+
+Future<void> _bulkRetryFailed(
+  BuildContext context,
+  Iterable<int> savedItemIds,
+) async {
+  final retried = await context.read<QueueCubit>().retryFailedForSavedItemIds(
+    savedItemIds,
+  );
+  if (!context.mounted) {
+    return;
+  }
+  AppToast.show(context, 'Retry queued for $retried failed/skipped job(s).');
+}
+
+Future<void> _exportMarkdownForItems(
+  BuildContext context,
+  List<SavedItem> items,
+) async {
+  if (items.isEmpty) {
+    return;
+  }
+  final settings = await context.read<SettingsRepository>().load();
+  final engine = PathTemplateEngine(settings);
+  final policy = settings.overwritePolicy;
+  final textExporter = TextPostMarkdownExporter();
+  final commentExporter = SavedCommentMarkdownExporter();
+
+  var exported = 0;
+  var skipped = 0;
+  for (final item in items) {
+    final result = item.kind == 'comment'
+        ? await commentExporter.export(
+            item: item,
+            engine: engine,
+            policy: policy,
+          )
+        : await textExporter.export(item: item, engine: engine, policy: policy);
+    if (result.isCompleted) {
+      exported += 1;
+    } else {
+      skipped += 1;
+    }
+  }
+
+  if (!context.mounted) {
+    return;
+  }
+  AppToast.show(
+    context,
+    'Markdown export: $exported written, $skipped skipped.',
+  );
+}
+
 Future<void> _retryJob(BuildContext context, int jobId) async {
-  await context.read<QueueRepository>().retryJob(jobId);
+  await context.read<QueueCubit>().retryJob(jobId);
   if (!context.mounted) {
     return;
   }
