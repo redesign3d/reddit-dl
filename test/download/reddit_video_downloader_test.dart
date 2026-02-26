@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http_mock_adapter/http_mock_adapter.dart';
+import 'package:path/path.dart' as p;
 
 import 'package:reddit_dl/data/app_database.dart';
 import 'package:reddit_dl/data/settings_repository.dart';
@@ -13,6 +15,36 @@ import 'package:reddit_dl/services/download/reddit_video_downloader.dart';
 import 'package:reddit_dl/services/ffmpeg_runtime_manager.dart';
 
 void main() {
+  test('extracts DASH base path from DASH mp4 path', () {
+    expect(
+      RedditVideoDownloader.extractDashBasePath('/video/DASH_720.mp4'),
+      '/video',
+    );
+    expect(
+      RedditVideoDownloader.extractDashBasePath('/video/sub/DASH_1080.mp4'),
+      '/video/sub',
+    );
+  });
+
+  test('generates DASH audio candidate URLs from fallback URL', () {
+    final candidates = RedditVideoDownloader.buildDashAudioCandidates(
+      'https://v.redd.it/video/sub/DASH_1080.mp4?source=fallback',
+    );
+
+    expect(candidates.map((candidate) => candidate.toString()).toList(), [
+      'https://v.redd.it/video/sub/DASH_audio.mp4',
+      'https://v.redd.it/video/sub/DASH_AUDIO_128.mp4',
+    ]);
+  });
+
+  test('produces at least one audio candidate for valid DASH fallback URL', () {
+    final candidates = RedditVideoDownloader.buildDashAudioCandidates(
+      'https://v.redd.it/video/DASH_720.mp4',
+    );
+
+    expect(candidates, isNotEmpty);
+  });
+
   test('builds ffmpeg args for dash and merge', () {
     final downloader = RedditVideoDownloader(
       dio: Dio(),
@@ -113,6 +145,52 @@ void main() {
     );
 
     expect(httpDownloader.called, isTrue);
+    expect(result.isCompleted, isTrue);
+  });
+
+  test('discovers DASH audio candidate and merges fallback streams', () async {
+    final dio = Dio();
+    final adapter = DioAdapter(dio: dio);
+    dio.httpClientAdapter = adapter;
+
+    final httpDownloader = FakeHttpMediaDownloader();
+    final ffmpegExecutor = FakeFfmpegExecutor();
+    final downloader = RedditVideoDownloader(
+      dio: dio,
+      policyEvaluator: OverwritePolicyEvaluator(Dio()),
+      httpDownloader: httpDownloader,
+      ffmpegRuntime: FakeFfmpegRuntimeManager(),
+      ffmpegExecutor: ffmpegExecutor,
+    );
+
+    final tempDir = await Directory.systemTemp.createTemp('video-download');
+    addTearDown(() async => tempDir.delete(recursive: true));
+
+    const fallbackUrl = 'https://v.redd.it/video/DASH_720.mp4';
+    const audioCandidate = 'https://v.redd.it/video/DASH_audio.mp4';
+    adapter.onHead(audioCandidate, (server) => server.reply(200, ''));
+    adapter.onGet(fallbackUrl, (server) => server.reply(200, 'video-stream'));
+    adapter.onGet(
+      audioCandidate,
+      (server) => server.reply(200, 'audio-stream'),
+    );
+
+    final asset = _videoAsset(metadata: const {});
+    final targetFile = File('${tempDir.path}/video.mp4');
+
+    final result = await downloader.download(
+      asset: asset,
+      targetFile: targetFile,
+      policy: OverwritePolicy.skipIfExists,
+      onProgress: (_) {},
+    );
+
+    expect(httpDownloader.called, isFalse);
+    expect(ffmpegExecutor.lastArgs, isNotNull);
+    expect(
+      ffmpegExecutor.lastArgs,
+      contains(p.join(tempDir.path, 'video_audio.m4a')),
+    );
     expect(result.isCompleted, isTrue);
   });
 }
