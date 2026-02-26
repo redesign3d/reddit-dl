@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -21,6 +22,8 @@ import '../../utils/reveal_path_resolver.dart';
 import '../queue/queue_cubit.dart';
 import 'library_cubit.dart';
 
+const _wideLibraryBreakpoint = 1080.0;
+
 class LibraryPage extends StatelessWidget {
   const LibraryPage({super.key});
 
@@ -28,333 +31,677 @@ class LibraryPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<LibraryCubit, LibraryState>(
       builder: (context, state) {
-        final colors = context.appColors;
-        final canFilter = state.hasIndexed && state.subreddits.isNotEmpty;
-        final includeValue =
-            state.includeSubreddit != null &&
-                state.subreddits.contains(state.includeSubreddit)
-            ? state.includeSubreddit!
-            : '_all';
-        final excludeValue =
-            state.excludeSubreddit != null &&
-                state.subreddits.contains(state.excludeSubreddit)
-            ? state.excludeSubreddit!
-            : '_none';
-
-        final subredditOptions = [
-          const AppSelectOption(label: 'All', value: '_all'),
-          ...state.subreddits.map(
-            (subreddit) =>
-                AppSelectOption(label: 'r/$subreddit', value: subreddit),
-          ),
-        ];
-        final excludeOptions = [
-          const AppSelectOption(label: 'None', value: '_none'),
-          ...state.subreddits.map(
-            (subreddit) =>
-                AppSelectOption(label: 'r/$subreddit', value: subreddit),
-          ),
-        ];
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: AppTextField(
-                    label: 'Search saved items',
-                    hint: 'Filter by title, author, permalink, or subreddit',
-                    onChanged: context.read<LibraryCubit>().updateSearch,
-                  ),
-                ),
-                SizedBox(width: AppTokens.space.s12),
-                AppButton(
-                  label: 'Copy selection',
-                  variant: AppButtonVariant.secondary,
-                  onPressed: state.items.isEmpty
-                      ? null
-                      : () {
-                          final text = state.items
-                              .map((item) => item.permalink)
-                              .join('\n');
-                          Clipboard.setData(ClipboardData(text: text));
-                          AppToast.show(context, 'Selection copied.');
-                        },
-                ),
-              ],
-            ),
-            SizedBox(height: AppTokens.space.s16),
-            Row(
-              children: [
-                Expanded(
-                  child: AppCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Saved items',
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        SizedBox(height: AppTokens.space.s8),
-                        Text(
-                          '${state.items.length} on page • ${state.totalCount} matched • ${state.items.where((item) => item.over18).length} NSFW',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: colors.mutedForeground),
-                        ),
-                      ],
+        final selectedItem = _findSelectedItem(
+          state.items,
+          state.selectedItemId,
+        );
+        final contentHeight = _contentHeight(context);
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth >= _wideLibraryBreakpoint;
+            if (isWide) {
+              return SizedBox(
+                height: contentHeight,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    SizedBox(
+                      width: 300,
+                      child: _LibraryFiltersPanel(state: state),
                     ),
-                  ),
-                ),
-                SizedBox(width: AppTokens.space.s12),
-                Expanded(
-                  child: AppCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Sources',
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        SizedBox(height: AppTokens.space.s8),
-                        Text(
-                          '${state.items.where((item) => item.source == 'zip').length} ZIP • '
-                          '${state.items.where((item) => item.source == 'sync').length} Sync',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: colors.mutedForeground),
-                        ),
-                      ],
+                    SizedBox(width: AppTokens.space.s12),
+                    Expanded(
+                      child: _LibraryListPanel(
+                        state: state,
+                        onItemTap: (item) =>
+                            context.read<LibraryCubit>().selectItem(item.id),
+                      ),
                     ),
-                  ),
+                    SizedBox(width: AppTokens.space.s12),
+                    SizedBox(
+                      width: 340,
+                      child: _LibraryDetailsPanel(item: selectedItem),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            SizedBox(height: AppTokens.space.s16),
-            AppCard(
+              );
+            }
+
+            return SizedBox(
+              height: contentHeight,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Filters',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  SizedBox(height: AppTokens.space.s6),
-                  Text(
-                    canFilter
-                        ? 'Subreddit filters are populated from indexed items.'
-                        : 'Import ZIP or Sync to populate subreddit filters.',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: colors.mutedForeground,
-                    ),
-                  ),
-                  SizedBox(height: AppTokens.space.s12),
                   Row(
                     children: [
                       Expanded(
-                        child: AppSelect<LibraryItemKind>(
-                          label: 'Type',
-                          value: state.kindFilter,
-                          options: const [
-                            AppSelectOption(
-                              label: 'All',
-                              value: LibraryItemKind.all,
-                            ),
-                            AppSelectOption(
-                              label: 'Posts only',
-                              value: LibraryItemKind.post,
-                            ),
-                            AppSelectOption(
-                              label: 'Comments only',
-                              value: LibraryItemKind.comment,
-                            ),
-                            AppSelectOption(
-                              label: 'Media items',
-                              value: LibraryItemKind.media,
-                            ),
-                          ],
-                          onChanged: (value) {
-                            if (value == null) {
-                              return;
-                            }
-                            context.read<LibraryCubit>().updateKindFilter(
-                              value,
-                            );
-                          },
+                        child: Text(
+                          _pageSummary(state),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: context.appColors.mutedForeground,
+                              ),
                         ),
                       ),
-                      SizedBox(width: AppTokens.space.s12),
-                      Expanded(
-                        child: AppSelect<LibraryResolutionFilter>(
-                          label: 'Resolution',
-                          value: state.resolutionFilter,
-                          options: const [
-                            AppSelectOption(
-                              label: 'All',
-                              value: LibraryResolutionFilter.all,
-                            ),
-                            AppSelectOption(
-                              label: 'Resolved',
-                              value: LibraryResolutionFilter.ok,
-                            ),
-                            AppSelectOption(
-                              label: 'Partial',
-                              value: LibraryResolutionFilter.partial,
-                            ),
-                            AppSelectOption(
-                              label: 'Failed',
-                              value: LibraryResolutionFilter.failed,
-                            ),
-                          ],
-                          onChanged: (value) {
-                            if (value == null) {
-                              return;
-                            }
-                            context.read<LibraryCubit>().updateResolutionFilter(
-                              value,
-                            );
-                          },
-                        ),
+                      AppButton(
+                        label: 'Filters',
+                        variant: AppButtonVariant.secondary,
+                        onPressed: () => _showFiltersOverlay(context, state),
                       ),
                     ],
                   ),
                   SizedBox(height: AppTokens.space.s12),
-                  AppSwitch(
-                    label: 'Show NSFW',
-                    description:
-                        'Toggle visibility only (downloads are separate).',
-                    value: state.showNsfw,
-                    onChanged: (value) =>
-                        context.read<LibraryCubit>().toggleShowNsfw(value),
-                  ),
-                  SizedBox(height: AppTokens.space.s12),
-                  Opacity(
-                    opacity: canFilter ? 1 : 0.5,
-                    child: AbsorbPointer(
-                      absorbing: !canFilter,
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: AppSelect<String>(
-                              label: 'Include subreddit',
-                              value: includeValue,
-                              options: subredditOptions,
-                              onChanged: (value) {
-                                final selected = value == '_all' ? null : value;
-                                context
-                                    .read<LibraryCubit>()
-                                    .updateIncludeSubreddit(selected);
-                              },
-                            ),
-                          ),
-                          SizedBox(width: AppTokens.space.s12),
-                          Expanded(
-                            child: AppSelect<String>(
-                              label: 'Exclude subreddit',
-                              value: excludeValue,
-                              options: excludeOptions,
-                              onChanged: (value) {
-                                final selected = value == '_none'
-                                    ? null
-                                    : value;
-                                context
-                                    .read<LibraryCubit>()
-                                    .updateExcludeSubreddit(selected);
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
+                  Expanded(
+                    child: _LibraryListPanel(
+                      state: state,
+                      onItemTap: (item) async {
+                        context.read<LibraryCubit>().selectItem(item.id);
+                        await _showDetailsOverlay(context, item);
+                      },
                     ),
                   ),
                 ],
               ),
-            ),
-            SizedBox(height: AppTokens.space.s16),
-            if (state.isPageLoading && state.items.isNotEmpty)
-              Padding(
-                padding: EdgeInsets.only(bottom: AppTokens.space.s12),
-                child: Text(
-                  'Loading page...',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: colors.mutedForeground,
-                  ),
-                ),
-              ),
-            if (state.totalCount > 0)
-              Padding(
-                padding: EdgeInsets.only(bottom: AppTokens.space.s12),
-                child: Row(
-                  children: [
-                    Text(
-                      _pageSummary(state),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: colors.mutedForeground,
-                      ),
-                    ),
-                    const Spacer(),
-                    AppButton(
-                      label: 'Previous',
-                      variant: AppButtonVariant.ghost,
-                      onPressed: state.hasPreviousPage && !state.isPageLoading
-                          ? () =>
-                                context.read<LibraryCubit>().goToPreviousPage()
-                          : null,
-                    ),
-                    SizedBox(width: AppTokens.space.s8),
-                    AppButton(
-                      label: 'Next',
-                      variant: AppButtonVariant.secondary,
-                      onPressed: state.hasNextPage && !state.isPageLoading
-                          ? () => context.read<LibraryCubit>().goToNextPage()
-                          : null,
-                    ),
-                  ],
-                ),
-              ),
-            if (state.items.isEmpty)
-              AppCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      state.hasIndexed
-                          ? 'No items match current filters'
-                          : 'No items indexed yet',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    SizedBox(height: AppTokens.space.s6),
-                    Text(
-                      state.hasIndexed
-                          ? 'Adjust filters or clear search terms.'
-                          : 'Run a ZIP import or sync to populate your library.',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: colors.mutedForeground,
-                      ),
-                    ),
-                  ],
-                ),
-              )
-            else
-              Column(
-                children: state.items
-                    .map(
-                      (item) => Padding(
-                        padding: EdgeInsets.only(bottom: AppTokens.space.s12),
-                        child: _LibraryItemCard(item: item),
-                      ),
-                    )
-                    .toList(),
-              ),
-          ],
+            );
+          },
         );
       },
     );
   }
 }
 
+class _LibraryFiltersPanel extends StatelessWidget {
+  const _LibraryFiltersPanel({required this.state});
+
+  final LibraryState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final canFilter = state.hasIndexed && state.subreddits.isNotEmpty;
+    final includeValue =
+        state.includeSubreddit != null &&
+            state.subreddits.contains(state.includeSubreddit)
+        ? state.includeSubreddit!
+        : '_all';
+    final excludeValue =
+        state.excludeSubreddit != null &&
+            state.subreddits.contains(state.excludeSubreddit)
+        ? state.excludeSubreddit!
+        : '_none';
+
+    final subredditOptions = [
+      const AppSelectOption(label: 'All', value: '_all'),
+      ...state.subreddits.map(
+        (subreddit) => AppSelectOption(label: 'r/$subreddit', value: subreddit),
+      ),
+    ];
+    final excludeOptions = [
+      const AppSelectOption(label: 'None', value: '_none'),
+      ...state.subreddits.map(
+        (subreddit) => AppSelectOption(label: 'r/$subreddit', value: subreddit),
+      ),
+    ];
+
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Filters', style: Theme.of(context).textTheme.titleLarge),
+          SizedBox(height: AppTokens.space.s12),
+          AppTextField(
+            label: 'Search',
+            hint: 'Title, body, author, subreddit',
+            onChanged: context.read<LibraryCubit>().updateSearch,
+          ),
+          SizedBox(height: AppTokens.space.s12),
+          AppSelect<LibraryItemKind>(
+            label: 'Type',
+            value: state.kindFilter,
+            options: const [
+              AppSelectOption(label: 'All', value: LibraryItemKind.all),
+              AppSelectOption(label: 'Posts only', value: LibraryItemKind.post),
+              AppSelectOption(
+                label: 'Comments only',
+                value: LibraryItemKind.comment,
+              ),
+              AppSelectOption(
+                label: 'Media items',
+                value: LibraryItemKind.media,
+              ),
+            ],
+            onChanged: (value) {
+              if (value == null) {
+                return;
+              }
+              context.read<LibraryCubit>().updateKindFilter(value);
+            },
+          ),
+          SizedBox(height: AppTokens.space.s12),
+          AppSelect<LibraryResolutionFilter>(
+            label: 'Resolution',
+            value: state.resolutionFilter,
+            options: const [
+              AppSelectOption(label: 'All', value: LibraryResolutionFilter.all),
+              AppSelectOption(
+                label: 'Resolved',
+                value: LibraryResolutionFilter.ok,
+              ),
+              AppSelectOption(
+                label: 'Partial',
+                value: LibraryResolutionFilter.partial,
+              ),
+              AppSelectOption(
+                label: 'Failed',
+                value: LibraryResolutionFilter.failed,
+              ),
+            ],
+            onChanged: (value) {
+              if (value == null) {
+                return;
+              }
+              context.read<LibraryCubit>().updateResolutionFilter(value);
+            },
+          ),
+          SizedBox(height: AppTokens.space.s12),
+          AppSwitch(
+            label: 'Show NSFW',
+            description: 'Toggle visibility only.',
+            value: state.showNsfw,
+            onChanged: (value) =>
+                context.read<LibraryCubit>().toggleShowNsfw(value),
+          ),
+          SizedBox(height: AppTokens.space.s12),
+          Opacity(
+            opacity: canFilter ? 1 : 0.5,
+            child: AbsorbPointer(
+              absorbing: !canFilter,
+              child: Column(
+                children: [
+                  AppSelect<String>(
+                    label: 'Include subreddit',
+                    value: includeValue,
+                    options: subredditOptions,
+                    onChanged: (value) {
+                      final selected = value == '_all' ? null : value;
+                      context.read<LibraryCubit>().updateIncludeSubreddit(
+                        selected,
+                      );
+                    },
+                  ),
+                  SizedBox(height: AppTokens.space.s12),
+                  AppSelect<String>(
+                    label: 'Exclude subreddit',
+                    value: excludeValue,
+                    options: excludeOptions,
+                    onChanged: (value) {
+                      final selected = value == '_none' ? null : value;
+                      context.read<LibraryCubit>().updateExcludeSubreddit(
+                        selected,
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LibraryListPanel extends StatelessWidget {
+  const _LibraryListPanel({required this.state, required this.onItemTap});
+
+  final LibraryState state;
+  final ValueChanged<SavedItem> onItemTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AppCard(
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  _pageSummary(state),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: colors.mutedForeground,
+                  ),
+                ),
+              ),
+              AppButton(
+                label: 'Previous',
+                variant: AppButtonVariant.ghost,
+                onPressed: state.hasPreviousPage && !state.isPageLoading
+                    ? () => context.read<LibraryCubit>().goToPreviousPage()
+                    : null,
+              ),
+              SizedBox(width: AppTokens.space.s8),
+              AppButton(
+                label: 'Next',
+                variant: AppButtonVariant.secondary,
+                onPressed: state.hasNextPage && !state.isPageLoading
+                    ? () => context.read<LibraryCubit>().goToNextPage()
+                    : null,
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: AppTokens.space.s12),
+        Expanded(
+          child: AppCard(
+            padding: EdgeInsets.zero,
+            child: state.items.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(AppTokens.space.s20),
+                      child: Text(
+                        state.hasIndexed
+                            ? 'No items match current filters.'
+                            : 'No items indexed yet.',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: colors.mutedForeground,
+                        ),
+                      ),
+                    ),
+                  )
+                : ListView.builder(
+                    itemCount: state.items.length,
+                    itemBuilder: (context, index) {
+                      final item = state.items[index];
+                      final selected = item.id == state.selectedItemId;
+                      return _LibraryListRow(
+                        item: item,
+                        selected: selected,
+                        onTap: () => onItemTap(item),
+                      );
+                    },
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _LibraryListRow extends StatelessWidget {
+  const _LibraryListRow({
+    required this.item,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final SavedItem item;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    return Material(
+      color: selected
+          ? colors.sidebarAccent.withValues(alpha: 0.18)
+          : colors.card,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: EdgeInsets.all(AppTokens.space.s12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.title.isEmpty ? 'Untitled' : item.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    SizedBox(height: AppTokens.space.s4),
+                    Text(
+                      'r/${item.subreddit} • u/${item.author}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colors.mutedForeground,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(width: AppTokens.space.s8),
+              Wrap(
+                spacing: AppTokens.space.s6,
+                children: [
+                  AppChip(
+                    label: item.kind.toUpperCase(),
+                    selected: false,
+                    onSelected: (_) {},
+                  ),
+                  if (item.over18)
+                    AppChip(label: 'NSFW', selected: true, onSelected: (_) {}),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LibraryDetailsPanel extends StatelessWidget {
+  const _LibraryDetailsPanel({required this.item});
+
+  final SavedItem? item;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    if (item == null) {
+      return AppCard(
+        child: Text(
+          'Select an item to view details.',
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: colors.mutedForeground),
+        ),
+      );
+    }
+
+    return AppCard(
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              item!.title.isEmpty ? 'Untitled' : item!.title,
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            SizedBox(height: AppTokens.space.s8),
+            Text(
+              'r/${item!.subreddit} • u/${item!.author}',
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: colors.mutedForeground),
+            ),
+            SizedBox(height: AppTokens.space.s4),
+            Text(
+              '${item!.kind.toUpperCase()} • ${item!.resolutionStatus.toUpperCase()} • ${item!.over18 ? 'NSFW' : 'SFW'}',
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: colors.mutedForeground),
+            ),
+            SizedBox(height: AppTokens.space.s4),
+            Text(
+              'Created: ${_formatDate(item!.createdUtc)}',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            SizedBox(height: AppTokens.space.s12),
+            Text(
+              item!.permalink,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: colors.mutedForeground),
+            ),
+            SizedBox(height: AppTokens.space.s12),
+            StreamBuilder<DownloadJob?>(
+              stream: _watchLatestJobForItem(context, item!.id),
+              builder: (context, snapshot) {
+                final job = snapshot.data;
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Download status: ${_statusLabel(job)}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colors.mutedForeground,
+                      ),
+                    ),
+                    SizedBox(height: AppTokens.space.s8),
+                    Wrap(
+                      spacing: AppTokens.space.s8,
+                      runSpacing: AppTokens.space.s8,
+                      children: [
+                        AppButton(
+                          label: 'Enqueue download',
+                          variant: AppButtonVariant.secondary,
+                          onPressed: () => _enqueueDownload(context, item!),
+                        ),
+                        if (job != null &&
+                            (job.status == 'failed' || job.status == 'skipped'))
+                          AppButton(
+                            label: 'Retry',
+                            variant: AppButtonVariant.ghost,
+                            onPressed: () => _retryJob(context, job.id),
+                          ),
+                        AppButton(
+                          label: 'Reveal output',
+                          variant: AppButtonVariant.ghost,
+                          onPressed: () => _revealOutput(context, item!, job),
+                        ),
+                      ],
+                    ),
+                  ],
+                );
+              },
+            ),
+            SizedBox(height: AppTokens.space.s12),
+            Wrap(
+              spacing: AppTokens.space.s8,
+              runSpacing: AppTokens.space.s8,
+              children: [
+                AppButton(
+                  label: 'Open permalink',
+                  variant: AppButtonVariant.secondary,
+                  onPressed: () => _openPermalink(context, item!.permalink),
+                ),
+                AppButton(
+                  label: 'Copy permalink',
+                  variant: AppButtonVariant.ghost,
+                  onPressed: () async {
+                    await Clipboard.setData(
+                      ClipboardData(text: item!.permalink),
+                    );
+                    if (!context.mounted) {
+                      return;
+                    }
+                    AppToast.show(context, 'Permalink copied.');
+                  },
+                ),
+              ],
+            ),
+            if (item!.bodyMarkdown != null &&
+                item!.bodyMarkdown!.trim().isNotEmpty) ...[
+              SizedBox(height: AppTokens.space.s12),
+              Text('Preview', style: Theme.of(context).textTheme.titleMedium),
+              SizedBox(height: AppTokens.space.s6),
+              SelectableText(
+                item!.bodyMarkdown!,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+Stream<DownloadJob?> _watchLatestJobForItem(
+  BuildContext context,
+  int savedItemId,
+) {
+  final queueRepository = context.read<QueueRepository>();
+  return queueRepository.watchQueue().map((records) {
+    final matches =
+        records
+            .where((record) => record.item.id == savedItemId)
+            .map((record) => record.job)
+            .toList()
+          ..sort((a, b) => b.id.compareTo(a.id));
+    return matches.isEmpty ? null : matches.first;
+  });
+}
+
+String _statusLabel(DownloadJob? job) {
+  if (job == null) {
+    return 'Not queued';
+  }
+  return job.status.toUpperCase();
+}
+
+Future<void> _enqueueDownload(BuildContext context, SavedItem item) async {
+  final created = await context.read<QueueCubit>().enqueueSavedItem(item);
+  if (!context.mounted) {
+    return;
+  }
+  AppToast.show(
+    context,
+    created ? 'Download queued.' : 'Download already queued.',
+  );
+}
+
+Future<void> _retryJob(BuildContext context, int jobId) async {
+  await context.read<QueueRepository>().retryJob(jobId);
+  if (!context.mounted) {
+    return;
+  }
+  AppToast.show(context, 'Retry queued.');
+}
+
+Future<void> _revealOutput(
+  BuildContext context,
+  SavedItem item,
+  DownloadJob? job,
+) async {
+  final path = await resolveRevealPath(
+    queueRepository: context.read<QueueRepository>(),
+    settingsRepository: context.read<SettingsRepository>(),
+    jobId: job?.id,
+    savedItemId: item.id,
+    legacyOutputPath: job?.outputPath,
+  );
+  if (!context.mounted) {
+    return;
+  }
+  if (path == null) {
+    AppToast.show(
+      context,
+      'No output path available. Set Download root in Settings.',
+    );
+    return;
+  }
+  final success = await revealInFileManager(path);
+  if (!context.mounted) {
+    return;
+  }
+  AppToast.show(
+    context,
+    success ? 'Opened file manager.' : 'Unable to reveal path.',
+  );
+}
+
+Future<void> _openPermalink(BuildContext context, String permalink) async {
+  final success = await _openExternal(permalink);
+  if (!context.mounted) {
+    return;
+  }
+  AppToast.show(
+    context,
+    success ? 'Opened permalink.' : 'Unable to open permalink.',
+  );
+}
+
+Future<bool> _openExternal(String target) async {
+  try {
+    if (Platform.isMacOS) {
+      final result = await Process.run('open', [target]);
+      return result.exitCode == 0;
+    }
+    if (Platform.isWindows) {
+      final result = await Process.run('explorer', [target]);
+      return result.exitCode == 0;
+    }
+    if (Platform.isLinux) {
+      final result = await Process.run('xdg-open', [target]);
+      return result.exitCode == 0;
+    }
+  } catch (_) {
+    return false;
+  }
+  return false;
+}
+
+SavedItem? _findSelectedItem(List<SavedItem> items, int? selectedItemId) {
+  if (selectedItemId == null) {
+    return items.isEmpty ? null : items.first;
+  }
+  for (final item in items) {
+    if (item.id == selectedItemId) {
+      return item;
+    }
+  }
+  return items.isEmpty ? null : items.first;
+}
+
+Future<void> _showFiltersOverlay(
+  BuildContext context,
+  LibraryState state,
+) async {
+  await showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    builder: (context) {
+      final height = math.min(MediaQuery.sizeOf(context).height * 0.9, 700.0);
+      return SafeArea(
+        child: Padding(
+          padding: EdgeInsets.all(AppTokens.space.s16),
+          child: SizedBox(
+            height: height,
+            child: _LibraryFiltersPanel(state: state),
+          ),
+        ),
+      );
+    },
+  );
+}
+
+Future<void> _showDetailsOverlay(BuildContext context, SavedItem item) async {
+  await showDialog<void>(
+    context: context,
+    builder: (context) {
+      return Dialog(
+        child: SizedBox(
+          width: 680,
+          height: 560,
+          child: Padding(
+            padding: EdgeInsets.all(AppTokens.space.s16),
+            child: _LibraryDetailsPanel(item: item),
+          ),
+        ),
+      );
+    },
+  );
+}
+
+double _contentHeight(BuildContext context) {
+  final screenHeight = MediaQuery.sizeOf(context).height;
+  final reserved =
+      AppTokens.layout.titleBarHeight +
+      AppTokens.space.s20 * 2 +
+      AppTokens.space.s16;
+  return math.max(520, screenHeight - reserved);
+}
+
 String _pageSummary(LibraryState state) {
   if (state.totalCount == 0) {
-    return 'No results';
+    return state.isPageLoading ? 'Loading...' : 'No results';
   }
   final start = state.pageIndex * state.pageSize + 1;
   final end = math.min(
@@ -362,152 +709,6 @@ String _pageSummary(LibraryState state) {
     state.totalCount,
   );
   return 'Showing $start-$end of ${state.totalCount} • Page ${state.pageIndex + 1}/${state.pageCount}';
-}
-
-class _LibraryItemCard extends StatelessWidget {
-  const _LibraryItemCard({required this.item});
-
-  final SavedItem item;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.appColors;
-    final createdDate = _formatDate(item.createdUtc);
-    final importedDate = item.importedAt?.toLocal();
-
-    return GestureDetector(
-      onSecondaryTapDown: (details) async {
-        final selection = await showMenu<String>(
-          context: context,
-          position: RelativeRect.fromLTRB(
-            details.globalPosition.dx,
-            details.globalPosition.dy,
-            details.globalPosition.dx,
-            details.globalPosition.dy,
-          ),
-          items: const [
-            PopupMenuItem(value: 'copy', child: Text('Copy permalink')),
-            PopupMenuItem(
-              value: 'reveal',
-              child: Text('Reveal in Finder/Explorer'),
-            ),
-          ],
-        );
-        if (!context.mounted) {
-          return;
-        }
-        if (selection == 'copy') {
-          Clipboard.setData(ClipboardData(text: item.permalink));
-          if (context.mounted) {
-            AppToast.show(context, 'Permalink copied.');
-          }
-        }
-        if (selection == 'reveal') {
-          final path = await resolveRevealPath(
-            queueRepository: context.read<QueueRepository>(),
-            settingsRepository: context.read<SettingsRepository>(),
-            savedItemId: item.id,
-          );
-          if (!context.mounted) {
-            return;
-          }
-          if (path == null) {
-            AppToast.show(
-              context,
-              'No output path available. Set Download root in Settings.',
-            );
-            return;
-          }
-          final success = await revealInFileManager(path);
-          if (context.mounted) {
-            AppToast.show(
-              context,
-              success ? 'Opened file manager.' : 'Unable to reveal path.',
-            );
-          }
-        }
-      },
-      child: AppCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item.title.isEmpty ? 'Untitled' : item.title,
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      SizedBox(height: AppTokens.space.s6),
-                      Text(
-                        'r/${item.subreddit} • u/${item.author}',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: colors.mutedForeground,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                AppButton(
-                  label: 'Enqueue download',
-                  variant: AppButtonVariant.secondary,
-                  onPressed: () async {
-                    final created = await context
-                        .read<QueueCubit>()
-                        .enqueueSavedItem(item);
-                    if (!context.mounted) {
-                      return;
-                    }
-                    AppToast.show(
-                      context,
-                      created ? 'Download queued.' : 'Download already queued.',
-                    );
-                  },
-                ),
-              ],
-            ),
-            SizedBox(height: AppTokens.space.s12),
-            Wrap(
-              spacing: AppTokens.space.s8,
-              runSpacing: AppTokens.space.s6,
-              children: [
-                AppChip(
-                  label: item.kind.toUpperCase(),
-                  selected: false,
-                  onSelected: (_) {},
-                ),
-                AppChip(
-                  label: item.source.toUpperCase(),
-                  selected: false,
-                  onSelected: (_) {},
-                ),
-                if (item.over18)
-                  AppChip(label: 'NSFW', selected: true, onSelected: (_) {}),
-              ],
-            ),
-            SizedBox(height: AppTokens.space.s12),
-            Text(
-              'Created: $createdDate • Imported: ${_formatOptionalDate(importedDate)}',
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: colors.mutedForeground),
-            ),
-            SizedBox(height: AppTokens.space.s6),
-            Text(
-              item.permalink,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: colors.mutedForeground),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 String _formatDate(int createdUtc) {
@@ -518,12 +719,5 @@ String _formatDate(int createdUtc) {
     createdUtc * 1000,
     isUtc: true,
   ).toLocal();
-  return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-}
-
-String _formatOptionalDate(DateTime? date) {
-  if (date == null) {
-    return 'Unknown';
-  }
   return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 }
