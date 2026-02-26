@@ -170,9 +170,9 @@ class DownloadScheduler {
     }
     final queued = _latestQueue
         .where((record) => record.job.status == 'queued')
-        .take(available)
         .toList();
-    for (final record in queued) {
+    queued.sort((a, b) => a.job.id.compareTo(b.job.id));
+    for (final record in queued.take(available)) {
       _startJob(record);
     }
   }

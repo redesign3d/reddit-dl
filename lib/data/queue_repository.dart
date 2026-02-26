@@ -8,18 +8,12 @@ class QueueRepository {
   final AppDatabase _db;
 
   Stream<List<QueueRecord>> watchQueue() {
-    final query =
-        _db.select(_db.downloadJobs).join([
-          innerJoin(
-            _db.savedItems,
-            _db.savedItems.id.equalsExp(_db.downloadJobs.savedItemId),
-          ),
-        ])..orderBy([
-          OrderingTerm(
-            expression: _db.downloadJobs.id,
-            mode: OrderingMode.desc,
-          ),
-        ]);
+    final query = _db.select(_db.downloadJobs).join([
+      innerJoin(
+        _db.savedItems,
+        _db.savedItems.id.equalsExp(_db.downloadJobs.savedItemId),
+      ),
+    ])..orderBy([_fifoOrdering()]);
 
     return query.watch().map(
       (rows) => rows
@@ -75,12 +69,7 @@ class QueueRepository {
             ),
           ])
           ..where(_db.downloadJobs.status.equals('queued'))
-          ..orderBy([
-            OrderingTerm(
-              expression: _db.downloadJobs.id,
-              mode: OrderingMode.asc,
-            ),
-          ])
+          ..orderBy([_fifoOrdering()])
           ..limit(limit);
 
     final rows = await query.get();
@@ -229,6 +218,15 @@ class QueueRepository {
             lastError: Value(reason),
           ),
         );
+  }
+
+  OrderingTerm _fifoOrdering() {
+    // `download_jobs` has no explicit created timestamp; auto-increment id
+    // provides stable FIFO ordering for queued jobs.
+    return OrderingTerm(
+      expression: _db.downloadJobs.id,
+      mode: OrderingMode.asc,
+    );
   }
 }
 
