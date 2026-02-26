@@ -25,6 +25,64 @@ class LibraryRepository {
     return query.watch();
   }
 
+  Future<Map<int, int>> fetchMediaCountsForSavedItemIds(
+    Iterable<int> savedItemIds,
+  ) async {
+    final ids = savedItemIds.toSet().toList(growable: false);
+    if (ids.isEmpty) {
+      return const <int, int>{};
+    }
+    final placeholders = List.filled(ids.length, '?').join(',');
+    final rows = await _db.customSelect(
+      '''
+SELECT saved_item_id, COUNT(*) AS media_count
+FROM media_assets
+WHERE saved_item_id IN ($placeholders)
+GROUP BY saved_item_id
+''',
+      variables: ids.map((id) => Variable<int>(id)).toList(growable: false),
+    ).get();
+    final counts = <int, int>{};
+    for (final row in rows) {
+      final savedItemId = row.read<int>('saved_item_id');
+      final count = row.read<int>('media_count');
+      counts[savedItemId] = count;
+    }
+    return counts;
+  }
+
+  Future<Map<int, String>> fetchLatestDownloadStatusForSavedItemIds(
+    Iterable<int> savedItemIds,
+  ) async {
+    final ids = savedItemIds.toSet().toList(growable: false);
+    if (ids.isEmpty) {
+      return const <int, String>{};
+    }
+    final placeholders = List.filled(ids.length, '?').join(',');
+    final rows = await _db.customSelect(
+      '''
+SELECT job.saved_item_id, job.status
+FROM download_jobs AS job
+INNER JOIN (
+  SELECT saved_item_id, MAX(id) AS max_id
+  FROM download_jobs
+  WHERE saved_item_id IN ($placeholders)
+  GROUP BY saved_item_id
+) AS latest ON latest.max_id = job.id
+''',
+      variables: ids.map((id) => Variable<int>(id)).toList(growable: false),
+    ).get();
+    final statuses = <int, String>{};
+    for (final row in rows) {
+      final savedItemId = row.read<int>('saved_item_id');
+      final status = row.read<String>('status');
+      if (status.isNotEmpty) {
+        statuses[savedItemId] = status;
+      }
+    }
+    return statuses;
+  }
+
   Future<int> countLibrary(LibraryQueryFilters filters) {
     final countExpr = _db.savedItems.id.count();
     final query = _db.selectOnly(_db.savedItems)

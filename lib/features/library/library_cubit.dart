@@ -26,6 +26,8 @@ class LibraryCubit extends Cubit<LibraryState> {
           isPageLoading: true,
           selectedItemIds: <int>{},
           selectedItemId: null,
+          mediaCountByItemId: <int, int>{},
+          latestDownloadStatusByItemId: <int, String>{},
           hasIndexed: false,
         ),
       ) {
@@ -185,6 +187,7 @@ class LibraryCubit extends Cubit<LibraryState> {
               selectedItemId: nextSelectedId,
             ),
           );
+          unawaited(_refreshPageMetadata(items: items, token: token));
         });
   }
 
@@ -209,6 +212,40 @@ class LibraryCubit extends Cubit<LibraryState> {
     }
 
     emit(state.copyWith(totalCount: totalCount, hasIndexed: indexedCount > 0));
+  }
+
+  Future<void> _refreshPageMetadata({
+    required List<SavedItem> items,
+    required int token,
+  }) async {
+    if (items.isEmpty) {
+      if (token != _activeQueryToken || isClosed) {
+        return;
+      }
+      emit(
+        state.copyWith(
+          mediaCountByItemId: const <int, int>{},
+          latestDownloadStatusByItemId: const <int, String>{},
+        ),
+      );
+      return;
+    }
+
+    final itemIds = items.map((item) => item.id).toList(growable: false);
+    final results = await Future.wait<dynamic>([
+      _repository.fetchMediaCountsForSavedItemIds(itemIds),
+      _repository.fetchLatestDownloadStatusForSavedItemIds(itemIds),
+    ]);
+    if (token != _activeQueryToken || isClosed) {
+      return;
+    }
+
+    emit(
+      state.copyWith(
+        mediaCountByItemId: results[0] as Map<int, int>,
+        latestDownloadStatusByItemId: results[1] as Map<int, String>,
+      ),
+    );
   }
 
   LibraryQueryFilters _currentFilters() {
@@ -277,6 +314,8 @@ class LibraryState extends Equatable {
     required this.isPageLoading,
     required this.selectedItemIds,
     required this.selectedItemId,
+    required this.mediaCountByItemId,
+    required this.latestDownloadStatusByItemId,
     required this.hasIndexed,
   });
 
@@ -294,6 +333,8 @@ class LibraryState extends Equatable {
   final bool isPageLoading;
   final Set<int> selectedItemIds;
   final int? selectedItemId;
+  final Map<int, int> mediaCountByItemId;
+  final Map<int, String> latestDownloadStatusByItemId;
   final bool hasIndexed;
 
   static const _unset = Object();
@@ -313,6 +354,8 @@ class LibraryState extends Equatable {
     bool? isPageLoading,
     Set<int>? selectedItemIds,
     Object? selectedItemId = _unset,
+    Map<int, int>? mediaCountByItemId,
+    Map<int, String>? latestDownloadStatusByItemId,
     bool? hasIndexed,
   }) {
     return LibraryState(
@@ -336,6 +379,9 @@ class LibraryState extends Equatable {
       selectedItemId: selectedItemId == _unset
           ? this.selectedItemId
           : selectedItemId as int?,
+      mediaCountByItemId: mediaCountByItemId ?? this.mediaCountByItemId,
+      latestDownloadStatusByItemId:
+          latestDownloadStatusByItemId ?? this.latestDownloadStatusByItemId,
       hasIndexed: hasIndexed ?? this.hasIndexed,
     );
   }
@@ -382,6 +428,14 @@ class LibraryState extends Equatable {
     isPageLoading,
     selectedItemIds.toList()..sort(),
     selectedItemId,
+    mediaCountByItemId.entries
+        .map((entry) => '${entry.key}:${entry.value}')
+        .toList()
+      ..sort(),
+    latestDownloadStatusByItemId.entries
+        .map((entry) => '${entry.key}:${entry.value}')
+        .toList()
+      ..sort(),
     hasIndexed,
   ];
 }

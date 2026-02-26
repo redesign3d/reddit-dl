@@ -34,10 +34,7 @@ class LibraryPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<LibraryCubit, LibraryState>(
       builder: (context, state) {
-        final selectedItem = _findSelectedItem(
-          state.items,
-          state.selectedItemId,
-        );
+        final selectedItem = state.selectedItem;
         final contentHeight = _contentHeight(context);
         return LayoutBuilder(
           builder: (context, constraints) {
@@ -343,7 +340,11 @@ class _LibraryListPanel extends StatelessWidget {
                         item.id,
                       );
                       return _LibraryListRow(
+                        key: ValueKey<int>(item.id),
                         item: item,
+                        mediaCount: state.mediaCountByItemId[item.id] ?? 0,
+                        downloadStatus:
+                            state.latestDownloadStatusByItemId[item.id],
                         selected: selected,
                         bulkSelected: bulkSelected,
                         onSelectChanged: (value) => context
@@ -441,7 +442,10 @@ class _LibraryBulkActionsBar extends StatelessWidget {
 
 class _LibraryListRow extends StatelessWidget {
   const _LibraryListRow({
+    super.key,
     required this.item,
+    required this.mediaCount,
+    required this.downloadStatus,
     required this.selected,
     required this.bulkSelected,
     required this.onSelectChanged,
@@ -449,6 +453,8 @@ class _LibraryListRow extends StatelessWidget {
   });
 
   final SavedItem item;
+  final int mediaCount;
+  final String? downloadStatus;
   final bool selected;
   final bool bulkSelected;
   final ValueChanged<bool> onSelectChanged;
@@ -491,6 +497,15 @@ class _LibraryListRow extends StatelessWidget {
                         color: colors.mutedForeground,
                       ),
                     ),
+                    SizedBox(height: AppTokens.space.s4),
+                    Text(
+                      '${item.kind.toUpperCase()} • ${_formatDate(item.createdUtc)} • $mediaCount media • ${_listStatusLabel(downloadStatus)}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colors.mutedForeground,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -499,7 +514,7 @@ class _LibraryListRow extends StatelessWidget {
                 spacing: AppTokens.space.s6,
                 children: [
                   AppChip(
-                    label: item.kind.toUpperCase(),
+                    label: _listStatusLabel(downloadStatus),
                     selected: false,
                     onSelected: (_) {},
                   ),
@@ -676,6 +691,13 @@ String _statusLabel(DownloadJob? job) {
   return job.status.toUpperCase();
 }
 
+String _listStatusLabel(String? status) {
+  if (status == null || status.isEmpty) {
+    return 'NOT QUEUED';
+  }
+  return status.toUpperCase();
+}
+
 Future<void> _enqueueDownload(BuildContext context, SavedItem item) async {
   final created = await context.read<QueueCubit>().enqueueSavedItem(item);
   if (!context.mounted) {
@@ -819,18 +841,6 @@ Future<bool> _openExternal(String target) async {
     return false;
   }
   return false;
-}
-
-SavedItem? _findSelectedItem(List<SavedItem> items, int? selectedItemId) {
-  if (selectedItemId == null) {
-    return items.isEmpty ? null : items.first;
-  }
-  for (final item in items) {
-    if (item.id == selectedItemId) {
-      return item;
-    }
-  }
-  return items.isEmpty ? null : items.first;
 }
 
 Future<void> _showFiltersOverlay(
