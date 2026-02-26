@@ -78,6 +78,9 @@ class LibraryCubit extends Cubit<LibraryState> {
   }
 
   void selectItem(int? itemId) {
+    if (state.selectedItemId == itemId) {
+      return;
+    }
     emit(state.copyWith(selectedItemId: itemId));
   }
 
@@ -88,18 +91,31 @@ class LibraryCubit extends Cubit<LibraryState> {
     } else {
       selectedIds.remove(itemId);
     }
+    final nextSelectedItemId = selected
+        ? itemId
+        : _resolveSelectionAfterToggle(
+            removedItemId: itemId,
+            selectedIds: selectedIds,
+          );
     emit(
       state.copyWith(
         selectedItemIds: selectedIds,
-        selectedItemId: selected ? itemId : state.selectedItemId,
+        selectedItemId: nextSelectedItemId,
       ),
     );
   }
 
   void selectAllVisible() {
+    final visibleIds = state.items.map((item) => item.id).toSet();
+    final nextSelectedItemId =
+        state.selectedItemId != null &&
+            visibleIds.contains(state.selectedItemId)
+        ? state.selectedItemId
+        : (state.items.isEmpty ? null : state.items.first.id);
     emit(
       state.copyWith(
-        selectedItemIds: state.items.map((item) => item.id).toSet(),
+        selectedItemIds: visibleIds,
+        selectedItemId: nextSelectedItemId,
       ),
     );
   }
@@ -218,6 +234,24 @@ class LibraryCubit extends Cubit<LibraryState> {
     return items.first.id;
   }
 
+  int? _resolveSelectionAfterToggle({
+    required int removedItemId,
+    required Set<int> selectedIds,
+  }) {
+    if (state.selectedItemId != removedItemId) {
+      return state.selectedItemId;
+    }
+    if (selectedIds.isEmpty) {
+      return null;
+    }
+    for (final item in state.items) {
+      if (selectedIds.contains(item.id)) {
+        return item.id;
+      }
+    }
+    return selectedIds.first;
+  }
+
   @override
   Future<void> close() async {
     _searchDebounce?.cancel();
@@ -311,6 +345,19 @@ class LibraryState extends Equatable {
   bool get hasNextPage => (pageIndex + 1) * pageSize < totalCount;
 
   bool get hasSelection => selectedItemIds.isNotEmpty;
+
+  SavedItem? get selectedItem {
+    final selectedId = selectedItemId;
+    if (selectedId == null) {
+      return items.isEmpty ? null : items.first;
+    }
+    for (final item in items) {
+      if (item.id == selectedId) {
+        return item;
+      }
+    }
+    return items.isEmpty ? null : items.first;
+  }
 
   int get pageCount {
     if (totalCount == 0) {
