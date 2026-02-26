@@ -101,11 +101,8 @@ class _AppState extends State<App> {
         RepositoryProvider.value(value: _settingsRepository),
         RepositoryProvider.value(value: _logsRepository),
         RepositoryProvider(
-          create:
-              (context) => ImportRepository(
-                context.read<AppDatabase>(),
-                ZipImportParser(),
-              ),
+          create: (context) =>
+              ImportRepository(context.read<AppDatabase>(), ZipImportParser()),
         ),
         RepositoryProvider(
           create: (context) => LibraryRepository(context.read<AppDatabase>()),
@@ -121,8 +118,8 @@ class _AppState extends State<App> {
         RepositoryProvider(create: (_) => FfmpegRuntimeManager()),
         RepositoryProvider(create: (_) => ToolDetector()),
         RepositoryProvider(
-          create:
-              (context) => ExternalToolRunner(context.read<LogsRepository>()),
+          create: (context) =>
+              ExternalToolRunner(context.read<LogsRepository>()),
         ),
         RepositoryProvider.value(value: _downloadTelemetry),
       ],
@@ -130,78 +127,71 @@ class _AppState extends State<App> {
         providers: [
           BlocProvider(create: (_) => NavigationCubit()),
           BlocProvider(
-            create:
-                (context) => LibraryCubit(context.read<LibraryRepository>()),
+            create: (context) =>
+                LibraryCubit(context.read<LibraryRepository>()),
           ),
           BlocProvider(
-            create:
-                (context) => QueueCubit(
-                  context.read<QueueRepository>(),
-                  context.read<LogsRepository>(),
-                  context.read<SettingsRepository>(),
-                  context.read<DownloadTelemetry>(),
-                ),
+            create: (context) => QueueCubit(
+              context.read<QueueRepository>(),
+              context.read<LogsRepository>(),
+              context.read<SettingsRepository>(),
+              context.read<DownloadTelemetry>(),
+            ),
           ),
           BlocProvider(
-            create:
-                (context) => ImportCubit(
-                  context.read<ImportRepository>(),
-                  context.read<LogsRepository>(),
-                ),
+            create: (context) => ImportCubit(
+              context.read<ImportRepository>(),
+              context.read<LogsRepository>(),
+            ),
           ),
           BlocProvider(
-            create:
-                (context) => SettingsCubit(context.read<SettingsRepository>()),
+            create: (context) =>
+                SettingsCubit(context.read<SettingsRepository>()),
           ),
           BlocProvider(
             create: (context) => LogsCubit(context.read<LogsRepository>()),
           ),
           BlocProvider(
-            create:
-                (context) => SyncCubit(
-                  context.read<SessionRepository>(),
-                  context.read<SyncRepository>(),
-                  context.read<LogsRepository>(),
-                ),
+            create: (context) => SyncCubit(
+              context.read<SessionRepository>(),
+              context.read<SyncRepository>(),
+              context.read<LogsRepository>(),
+            ),
           ),
           BlocProvider(
-            create:
-                (context) => HistoryCubit(context.read<HistoryRepository>()),
+            create: (context) =>
+                HistoryCubit(context.read<HistoryRepository>()),
           ),
           BlocProvider(
-            create:
-                (context) => WantedCubit(
-                  queueRepository: context.read<QueueRepository>(),
-                  libraryRepository: context.read<LibraryRepository>(),
-                  settingsRepository: context.read<SettingsRepository>(),
-                ),
+            create: (context) => WantedCubit(
+              queueRepository: context.read<QueueRepository>(),
+              libraryRepository: context.read<LibraryRepository>(),
+              settingsRepository: context.read<SettingsRepository>(),
+            ),
           ),
           BlocProvider(
-            create:
-                (context) => ToolsCubit(
-                  context.read<SettingsRepository>(),
-                  context.read<LogsRepository>(),
-                  context.read<ToolDetector>(),
-                  context.read<ExternalToolRunner>(),
-                ),
+            create: (context) => ToolsCubit(
+              context.read<SettingsRepository>(),
+              context.read<LogsRepository>(),
+              context.read<ToolDetector>(),
+              context.read<ExternalToolRunner>(),
+            ),
           ),
           BlocProvider(
-            create:
-                (context) => FfmpegCubit(
-                  context.read<FfmpegRuntimeManager>(),
-                  context.read<LogsRepository>(),
-                ),
+            create: (context) => FfmpegCubit(
+              context.read<FfmpegRuntimeManager>(),
+              context.read<LogsRepository>(),
+            ),
           ),
           BlocProvider(
-            create:
-                (context) => DiagnosticsCubit(
-                  settingsRepository: context.read<SettingsRepository>(),
-                  sessionRepository: context.read<SessionRepository>(),
-                  logsRepository: context.read<LogsRepository>(),
-                  toolDetector: context.read<ToolDetector>(),
-                  ffmpegRuntime: context.read<FfmpegRuntimeManager>(),
-                  libraryRepository: context.read<LibraryRepository>(),
-                ),
+            create: (context) => DiagnosticsCubit(
+              settingsRepository: context.read<SettingsRepository>(),
+              sessionRepository: context.read<SessionRepository>(),
+              logsRepository: context.read<LogsRepository>(),
+              toolDetector: context.read<ToolDetector>(),
+              ffmpegRuntime: context.read<FfmpegRuntimeManager>(),
+              libraryRepository: context.read<LibraryRepository>(),
+            ),
           ),
         ],
         child: BlocBuilder<SettingsCubit, SettingsState>(
@@ -313,14 +303,14 @@ class _AppShellState extends State<AppShell> {
         return [
           AppButton(
             label: 'Import ZIP',
-            onPressed:
-                () => context.read<NavigationCubit>().select(AppSection.import),
+            onPressed: () =>
+                context.read<NavigationCubit>().select(AppSection.import),
           ),
           AppButton(
             label: 'Sync',
             variant: AppButtonVariant.secondary,
-            onPressed:
-                () => context.read<NavigationCubit>().select(AppSection.sync),
+            onPressed: () =>
+                context.read<NavigationCubit>().select(AppSection.sync),
           ),
         ];
       case AppSection.queue:
@@ -340,9 +330,8 @@ class _AppShellState extends State<AppShell> {
           AppButton(
             label: 'Open library',
             variant: AppButtonVariant.secondary,
-            onPressed:
-                () =>
-                    context.read<NavigationCubit>().select(AppSection.library),
+            onPressed: () =>
+                context.read<NavigationCubit>().select(AppSection.library),
           ),
         ];
       case AppSection.sync:
@@ -350,8 +339,8 @@ class _AppShellState extends State<AppShell> {
           AppButton(
             label: 'Open queue',
             variant: AppButtonVariant.secondary,
-            onPressed:
-                () => context.read<NavigationCubit>().select(AppSection.queue),
+            onPressed: () =>
+                context.read<NavigationCubit>().select(AppSection.queue),
           ),
         ];
       case AppSection.logs:
@@ -380,10 +369,9 @@ class _AppShellState extends State<AppShell> {
           AppButton(
             label: 'Reset defaults',
             variant: AppButtonVariant.ghost,
-            onPressed:
-                () => context.read<SettingsCubit>().updateSettings(
-                  AppSettings.defaults(),
-                ),
+            onPressed: () => context.read<SettingsCubit>().updateSettings(
+              AppSettings.defaults(),
+            ),
           ),
         ];
       case AppSection.diagnostics:

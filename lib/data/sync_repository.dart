@@ -12,9 +12,9 @@ class SyncRepository {
 
   Future<SyncUpsertResult> upsertResolved(ResolvedItem resolved) async {
     final existing =
-        await (_db.select(_db.savedItems)..where(
-          (tbl) => tbl.permalink.equals(resolved.permalink),
-        )).getSingleOrNull();
+        await (_db.select(_db.savedItems)
+              ..where((tbl) => tbl.permalink.equals(resolved.permalink)))
+            .getSingleOrNull();
 
     final now = DateTime.now();
     final author = _selectText(resolved.author, existing?.author ?? '');
@@ -24,10 +24,9 @@ class SyncRepository {
     );
     final title = _selectText(resolved.title, existing?.title ?? '');
     final body = _selectText(resolved.body, existing?.bodyMarkdown ?? '');
-    final createdUtc =
-        resolved.createdUtc > 0
-            ? resolved.createdUtc
-            : (existing?.createdUtc ?? 0);
+    final createdUtc = resolved.createdUtc > 0
+        ? resolved.createdUtc
+        : (existing?.createdUtc ?? 0);
     final over18 = resolved.over18 || (existing?.over18 ?? false);
     final source = existing?.source == 'zip' ? 'zip' : 'sync';
     final resolutionStatus = _statusName(resolved.status);
@@ -56,8 +55,9 @@ class SyncRepository {
       savedItemId = await _db.into(_db.savedItems).insert(companion);
       inserted = true;
     } else {
-      await (_db.update(_db.savedItems)
-        ..where((tbl) => tbl.id.equals(existing.id))).write(companion);
+      await (_db.update(
+        _db.savedItems,
+      )..where((tbl) => tbl.id.equals(existing.id))).write(companion);
       savedItemId = existing.id;
     }
 
@@ -70,8 +70,9 @@ class SyncRepository {
   }
 
   Future<void> markResolutionFailed(String permalink) async {
-    await (_db.update(_db.savedItems)
-      ..where((tbl) => tbl.permalink.equals(permalink))).write(
+    await (_db.update(
+      _db.savedItems,
+    )..where((tbl) => tbl.permalink.equals(permalink))).write(
       SavedItemsCompanion(
         resolutionStatus: const Value('failed'),
         lastResolvedAt: Value(DateTime.now()),
@@ -87,9 +88,9 @@ class SyncRepository {
       return 0;
     }
 
-    final existing =
-        await (_db.select(_db.mediaAssets)
-          ..where((tbl) => tbl.savedItemId.equals(savedItemId))).get();
+    final existing = await (_db.select(
+      _db.mediaAssets,
+    )..where((tbl) => tbl.savedItemId.equals(savedItemId))).get();
     final existingSet = existing.map((row) => row.normalizedUrl).toSet();
 
     final inserts = <MediaAssetsCompanion>[];
@@ -107,10 +108,9 @@ class SyncRepository {
           normalizedUrl: asset.normalizedUrl,
           toolHint: asset.toolHint,
           filenameSuggested: const Value.absent(),
-          metadataJson:
-              asset.metadata == null
-                  ? const Value.absent()
-                  : Value(jsonEncode(asset.metadata)),
+          metadataJson: asset.metadata == null
+              ? const Value.absent()
+              : Value(jsonEncode(asset.metadata)),
         ),
       );
     }

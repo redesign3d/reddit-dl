@@ -22,10 +22,12 @@ class QueuePage extends StatelessWidget {
     return BlocBuilder<QueueCubit, QueueState>(
       builder: (context, state) {
         final colors = context.appColors;
-        final running =
-            state.items.where((item) => item.job.status == 'running').length;
-        final failed =
-            state.items.where((item) => item.job.status == 'failed').length;
+        final running = state.items
+            .where((item) => item.job.status == 'running')
+            .length;
+        final failed = state.items
+            .where((item) => item.job.status == 'failed')
+            .length;
         final remaining = state.rateLimitRemaining;
         final resetAt = state.rateLimitResetAt;
 
@@ -89,10 +91,9 @@ class QueuePage extends StatelessWidget {
                 AppButton(
                   label: state.paused ? 'Resume all' : 'Pause all',
                   onPressed: () => context.read<QueueCubit>().togglePauseAll(),
-                  variant:
-                      state.paused
-                          ? AppButtonVariant.primary
-                          : AppButtonVariant.secondary,
+                  variant: state.paused
+                      ? AppButtonVariant.primary
+                      : AppButtonVariant.secondary,
                 ),
                 SizedBox(width: AppTokens.space.s8),
                 AppButton(
@@ -100,8 +101,8 @@ class QueuePage extends StatelessWidget {
                   variant: AppButtonVariant.ghost,
                   onPressed:
                       state.items.any((item) => item.job.status == 'completed')
-                          ? () => context.read<QueueCubit>().clearCompleted()
-                          : null,
+                      ? () => context.read<QueueCubit>().clearCompleted()
+                      : null,
                 ),
                 const Spacer(),
                 AppButton(
@@ -130,17 +131,14 @@ class QueuePage extends StatelessWidget {
               )
             else
               Column(
-                children:
-                    state.items
-                        .map(
-                          (item) => Padding(
-                            padding: EdgeInsets.only(
-                              bottom: AppTokens.space.s12,
-                            ),
-                            child: _QueueItemCard(item: item),
-                          ),
-                        )
-                        .toList(),
+                children: state.items
+                    .map(
+                      (item) => Padding(
+                        padding: EdgeInsets.only(bottom: AppTokens.space.s12),
+                        child: _QueueItemCard(item: item),
+                      ),
+                    )
+                    .toList(),
               ),
           ],
         );
@@ -198,10 +196,9 @@ class _QueueItemCard extends StatelessWidget {
           AppToast.show(context, 'Retry queued.');
         }
         if (selection == 'reveal') {
-          final path =
-              item.job.outputPath.isEmpty
-                  ? Directory.systemTemp.path
-                  : item.job.outputPath;
+          final path = item.job.outputPath.isEmpty
+              ? Directory.systemTemp.path
+              : item.job.outputPath;
           final success = await revealInFileManager(path);
           if (!context.mounted) {
             return;
@@ -241,22 +238,22 @@ class _QueueItemCard extends StatelessWidget {
                   AppButton(
                     label: 'Retry',
                     variant: AppButtonVariant.secondary,
-                    onPressed:
-                        () => context.read<QueueCubit>().retryJob(item.job.id),
+                    onPressed: () =>
+                        context.read<QueueCubit>().retryJob(item.job.id),
                   )
                 else if (isPaused)
                   AppButton(
                     label: 'Resume',
                     variant: AppButtonVariant.secondary,
-                    onPressed:
-                        () => context.read<QueueCubit>().resumeJob(item.job.id),
+                    onPressed: () =>
+                        context.read<QueueCubit>().resumeJob(item.job.id),
                   )
                 else if (isQueued)
                   AppButton(
                     label: 'Pause',
                     variant: AppButtonVariant.ghost,
-                    onPressed:
-                        () => context.read<QueueCubit>().pauseJob(item.job.id),
+                    onPressed: () =>
+                        context.read<QueueCubit>().pauseJob(item.job.id),
                   )
                 else
                   const SizedBox.shrink(),

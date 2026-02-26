@@ -81,16 +81,14 @@ class ToolsCubit extends Cubit<ToolsState> {
       return message;
     }
     final result = await _toolRunner.run(tool: tool, args: const ['--version']);
-    final output =
-        result.stdout.isNotEmpty
-            ? result.stdout.first
-            : result.stderr.isNotEmpty
-            ? result.stderr.first
-            : '';
-    final message =
-        result.isSuccess
-            ? (output.isNotEmpty ? output : '${tool.name} OK.')
-            : '${tool.name} failed (${result.exitCode}).';
+    final output = result.stdout.isNotEmpty
+        ? result.stdout.first
+        : result.stderr.isNotEmpty
+        ? result.stderr.first
+        : '';
+    final message = result.isSuccess
+        ? (output.isNotEmpty ? output : '${tool.name} OK.')
+        : '${tool.name} failed (${result.exitCode}).';
     emit(state.copyWith(lastTestMessage: message, lastTestTool: tool.name));
     await _logsRepository.add(
       LogRecord(

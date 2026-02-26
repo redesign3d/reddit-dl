@@ -107,15 +107,14 @@ class ThreadCommentsMarkdownExporter {
       final cutoff = DateTime.now().toUtc().subtract(
         Duration(days: timeframeDays),
       );
-      filtered =
-          comments
-              .where(
-                (comment) => DateTime.fromMillisecondsSinceEpoch(
-                  comment.createdUtc * 1000,
-                  isUtc: true,
-                ).isAfter(cutoff),
-              )
-              .toList();
+      filtered = comments
+          .where(
+            (comment) => DateTime.fromMillisecondsSinceEpoch(
+              comment.createdUtc * 1000,
+              isUtc: true,
+            ).isAfter(cutoff),
+          )
+          .toList();
     }
     if (maxCount != null && maxCount > 0 && filtered.length > maxCount) {
       filtered = filtered.take(maxCount).toList();
@@ -180,8 +179,9 @@ class ThreadCommentsMarkdownExporter {
         final replies = data['replies'];
         if (replies is Map<String, dynamic>) {
           final replyData = replies['data'];
-          final replyListing =
-              replyData is Map<String, dynamic> ? replyData : null;
+          final replyListing = replyData is Map<String, dynamic>
+              ? replyData
+              : null;
           final replyChildren = replyListing?['children'];
           if (replyChildren is List) {
             _walkComments(replyChildren, depth + 1, results);
@@ -213,24 +213,21 @@ class ThreadCommentsMarkdownExporter {
     buffer.writeln();
     for (final comment in comments) {
       final indent = '  ' * comment.depth;
-      final created =
-          comment.createdUtc > 0
-              ? DateTime.fromMillisecondsSinceEpoch(
-                comment.createdUtc * 1000,
-                isUtc: true,
-              ).toLocal()
-              : null;
-      final createdText =
-          created == null
-              ? 'Unknown'
-              : '${created.year}-${created.month.toString().padLeft(2, '0')}-${created.day.toString().padLeft(2, '0')}';
+      final created = comment.createdUtc > 0
+          ? DateTime.fromMillisecondsSinceEpoch(
+              comment.createdUtc * 1000,
+              isUtc: true,
+            ).toLocal()
+          : null;
+      final createdText = created == null
+          ? 'Unknown'
+          : '${created.year}-${created.month.toString().padLeft(2, '0')}-${created.day.toString().padLeft(2, '0')}';
       final author = comment.author;
       final score = comment.score;
       buffer.writeln('$indent- **u/$author** • $createdText • score $score');
-      final lines =
-          comment.body.trim().isEmpty
-              ? const ['_No text body provided._']
-              : comment.body.trim().split('\n');
+      final lines = comment.body.trim().isEmpty
+          ? const ['_No text body provided._']
+          : comment.body.trim().split('\n');
       for (final line in lines) {
         buffer.writeln('$indent  > $line');
       }

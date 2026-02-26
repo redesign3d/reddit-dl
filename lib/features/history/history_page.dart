@@ -24,18 +24,15 @@ class HistoryPage extends StatelessWidget {
       builder: (context, state) {
         final colors = context.appColors;
         final total = state.records.length;
-        final failed =
-            state.records
-                .where((record) => record.job.status == 'failed')
-                .length;
-        final skipped =
-            state.records
-                .where((record) => record.job.status == 'skipped')
-                .length;
-        final completed =
-            state.records
-                .where((record) => record.job.status == 'completed')
-                .length;
+        final failed = state.records
+            .where((record) => record.job.status == 'failed')
+            .length;
+        final skipped = state.records
+            .where((record) => record.job.status == 'skipped')
+            .length;
+        final completed = state.records
+            .where((record) => record.job.status == 'completed')
+            .length;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -68,17 +65,14 @@ class HistoryPage extends StatelessWidget {
               )
             else
               Column(
-                children:
-                    state.records
-                        .map(
-                          (record) => Padding(
-                            padding: EdgeInsets.only(
-                              bottom: AppTokens.space.s12,
-                            ),
-                            child: _HistoryCard(record: record),
-                          ),
-                        )
-                        .toList(),
+                children: state.records
+                    .map(
+                      (record) => Padding(
+                        padding: EdgeInsets.only(bottom: AppTokens.space.s12),
+                        child: _HistoryCard(record: record),
+                      ),
+                    )
+                    .toList(),
               ),
           ],
         );
@@ -99,10 +93,9 @@ class _HistoryCard extends StatelessWidget {
     final item = record.item;
     final statusLabel = job.status.toUpperCase();
     final duration = _formatDuration(job.startedAt, job.completedAt);
-    final completedAt =
-        job.completedAt == null
-            ? 'In progress'
-            : job.completedAt!.toLocal().toString();
+    final completedAt = job.completedAt == null
+        ? 'In progress'
+        : job.completedAt!.toLocal().toString();
 
     return AppCard(
       child: Column(
@@ -153,10 +146,9 @@ class _HistoryCard extends StatelessWidget {
                 label: 'Open folder',
                 variant: AppButtonVariant.secondary,
                 onPressed: () async {
-                  final path =
-                      job.outputPath.isEmpty
-                          ? Directory.systemTemp.path
-                          : job.outputPath;
+                  final path = job.outputPath.isEmpty
+                      ? Directory.systemTemp.path
+                      : job.outputPath;
                   final success = await revealInFileManager(path);
                   if (!context.mounted) {
                     return;

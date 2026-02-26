@@ -48,17 +48,14 @@ class WantedPage extends StatelessWidget {
               )
             else
               Column(
-                children:
-                    state.items
-                        .map(
-                          (record) => Padding(
-                            padding: EdgeInsets.only(
-                              bottom: AppTokens.space.s12,
-                            ),
-                            child: _WantedCard(record: record),
-                          ),
-                        )
-                        .toList(),
+                children: state.items
+                    .map(
+                      (record) => Padding(
+                        padding: EdgeInsets.only(bottom: AppTokens.space.s12),
+                        child: _WantedCard(record: record),
+                      ),
+                    )
+                    .toList(),
               ),
           ],
         );

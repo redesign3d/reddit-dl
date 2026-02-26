@@ -24,28 +24,27 @@ class AppButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = context.appColors;
-    final child =
-        isLoading
-            ? SizedBox(
-              height: AppTokens.text.base,
-              width: AppTokens.text.base,
-              child: CircularProgressIndicator(
-                strokeWidth: AppTokens.space.s2,
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  _foregroundColor(colors),
-                ),
+    final child = isLoading
+        ? SizedBox(
+            height: AppTokens.text.base,
+            width: AppTokens.text.base,
+            child: CircularProgressIndicator(
+              strokeWidth: AppTokens.space.s2,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                _foregroundColor(colors),
               ),
-            )
-            : Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (icon != null) ...[
-                  Icon(icon, size: AppTokens.text.lg),
-                  SizedBox(width: AppTokens.space.s6),
-                ],
-                Text(label),
+            ),
+          )
+        : Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon != null) ...[
+                Icon(icon, size: AppTokens.text.lg),
+                SizedBox(width: AppTokens.space.s6),
               ],
-            );
+              Text(label),
+            ],
+          );
 
     return TextButton(
       onPressed: isLoading ? null : onPressed,

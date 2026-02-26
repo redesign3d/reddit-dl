@@ -53,9 +53,9 @@ void main() {
     expect(result.updated, isTrue);
     expect(result.mediaInserted, 1);
 
-    final item =
-        await (db.select(db.savedItems)
-          ..where((tbl) => tbl.id.equals(savedId))).getSingle();
+    final item = await (db.select(
+      db.savedItems,
+    )..where((tbl) => tbl.id.equals(savedId))).getSingle();
     expect(item.title, 'New title');
     expect(item.source, 'zip');
     expect(item.over18, isTrue);

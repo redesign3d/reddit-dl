@@ -55,10 +55,9 @@ class ExternalMediaDownloader {
 
     final toolInfo = await _toolDetector.detect(
       toolChoice.command,
-      overridePath:
-          toolChoice.command == 'gallery-dl'
-              ? settings.galleryDlPathOverride
-              : settings.ytDlpPathOverride,
+      overridePath: toolChoice.command == 'gallery-dl'
+          ? settings.galleryDlPathOverride
+          : settings.ytDlpPathOverride,
     );
     if (!toolInfo.isAvailable) {
       return MediaDownloadResult.failed(
@@ -156,8 +155,9 @@ class ExternalMediaDownloader {
       return const _ToolChoice.ytdlp();
     }
 
-    final url =
-        asset.normalizedUrl.isNotEmpty ? asset.normalizedUrl : asset.sourceUrl;
+    final url = asset.normalizedUrl.isNotEmpty
+        ? asset.normalizedUrl
+        : asset.sourceUrl;
     final host = Uri.tryParse(url)?.host.toLowerCase() ?? '';
     if (_videoDomains.any((domain) => host.contains(domain))) {
       return const _ToolChoice.ytdlp();
@@ -174,8 +174,9 @@ class ExternalMediaDownloader {
     File targetFile,
     Directory outputDir,
   ) {
-    final url =
-        asset.normalizedUrl.isNotEmpty ? asset.normalizedUrl : asset.sourceUrl;
+    final url = asset.normalizedUrl.isNotEmpty
+        ? asset.normalizedUrl
+        : asset.sourceUrl;
     if (tool.command == 'yt-dlp') {
       final baseName = p.basenameWithoutExtension(targetFile.path);
       final safeBase = baseName.isEmpty ? 'media' : baseName;
