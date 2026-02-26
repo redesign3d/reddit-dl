@@ -7,7 +7,14 @@ import 'migrations.dart';
 part 'app_database.g.dart';
 
 @DriftDatabase(
-  tables: [SavedItems, MediaAssets, DownloadJobs, LogEntries, Settings],
+  tables: [
+    SavedItems,
+    MediaAssets,
+    DownloadJobs,
+    DownloadOutputs,
+    LogEntries,
+    Settings,
+  ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase({QueryExecutor? executor})
@@ -16,7 +23,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.inMemory() : super(NativeDatabase.memory());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => buildMigrationStrategy(this);
@@ -66,6 +73,17 @@ class DownloadJobs extends Table {
   TextColumn get outputPath => text()();
   DateTimeColumn get startedAt => dateTime().nullable()();
   DateTimeColumn get completedAt => dateTime().nullable()();
+}
+
+@TableIndex(name: 'download_outputs_job_id', columns: {#jobId})
+@TableIndex(name: 'download_outputs_saved_item_id', columns: {#savedItemId})
+class DownloadOutputs extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get jobId => integer().references(DownloadJobs, #id)();
+  IntColumn get savedItemId => integer().references(SavedItems, #id)();
+  TextColumn get path => text()();
+  TextColumn get kind => text()();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
 
 class LogEntries extends Table {
