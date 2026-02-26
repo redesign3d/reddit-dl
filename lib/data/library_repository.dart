@@ -193,6 +193,14 @@ INNER JOIN (
           tbl.resolutionStatus.equals(filters.resolutionStatus.name);
     }
 
+    final includeItemIds = filters.includeItemIds;
+    if (includeItemIds != null) {
+      if (includeItemIds.isEmpty) {
+        return const Constant(false);
+      }
+      expression = expression & tbl.id.isIn(includeItemIds.toList());
+    }
+
     return expression;
   }
 }
@@ -209,6 +217,7 @@ class LibraryQueryFilters {
     this.kind = LibraryItemKind.all,
     this.includeNsfw = true,
     this.resolutionStatus = LibraryResolutionFilter.all,
+    this.includeItemIds,
   });
 
   final String searchQuery;
@@ -217,4 +226,5 @@ class LibraryQueryFilters {
   final LibraryItemKind kind;
   final bool includeNsfw;
   final LibraryResolutionFilter resolutionStatus;
+  final Set<int>? includeItemIds;
 }
