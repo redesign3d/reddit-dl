@@ -221,6 +221,78 @@ void main() {
     await queueRepository.resumeJob(jobResult.job.id);
     await _waitForStatus(db, jobResult.job.id, 'completed');
   });
+
+  test('scheduler logs are linked to related job id', () async {
+    final db = AppDatabase.inMemory();
+    addTearDown(() async => db.close());
+    final queueRepository = QueueRepository(db);
+    final settingsRepository = SettingsRepository(db);
+    final logsRepository = LogsRepository(db);
+    final sessionRepository = SessionRepository();
+    final telemetry = DownloadTelemetry();
+
+    final tempDir = await Directory.systemTemp.createTemp('downloads');
+    addTearDown(() async => tempDir.delete(recursive: true));
+    await settingsRepository.save(
+      AppSettings.defaults().copyWith(downloadRoot: tempDir.path),
+    );
+
+    final itemId = await db
+        .into(db.savedItems)
+        .insert(
+          SavedItemsCompanion.insert(
+            permalink: 'https://www.reddit.com/r/test/comments/abc/title',
+            kind: 'post',
+            subreddit: 'test',
+            author: 'alice',
+            createdUtc: 1700000000,
+            title: 'Sample',
+            bodyMarkdown: const Value.absent(),
+            source: 'sync',
+            resolutionStatus: 'ok',
+          ),
+        );
+    await db
+        .into(db.mediaAssets)
+        .insert(
+          MediaAssetsCompanion.insert(
+            savedItemId: itemId,
+            type: 'image',
+            sourceUrl: 'https://example.com/image.jpg',
+            normalizedUrl: 'https://example.com/image.jpg',
+            toolHint: 'none',
+          ),
+        );
+
+    final jobResult = await queueRepository.enqueueForItem(
+      (await (db.select(
+        db.savedItems,
+      )..where((tbl) => tbl.id.equals(itemId))).getSingle()),
+      policySnapshot: 'skip_if_exists',
+    );
+
+    final scheduler = DownloadScheduler(
+      queueRepository: queueRepository,
+      settingsRepository: settingsRepository,
+      logsRepository: logsRepository,
+      sessionRepository: sessionRepository,
+      telemetry: telemetry,
+      downloader: FakeDownloader(shouldComplete: true),
+    );
+    scheduler.start();
+    addTearDown(() async => scheduler.dispose());
+
+    await _waitForStatus(db, jobResult.job.id, 'completed');
+
+    final linkedLogs = await (db.select(
+      db.logEntries,
+    )..where((tbl) => tbl.relatedJobId.equals(jobResult.job.id))).get();
+    expect(linkedLogs, isNotEmpty);
+    expect(
+      linkedLogs.every((entry) => entry.relatedJobId == jobResult.job.id),
+      isTrue,
+    );
+  });
 }
 
 Future<DownloadJob> _waitForStatus(
