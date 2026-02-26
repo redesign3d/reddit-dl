@@ -73,6 +73,57 @@ void main() {
       secondJob.job.id,
     ]);
   });
+
+  test(
+    'enqueueForItems batches inserts and skips already active jobs',
+    () async {
+      final db = AppDatabase.inMemory();
+      addTearDown(() async => db.close());
+      final repository = QueueRepository(db);
+
+      final firstItem = await _insertItem(
+        db,
+        'https://www.reddit.com/r/test/comments/f/title',
+      );
+      final secondItem = await _insertItem(
+        db,
+        'https://www.reddit.com/r/test/comments/g/title',
+      );
+      final thirdItem = await _insertItem(
+        db,
+        'https://www.reddit.com/r/test/comments/h/title',
+      );
+
+      await repository.enqueueForItem(
+        firstItem,
+        policySnapshot: 'skip_if_exists',
+      );
+
+      final result = await repository.enqueueForItems([
+        firstItem,
+        secondItem,
+        thirdItem,
+      ], policySnapshot: 'skip_if_exists');
+
+      expect(result.createdCount, 2);
+      expect(result.skippedCount, 1);
+
+      final jobs =
+          await (db.select(db.downloadJobs)..orderBy([
+                (tbl) => drift.OrderingTerm(
+                  expression: tbl.savedItemId,
+                  mode: drift.OrderingMode.asc,
+                ),
+              ]))
+              .get();
+      expect(jobs, hasLength(3));
+      expect(jobs.map((job) => job.savedItemId).toSet(), {
+        firstItem.id,
+        secondItem.id,
+        thirdItem.id,
+      });
+    },
+  );
 }
 
 Future<SavedItem> _insertItem(AppDatabase db, String permalink) async {

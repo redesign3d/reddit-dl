@@ -6,6 +6,14 @@ class QueueRepository {
   QueueRepository(this._db);
 
   final AppDatabase _db;
+  static const _activeEnqueueStatuses = [
+    'queued',
+    'running',
+    'paused',
+    'merging',
+    'running_tool',
+    'exporting',
+  ];
 
   Stream<List<QueueRecord>> watchQueue() {
     final query = _db.select(_db.downloadJobs).join([
@@ -35,7 +43,7 @@ class QueueRepository {
         await (_db.select(_db.downloadJobs)..where(
               (tbl) =>
                   tbl.savedItemId.equals(item.id) &
-                  tbl.status.isIn(['queued', 'running', 'paused']),
+                  tbl.status.isIn(_activeEnqueueStatuses),
             ))
             .getSingleOrNull();
     if (existing != null) {
@@ -58,6 +66,55 @@ class QueueRepository {
     )..where((tbl) => tbl.id.equals(jobId))).getSingle();
 
     return QueueEnqueueResult(created: true, job: job);
+  }
+
+  Future<QueueBulkEnqueueResult> enqueueForItems(
+    Iterable<SavedItem> items, {
+    required String policySnapshot,
+  }) async {
+    final uniqueItems = <int, SavedItem>{};
+    for (final item in items) {
+      uniqueItems[item.id] = item;
+    }
+    if (uniqueItems.isEmpty) {
+      return const QueueBulkEnqueueResult(createdCount: 0, skippedCount: 0);
+    }
+
+    final itemIds = uniqueItems.keys.toList(growable: false);
+    final existing =
+        await (_db.select(_db.downloadJobs)..where(
+              (tbl) =>
+                  tbl.savedItemId.isIn(itemIds) &
+                  tbl.status.isIn(_activeEnqueueStatuses),
+            ))
+            .get();
+    final existingItemIds = existing.map((job) => job.savedItemId).toSet();
+    final pendingItemIds = itemIds
+        .where((itemId) => !existingItemIds.contains(itemId))
+        .toList(growable: false);
+
+    if (pendingItemIds.isNotEmpty) {
+      await _db.batch((batch) {
+        batch.insertAll(
+          _db.downloadJobs,
+          pendingItemIds
+              .map(
+                (itemId) => DownloadJobsCompanion.insert(
+                  savedItemId: itemId,
+                  status: 'queued',
+                  policySnapshot: policySnapshot,
+                  outputPath: 'pending',
+                ),
+              )
+              .toList(growable: false),
+        );
+      });
+    }
+
+    return QueueBulkEnqueueResult(
+      createdCount: pendingItemIds.length,
+      skippedCount: itemIds.length - pendingItemIds.length,
+    );
   }
 
   Future<List<QueueRecord>> fetchQueuedRecords(int limit) async {
@@ -168,6 +225,25 @@ class QueueRepository {
         lastError: const Value.absent(),
       ),
     );
+  }
+
+  Future<int> retryFailedForSavedItemIds(Iterable<int> savedItemIds) {
+    final uniqueIds = savedItemIds.toSet().toList(growable: false);
+    if (uniqueIds.isEmpty) {
+      return Future.value(0);
+    }
+    return (_db.update(_db.downloadJobs)..where(
+          (tbl) =>
+              tbl.savedItemId.isIn(uniqueIds) &
+              tbl.status.isIn(['failed', 'skipped']),
+        ))
+        .write(
+          DownloadJobsCompanion(
+            status: const Value('queued'),
+            progress: const Value(0),
+            lastError: const Value.absent(),
+          ),
+        );
   }
 
   Future<void> incrementAttempts(int jobId) async {
@@ -318,4 +394,14 @@ class QueueEnqueueResult {
 
   final bool created;
   final DownloadJob job;
+}
+
+class QueueBulkEnqueueResult {
+  const QueueBulkEnqueueResult({
+    required this.createdCount,
+    required this.skippedCount,
+  });
+
+  final int createdCount;
+  final int skippedCount;
 }

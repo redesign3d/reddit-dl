@@ -24,6 +24,7 @@ class LibraryCubit extends Cubit<LibraryState> {
           pageIndex: 0,
           totalCount: 0,
           isPageLoading: true,
+          selectedItemIds: <int>{},
           selectedItemId: null,
           hasIndexed: false,
         ),
@@ -80,6 +81,33 @@ class LibraryCubit extends Cubit<LibraryState> {
     emit(state.copyWith(selectedItemId: itemId));
   }
 
+  void toggleItemSelection(int itemId, bool selected) {
+    final selectedIds = Set<int>.from(state.selectedItemIds);
+    if (selected) {
+      selectedIds.add(itemId);
+    } else {
+      selectedIds.remove(itemId);
+    }
+    emit(
+      state.copyWith(
+        selectedItemIds: selectedIds,
+        selectedItemId: selected ? itemId : state.selectedItemId,
+      ),
+    );
+  }
+
+  void selectAllVisible() {
+    emit(
+      state.copyWith(
+        selectedItemIds: state.items.map((item) => item.id).toSet(),
+      ),
+    );
+  }
+
+  void clearSelection() {
+    emit(state.copyWith(selectedItemIds: <int>{}));
+  }
+
   void goToNextPage() {
     if (!state.hasNextPage || state.isPageLoading) {
       return;
@@ -128,11 +156,16 @@ class LibraryCubit extends Cubit<LibraryState> {
           if (token != _activeQueryToken || isClosed) {
             return;
           }
+          final visibleIds = items.map((item) => item.id).toSet();
+          final retainedSelection = state.selectedItemIds
+              .where(visibleIds.contains)
+              .toSet();
           final nextSelectedId = _resolveSelectedItemId(items);
           emit(
             state.copyWith(
               items: items,
               isPageLoading: false,
+              selectedItemIds: retainedSelection,
               selectedItemId: nextSelectedId,
             ),
           );
@@ -208,6 +241,7 @@ class LibraryState extends Equatable {
     required this.pageIndex,
     required this.totalCount,
     required this.isPageLoading,
+    required this.selectedItemIds,
     required this.selectedItemId,
     required this.hasIndexed,
   });
@@ -224,6 +258,7 @@ class LibraryState extends Equatable {
   final int pageIndex;
   final int totalCount;
   final bool isPageLoading;
+  final Set<int> selectedItemIds;
   final int? selectedItemId;
   final bool hasIndexed;
 
@@ -242,6 +277,7 @@ class LibraryState extends Equatable {
     int? pageIndex,
     int? totalCount,
     bool? isPageLoading,
+    Set<int>? selectedItemIds,
     Object? selectedItemId = _unset,
     bool? hasIndexed,
   }) {
@@ -262,6 +298,7 @@ class LibraryState extends Equatable {
       pageIndex: pageIndex ?? this.pageIndex,
       totalCount: totalCount ?? this.totalCount,
       isPageLoading: isPageLoading ?? this.isPageLoading,
+      selectedItemIds: selectedItemIds ?? this.selectedItemIds,
       selectedItemId: selectedItemId == _unset
           ? this.selectedItemId
           : selectedItemId as int?,
@@ -272,6 +309,8 @@ class LibraryState extends Equatable {
   bool get hasPreviousPage => pageIndex > 0;
 
   bool get hasNextPage => (pageIndex + 1) * pageSize < totalCount;
+
+  bool get hasSelection => selectedItemIds.isNotEmpty;
 
   int get pageCount {
     if (totalCount == 0) {
@@ -294,6 +333,7 @@ class LibraryState extends Equatable {
     pageIndex,
     totalCount,
     isPageLoading,
+    selectedItemIds.toList()..sort(),
     selectedItemId,
     hasIndexed,
   ];

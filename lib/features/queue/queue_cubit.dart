@@ -67,13 +67,9 @@ class QueueCubit extends Cubit<QueueState> {
   }
 
   Future<bool> enqueueSavedItem(SavedItem item) async {
-    final policySnapshot =
-        _settings.overwritePolicy == OverwritePolicy.skipIfExists
-        ? 'skip_if_exists'
-        : 'overwrite_if_newer';
     final result = await _repository.enqueueForItem(
       item,
-      policySnapshot: policySnapshot,
+      policySnapshot: _policySnapshot(),
     );
     await _logs.add(
       LogRecord(
@@ -86,6 +82,38 @@ class QueueCubit extends Cubit<QueueState> {
       ),
     );
     return result.created;
+  }
+
+  Future<QueueBulkEnqueueResult> enqueueSavedItems(
+    Iterable<SavedItem> items,
+  ) async {
+    final result = await _repository.enqueueForItems(
+      items,
+      policySnapshot: _policySnapshot(),
+    );
+    await _logs.add(
+      LogRecord(
+        timestamp: DateTime.now(),
+        scope: 'download',
+        level: 'info',
+        message:
+            'Bulk enqueue: ${result.createdCount} queued, ${result.skippedCount} skipped.',
+      ),
+    );
+    return result;
+  }
+
+  Future<int> retryFailedForSavedItemIds(Iterable<int> savedItemIds) async {
+    final retried = await _repository.retryFailedForSavedItemIds(savedItemIds);
+    await _logs.add(
+      LogRecord(
+        timestamp: DateTime.now(),
+        scope: 'download',
+        level: 'info',
+        message: 'Bulk retry queued for $retried failed/skipped job(s).',
+      ),
+    );
+    return retried;
   }
 
   Future<void> togglePauseAll() async {
@@ -118,6 +146,12 @@ class QueueCubit extends Cubit<QueueState> {
 
   Future<void> clearCompleted() async {
     await _repository.clearCompleted();
+  }
+
+  String _policySnapshot() {
+    return _settings.overwritePolicy == OverwritePolicy.skipIfExists
+        ? 'skip_if_exists'
+        : 'overwrite_if_newer';
   }
 
   @override
