@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:drift/drift.dart' show Value;
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -49,7 +48,7 @@ class LibraryCubit extends Cubit<LibraryState> {
   int _activeQueryToken = 0;
 
   void updateSearch(String query) {
-    emit(state.copyWith(searchQuery: query, focusedItemIds: const Value(null)));
+    emit(state.copyWith(searchQuery: query, focusedItemIds: null));
     _searchDebounce?.cancel();
     _searchDebounce = Timer(const Duration(milliseconds: 300), () {
       _reloadPage(resetPage: true);
@@ -57,42 +56,27 @@ class LibraryCubit extends Cubit<LibraryState> {
   }
 
   void updateIncludeSubreddit(String? subreddit) {
-    emit(
-      state.copyWith(
-        includeSubreddit: subreddit,
-        focusedItemIds: const Value(null),
-      ),
-    );
+    emit(state.copyWith(includeSubreddit: subreddit, focusedItemIds: null));
     _reloadPage(resetPage: true);
   }
 
   void updateExcludeSubreddit(String? subreddit) {
-    emit(
-      state.copyWith(
-        excludeSubreddit: subreddit,
-        focusedItemIds: const Value(null),
-      ),
-    );
+    emit(state.copyWith(excludeSubreddit: subreddit, focusedItemIds: null));
     _reloadPage(resetPage: true);
   }
 
   void updateKindFilter(LibraryItemKind filter) {
-    emit(state.copyWith(kindFilter: filter, focusedItemIds: const Value(null)));
+    emit(state.copyWith(kindFilter: filter, focusedItemIds: null));
     _reloadPage(resetPage: true);
   }
 
   void toggleShowNsfw(bool value) {
-    emit(state.copyWith(showNsfw: value, focusedItemIds: const Value(null)));
+    emit(state.copyWith(showNsfw: value, focusedItemIds: null));
     _reloadPage(resetPage: true);
   }
 
   void updateResolutionFilter(LibraryResolutionFilter filter) {
-    emit(
-      state.copyWith(
-        resolutionFilter: filter,
-        focusedItemIds: const Value(null),
-      ),
-    );
+    emit(state.copyWith(resolutionFilter: filter, focusedItemIds: null));
     _reloadPage(resetPage: true);
   }
 
@@ -100,7 +84,7 @@ class LibraryCubit extends Cubit<LibraryState> {
     final ids = itemIds.toSet();
     emit(
       state.copyWith(
-        focusedItemIds: Value(ids.isEmpty ? null : ids),
+        focusedItemIds: ids.isEmpty ? null : ids,
         pageIndex: 0,
         isPageLoading: true,
       ),
@@ -112,7 +96,7 @@ class LibraryCubit extends Cubit<LibraryState> {
     if (state.focusedItemIds == null) {
       return;
     }
-    emit(state.copyWith(focusedItemIds: const Value(null)));
+    emit(state.copyWith(focusedItemIds: null));
     _reloadPage(resetPage: true);
   }
 
