@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../data/logs_repository.dart';
 import '../../data/queue_repository.dart';
 import '../../data/settings_repository.dart';
+import '../logs/log_record.dart';
 import '../../ui/components/app_button.dart';
 import '../../ui/components/app_card.dart';
 import '../../ui/components/app_chip.dart';
@@ -147,15 +149,22 @@ class QueuePage extends StatelessWidget {
   }
 }
 
-class _QueueItemCard extends StatelessWidget {
+class _QueueItemCard extends StatefulWidget {
   const _QueueItemCard({required this.item});
 
   final QueueRecord item;
 
   @override
+  State<_QueueItemCard> createState() => _QueueItemCardState();
+}
+
+class _QueueItemCardState extends State<_QueueItemCard> {
+  bool _showLogs = false;
+
+  @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
-    final status = item.job.status;
+    final status = widget.item.job.status;
     final isQueued = status == 'queued';
     final isPaused = status == 'paused';
     final isFailed = status == 'failed';
@@ -189,7 +198,7 @@ class _QueueItemCard extends StatelessWidget {
           return;
         }
         if (selection == 'retry') {
-          await context.read<QueueCubit>().retryJob(item.job.id);
+          await context.read<QueueCubit>().retryJob(widget.item.job.id);
           if (!context.mounted) {
             return;
           }
@@ -199,9 +208,9 @@ class _QueueItemCard extends StatelessWidget {
           final path = await resolveRevealPath(
             queueRepository: context.read<QueueRepository>(),
             settingsRepository: context.read<SettingsRepository>(),
-            jobId: item.job.id,
-            savedItemId: item.item.id,
-            legacyOutputPath: item.job.outputPath,
+            jobId: widget.item.job.id,
+            savedItemId: widget.item.item.id,
+            legacyOutputPath: widget.item.job.outputPath,
           );
           if (!context.mounted) {
             return;
@@ -235,12 +244,12 @@ class _QueueItemCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        item.item.title,
+                        widget.item.item.title,
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       SizedBox(height: AppTokens.space.s6),
                       Text(
-                        'r/${item.item.subreddit}',
+                        'r/${widget.item.item.subreddit}',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: colors.mutedForeground,
                         ),
@@ -253,21 +262,22 @@ class _QueueItemCard extends StatelessWidget {
                     label: 'Retry',
                     variant: AppButtonVariant.secondary,
                     onPressed: () =>
-                        context.read<QueueCubit>().retryJob(item.job.id),
+                        context.read<QueueCubit>().retryJob(widget.item.job.id),
                   )
                 else if (isPaused)
                   AppButton(
                     label: 'Resume',
                     variant: AppButtonVariant.secondary,
-                    onPressed: () =>
-                        context.read<QueueCubit>().resumeJob(item.job.id),
+                    onPressed: () => context.read<QueueCubit>().resumeJob(
+                      widget.item.job.id,
+                    ),
                   )
                 else if (isQueued)
                   AppButton(
                     label: 'Pause',
                     variant: AppButtonVariant.ghost,
                     onPressed: () =>
-                        context.read<QueueCubit>().pauseJob(item.job.id),
+                        context.read<QueueCubit>().pauseJob(widget.item.job.id),
                   )
                 else
                   const SizedBox.shrink(),
@@ -283,9 +293,9 @@ class _QueueItemCard extends StatelessWidget {
                   selected: isActive || status == 'completed',
                   onSelected: (_) {},
                 ),
-                if (item.job.lastError != null)
+                if (widget.item.job.lastError != null)
                   Text(
-                    item.job.lastError!,
+                    widget.item.job.lastError!,
                     style: Theme.of(
                       context,
                     ).textTheme.bodySmall?.copyWith(color: colors.destructive),
@@ -294,7 +304,7 @@ class _QueueItemCard extends StatelessWidget {
             ),
             SizedBox(height: AppTokens.space.s12),
             AppProgress(
-              progress: item.job.progress,
+              progress: widget.item.job.progress,
               label: _statusLabel(
                 isQueued: isQueued,
                 isPaused: isPaused,
@@ -306,9 +316,69 @@ class _QueueItemCard extends StatelessWidget {
                 isExporting: isExporting,
               ),
             ),
+            SizedBox(height: AppTokens.space.s12),
+            AppButton(
+              label: _showLogs ? 'Hide logs' : 'View logs',
+              variant: AppButtonVariant.ghost,
+              onPressed: () => setState(() => _showLogs = !_showLogs),
+            ),
+            if (_showLogs) ...[
+              SizedBox(height: AppTokens.space.s12),
+              _QueueJobLogsPanel(jobId: widget.item.job.id),
+            ],
           ],
         ),
       ),
+    );
+  }
+}
+
+class _QueueJobLogsPanel extends StatelessWidget {
+  const _QueueJobLogsPanel({required this.jobId});
+
+  final int jobId;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.appColors;
+    return StreamBuilder<List<LogRecord>>(
+      stream: context.read<LogsRepository>().watchByJobId(jobId, limit: 25),
+      builder: (context, snapshot) {
+        final entries = snapshot.data ?? const <LogRecord>[];
+        if (entries.isEmpty) {
+          return Text(
+            'No logs for this job yet.',
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: colors.mutedForeground),
+          );
+        }
+
+        return Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppTokens.radii.md),
+            border: Border.all(color: colors.border),
+          ),
+          padding: EdgeInsets.all(AppTokens.space.s8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: entries
+                .map(
+                  (entry) => Padding(
+                    padding: EdgeInsets.only(bottom: AppTokens.space.s6),
+                    child: Text(
+                      '${entry.timestamp.toLocal().toIso8601String()} [${entry.level.toUpperCase()}] ${entry.message}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colors.mutedForeground,
+                        fontFamily: AppTokens.fontFamilyMono,
+                      ),
+                    ),
+                  ),
+                )
+                .toList(),
+          ),
+        );
+      },
     );
   }
 }
