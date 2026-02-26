@@ -69,8 +69,8 @@ class QueueCubit extends Cubit<QueueState> {
   Future<bool> enqueueSavedItem(SavedItem item) async {
     final policySnapshot =
         _settings.overwritePolicy == OverwritePolicy.skipIfExists
-            ? 'skip_if_exists'
-            : 'overwrite_if_newer';
+        ? 'skip_if_exists'
+        : 'overwrite_if_newer';
     final result = await _repository.enqueueForItem(
       item,
       policySnapshot: policySnapshot,
@@ -80,10 +80,9 @@ class QueueCubit extends Cubit<QueueState> {
         timestamp: DateTime.now(),
         scope: 'download',
         level: 'info',
-        message:
-            result.created
-                ? 'Enqueued download for ${item.permalink}.'
-                : 'Download already queued for ${item.permalink}.',
+        message: result.created
+            ? 'Enqueued download for ${item.permalink}.'
+            : 'Download already queued for ${item.permalink}.',
       ),
     );
     return result.created;

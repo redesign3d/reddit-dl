@@ -28,14 +28,14 @@ class LibraryPage extends StatelessWidget {
         final canFilter = state.hasIndexed && state.subreddits.isNotEmpty;
         final includeValue =
             state.includeSubreddit != null &&
-                    state.subreddits.contains(state.includeSubreddit)
-                ? state.includeSubreddit!
-                : '_all';
+                state.subreddits.contains(state.includeSubreddit)
+            ? state.includeSubreddit!
+            : '_all';
         final excludeValue =
             state.excludeSubreddit != null &&
-                    state.subreddits.contains(state.excludeSubreddit)
-                ? state.excludeSubreddit!
-                : '_none';
+                state.subreddits.contains(state.excludeSubreddit)
+            ? state.excludeSubreddit!
+            : '_none';
 
         final subredditOptions = [
           const AppSelectOption(label: 'All', value: '_all'),
@@ -68,16 +68,15 @@ class LibraryPage extends StatelessWidget {
                 AppButton(
                   label: 'Copy selection',
                   variant: AppButtonVariant.secondary,
-                  onPressed:
-                      state.items.isEmpty
-                          ? null
-                          : () {
-                            final text = state.items
-                                .map((item) => item.permalink)
-                                .join('\n');
-                            Clipboard.setData(ClipboardData(text: text));
-                            AppToast.show(context, 'Selection copied.');
-                          },
+                  onPressed: state.items.isEmpty
+                      ? null
+                      : () {
+                          final text = state.items
+                              .map((item) => item.permalink)
+                              .join('\n');
+                          Clipboard.setData(ClipboardData(text: text));
+                          AppToast.show(context, 'Selection copied.');
+                        },
                 ),
               ],
             ),
@@ -182,10 +181,9 @@ class LibraryPage extends StatelessWidget {
                           description:
                               'Toggle visibility only (downloads are separate).',
                           value: state.showNsfw,
-                          onChanged:
-                              (value) => context
-                                  .read<LibraryCubit>()
-                                  .toggleShowNsfw(value),
+                          onChanged: (value) => context
+                              .read<LibraryCubit>()
+                              .toggleShowNsfw(value),
                         ),
                       ),
                     ],
@@ -217,8 +215,9 @@ class LibraryPage extends StatelessWidget {
                               value: excludeValue,
                               options: excludeOptions,
                               onChanged: (value) {
-                                final selected =
-                                    value == '_none' ? null : value;
+                                final selected = value == '_none'
+                                    ? null
+                                    : value;
                                 context
                                     .read<LibraryCubit>()
                                     .updateExcludeSubreddit(selected);
@@ -254,17 +253,14 @@ class LibraryPage extends StatelessWidget {
               )
             else
               Column(
-                children:
-                    state.items
-                        .map(
-                          (item) => Padding(
-                            padding: EdgeInsets.only(
-                              bottom: AppTokens.space.s12,
-                            ),
-                            child: _LibraryItemCard(item: item),
-                          ),
-                        )
-                        .toList(),
+                children: state.items
+                    .map(
+                      (item) => Padding(
+                        padding: EdgeInsets.only(bottom: AppTokens.space.s12),
+                        child: _LibraryItemCard(item: item),
+                      ),
+                    )
+                    .toList(),
               ),
           ],
         );
@@ -407,11 +403,10 @@ String _formatDate(int createdUtc) {
   if (createdUtc <= 0) {
     return 'Unknown';
   }
-  final date =
-      DateTime.fromMillisecondsSinceEpoch(
-        createdUtc * 1000,
-        isUtc: true,
-      ).toLocal();
+  final date = DateTime.fromMillisecondsSinceEpoch(
+    createdUtc * 1000,
+    isUtc: true,
+  ).toLocal();
   return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 }
 

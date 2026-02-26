@@ -31,15 +31,14 @@ class _LogViewerState extends State<LogViewer> {
   Widget build(BuildContext context) {
     final colors = context.appColors;
     final filter = _filterController.text.toLowerCase();
-    final entries =
-        widget.entries.where((entry) {
-          final matchesFilter =
-              filter.isEmpty ||
-              entry.message.toLowerCase().contains(filter) ||
-              entry.scope.toLowerCase().contains(filter);
-          final matchesLevel = _levels.contains(entry.level.toLowerCase());
-          return matchesFilter && matchesLevel;
-        }).toList();
+    final entries = widget.entries.where((entry) {
+      final matchesFilter =
+          filter.isEmpty ||
+          entry.message.toLowerCase().contains(filter) ||
+          entry.scope.toLowerCase().contains(filter);
+      final matchesLevel = _levels.contains(entry.level.toLowerCase());
+      return matchesFilter && matchesLevel;
+    }).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,23 +57,22 @@ class _LogViewerState extends State<LogViewer> {
             AppButton(
               label: 'Copy visible',
               variant: AppButtonVariant.secondary,
-              onPressed:
-                  entries.isEmpty
-                      ? null
-                      : () {
-                        final text = entries
-                            .map(
-                              (entry) =>
-                                  '[${entry.timestamp.toIso8601String()}] '
-                                  '${entry.level.toUpperCase()} '
-                                  '${entry.scope} - ${entry.message}',
-                            )
-                            .join('\n');
-                        Clipboard.setData(ClipboardData(text: text));
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Logs copied')),
-                        );
-                      },
+              onPressed: entries.isEmpty
+                  ? null
+                  : () {
+                      final text = entries
+                          .map(
+                            (entry) =>
+                                '[${entry.timestamp.toIso8601String()}] '
+                                '${entry.level.toUpperCase()} '
+                                '${entry.scope} - ${entry.message}',
+                          )
+                          .join('\n');
+                      Clipboard.setData(ClipboardData(text: text));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Logs copied')),
+                      );
+                    },
             ),
           ],
         ),

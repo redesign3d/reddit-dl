@@ -62,16 +62,15 @@ class AppScaffold extends StatelessWidget {
                     padding: EdgeInsets.symmetric(
                       horizontal: AppTokens.space.s8,
                     ),
-                    children:
-                        AppSection.values
-                            .map(
-                              (item) => _NavItem(
-                                section: item,
-                                selected: item == section,
-                                onTap: () => onSectionSelected(item),
-                              ),
-                            )
-                            .toList(),
+                    children: AppSection.values
+                        .map(
+                          (item) => _NavItem(
+                            section: item,
+                            selected: item == section,
+                            onTap: () => onSectionSelected(item),
+                          ),
+                        )
+                        .toList(),
                   ),
                 ),
                 Padding(
@@ -106,17 +105,16 @@ class AppScaffold extends StatelessWidget {
                       const Spacer(),
                       if (actions.isNotEmpty)
                         Row(
-                          children:
-                              actions
-                                  .map(
-                                    (action) => Padding(
-                                      padding: EdgeInsets.only(
-                                        left: AppTokens.space.s8,
-                                      ),
-                                      child: action,
-                                    ),
-                                  )
-                                  .toList(),
+                          children: actions
+                              .map(
+                                (action) => Padding(
+                                  padding: EdgeInsets.only(
+                                    left: AppTokens.space.s8,
+                                  ),
+                                  child: action,
+                                ),
+                              )
+                              .toList(),
                         ),
                     ],
                   ),
@@ -159,8 +157,9 @@ class _NavItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.appColors;
     final background = selected ? colors.sidebarAccent : Colors.transparent;
-    final foreground =
-        selected ? colors.sidebarAccentForeground : colors.sidebarForeground;
+    final foreground = selected
+        ? colors.sidebarAccentForeground
+        : colors.sidebarForeground;
 
     return Padding(
       padding: EdgeInsets.symmetric(vertical: AppTokens.space.s4),

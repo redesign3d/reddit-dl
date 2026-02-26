@@ -104,10 +104,10 @@ class _ImportPageState extends State<ImportPage> {
             ),
             SizedBox(height: AppTokens.space.s16),
             DropTarget(
-              onDragEntered:
-                  (_) => context.read<ImportCubit>().setDragging(true),
-              onDragExited:
-                  (_) => context.read<ImportCubit>().setDragging(false),
+              onDragEntered: (_) =>
+                  context.read<ImportCubit>().setDragging(true),
+              onDragExited: (_) =>
+                  context.read<ImportCubit>().setDragging(false),
               onDragDone: (details) => _handleDrop(context, details),
               child: AppCard(
                 child: Column(
@@ -144,19 +144,16 @@ class _ImportPageState extends State<ImportPage> {
                             children: [
                               AppButton(
                                 label: 'Select ZIP',
-                                onPressed:
-                                    isImporting
-                                        ? null
-                                        : () => _pickZip(context),
+                                onPressed: isImporting
+                                    ? null
+                                    : () => _pickZip(context),
                               ),
                               AppButton(
                                 label: 'Reset',
                                 variant: AppButtonVariant.ghost,
-                                onPressed:
-                                    isImporting
-                                        ? null
-                                        : () =>
-                                            context.read<ImportCubit>().reset(),
+                                onPressed: isImporting
+                                    ? null
+                                    : () => context.read<ImportCubit>().reset(),
                               ),
                             ],
                           ),
@@ -249,10 +246,9 @@ class _ImportPageState extends State<ImportPage> {
                     AppButton(
                       label: 'View in library',
                       variant: AppButtonVariant.secondary,
-                      onPressed:
-                          () => context.read<NavigationCubit>().select(
-                            AppSection.library,
-                          ),
+                      onPressed: () => context.read<NavigationCubit>().select(
+                        AppSection.library,
+                      ),
                     ),
                   ],
                 ),

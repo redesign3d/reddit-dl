@@ -71,9 +71,8 @@ class WantedCubit extends Cubit<WantedState> {
 
     emit(
       WantedState(
-        items:
-            wanted.values.toList()
-              ..sort((a, b) => a.item.id.compareTo(b.item.id)),
+        items: wanted.values.toList()
+          ..sort((a, b) => a.item.id.compareTo(b.item.id)),
         isLoading: false,
       ),
     );

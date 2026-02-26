@@ -30,15 +30,14 @@ class HistoryRepository {
           ]);
 
     return query.watch().map(
-      (rows) =>
-          rows
-              .map(
-                (row) => HistoryRecord(
-                  job: row.readTable(_db.downloadJobs),
-                  item: row.readTable(_db.savedItems),
-                ),
-              )
-              .toList(),
+      (rows) => rows
+          .map(
+            (row) => HistoryRecord(
+              job: row.readTable(_db.downloadJobs),
+              item: row.readTable(_db.savedItems),
+            ),
+          )
+          .toList(),
     );
   }
 }

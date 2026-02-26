@@ -44,17 +44,15 @@ class TextPostMarkdownExporter {
   }
 
   String _buildMarkdown(SavedItem item) {
-    final created =
-        item.createdUtc > 0
-            ? DateTime.fromMillisecondsSinceEpoch(
-              item.createdUtc * 1000,
-              isUtc: true,
-            ).toLocal()
-            : null;
-    final createdText =
-        created == null
-            ? 'Unknown'
-            : '${created.year}-${created.month.toString().padLeft(2, '0')}-${created.day.toString().padLeft(2, '0')}';
+    final created = item.createdUtc > 0
+        ? DateTime.fromMillisecondsSinceEpoch(
+            item.createdUtc * 1000,
+            isUtc: true,
+          ).toLocal()
+        : null;
+    final createdText = created == null
+        ? 'Unknown'
+        : '${created.year}-${created.month.toString().padLeft(2, '0')}-${created.day.toString().padLeft(2, '0')}';
     final buffer = StringBuffer();
     buffer.writeln('# ${item.title.isEmpty ? 'Untitled post' : item.title}');
     buffer.writeln();

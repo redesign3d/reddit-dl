@@ -58,8 +58,9 @@ void main() {
         );
 
     final jobResult = await queueRepository.enqueueForItem(
-      (await (db.select(db.savedItems)
-        ..where((tbl) => tbl.id.equals(itemId))).getSingle()),
+      (await (db.select(
+        db.savedItems,
+      )..where((tbl) => tbl.id.equals(itemId))).getSingle()),
       policySnapshot: 'skip_if_exists',
     );
 
@@ -121,8 +122,9 @@ void main() {
         );
 
     final jobResult = await queueRepository.enqueueForItem(
-      (await (db.select(db.savedItems)
-        ..where((tbl) => tbl.id.equals(itemId))).getSingle()),
+      (await (db.select(
+        db.savedItems,
+      )..where((tbl) => tbl.id.equals(itemId))).getSingle()),
       policySnapshot: 'skip_if_exists',
     );
 
@@ -185,8 +187,9 @@ void main() {
         );
 
     final jobResult = await queueRepository.enqueueForItem(
-      (await (db.select(db.savedItems)
-        ..where((tbl) => tbl.id.equals(itemId))).getSingle()),
+      (await (db.select(
+        db.savedItems,
+      )..where((tbl) => tbl.id.equals(itemId))).getSingle()),
       policySnapshot: 'skip_if_exists',
     );
 
@@ -220,9 +223,9 @@ Future<DownloadJob> _waitForStatus(
 }) async {
   final start = DateTime.now();
   while (true) {
-    final job =
-        await (db.select(db.downloadJobs)
-          ..where((tbl) => tbl.id.equals(jobId))).getSingle();
+    final job = await (db.select(
+      db.downloadJobs,
+    )..where((tbl) => tbl.id.equals(jobId))).getSingle();
     if (job.status == status) {
       return job;
     }

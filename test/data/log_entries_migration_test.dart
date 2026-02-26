@@ -34,8 +34,9 @@ CREATE TABLE log_entries (
           ),
         );
 
-    final columns =
-        await database.customSelect('PRAGMA table_info(log_entries)').get();
+    final columns = await database
+        .customSelect('PRAGMA table_info(log_entries)')
+        .get();
     final idColumn = columns.firstWhere((row) => row.data['name'] == 'id');
     expect((idColumn.data['pk'] as int?) ?? 0, greaterThan(0));
   });

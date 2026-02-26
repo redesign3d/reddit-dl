@@ -20,8 +20,9 @@ MigrationStrategy buildMigrationStrategy(AppDatabase database) {
 }
 
 Future<void> ensureLogEntriesPrimaryKey(AppDatabase database) async {
-  final columns =
-      await database.customSelect('PRAGMA table_info(log_entries)').get();
+  final columns = await database
+      .customSelect('PRAGMA table_info(log_entries)')
+      .get();
   if (columns.isEmpty) {
     return;
   }

@@ -15,13 +15,13 @@ class DownloadTelemetry {
   void updateFromHeaders(Headers headers) {
     final remainingRaw = headers.value('x-ratelimit-remaining');
     final resetRaw = headers.value('x-ratelimit-reset');
-    final remaining =
-        remainingRaw == null ? null : double.tryParse(remainingRaw);
+    final remaining = remainingRaw == null
+        ? null
+        : double.tryParse(remainingRaw);
     final resetSeconds = resetRaw == null ? null : int.tryParse(resetRaw);
-    final resetAt =
-        resetSeconds == null
-            ? null
-            : DateTime.now().add(Duration(seconds: resetSeconds));
+    final resetAt = resetSeconds == null
+        ? null
+        : DateTime.now().add(Duration(seconds: resetSeconds));
     if (remaining == null && resetAt == null) {
       return;
     }
