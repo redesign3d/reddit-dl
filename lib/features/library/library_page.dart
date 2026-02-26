@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -95,7 +97,7 @@ class LibraryPage extends StatelessWidget {
                         ),
                         SizedBox(height: AppTokens.space.s8),
                         Text(
-                          '${state.items.length} visible • ${state.items.where((item) => item.over18).length} NSFW',
+                          '${state.items.length} on page • ${state.totalCount} matched • ${state.items.where((item) => item.over18).length} NSFW',
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: colors.mutedForeground),
                         ),
@@ -148,21 +150,25 @@ class LibraryPage extends StatelessWidget {
                   Row(
                     children: [
                       Expanded(
-                        child: AppSelect<LibraryKindFilter>(
+                        child: AppSelect<LibraryItemKind>(
                           label: 'Type',
                           value: state.kindFilter,
                           options: const [
                             AppSelectOption(
                               label: 'All',
-                              value: LibraryKindFilter.all,
+                              value: LibraryItemKind.all,
                             ),
                             AppSelectOption(
                               label: 'Posts only',
-                              value: LibraryKindFilter.post,
+                              value: LibraryItemKind.post,
                             ),
                             AppSelectOption(
                               label: 'Comments only',
-                              value: LibraryKindFilter.comment,
+                              value: LibraryItemKind.comment,
+                            ),
+                            AppSelectOption(
+                              label: 'Media items',
+                              value: LibraryItemKind.media,
                             ),
                           ],
                           onChanged: (value) {
@@ -177,17 +183,47 @@ class LibraryPage extends StatelessWidget {
                       ),
                       SizedBox(width: AppTokens.space.s12),
                       Expanded(
-                        child: AppSwitch(
-                          label: 'Show NSFW',
-                          description:
-                              'Toggle visibility only (downloads are separate).',
-                          value: state.showNsfw,
-                          onChanged: (value) => context
-                              .read<LibraryCubit>()
-                              .toggleShowNsfw(value),
+                        child: AppSelect<LibraryResolutionFilter>(
+                          label: 'Resolution',
+                          value: state.resolutionFilter,
+                          options: const [
+                            AppSelectOption(
+                              label: 'All',
+                              value: LibraryResolutionFilter.all,
+                            ),
+                            AppSelectOption(
+                              label: 'Resolved',
+                              value: LibraryResolutionFilter.ok,
+                            ),
+                            AppSelectOption(
+                              label: 'Partial',
+                              value: LibraryResolutionFilter.partial,
+                            ),
+                            AppSelectOption(
+                              label: 'Failed',
+                              value: LibraryResolutionFilter.failed,
+                            ),
+                          ],
+                          onChanged: (value) {
+                            if (value == null) {
+                              return;
+                            }
+                            context.read<LibraryCubit>().updateResolutionFilter(
+                              value,
+                            );
+                          },
                         ),
                       ),
                     ],
+                  ),
+                  SizedBox(height: AppTokens.space.s12),
+                  AppSwitch(
+                    label: 'Show NSFW',
+                    description:
+                        'Toggle visibility only (downloads are separate).',
+                    value: state.showNsfw,
+                    onChanged: (value) =>
+                        context.read<LibraryCubit>().toggleShowNsfw(value),
                   ),
                   SizedBox(height: AppTokens.space.s12),
                   Opacity(
@@ -233,18 +269,63 @@ class LibraryPage extends StatelessWidget {
               ),
             ),
             SizedBox(height: AppTokens.space.s16),
+            if (state.isPageLoading && state.items.isNotEmpty)
+              Padding(
+                padding: EdgeInsets.only(bottom: AppTokens.space.s12),
+                child: Text(
+                  'Loading page...',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: colors.mutedForeground,
+                  ),
+                ),
+              ),
+            if (state.totalCount > 0)
+              Padding(
+                padding: EdgeInsets.only(bottom: AppTokens.space.s12),
+                child: Row(
+                  children: [
+                    Text(
+                      _pageSummary(state),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: colors.mutedForeground,
+                      ),
+                    ),
+                    const Spacer(),
+                    AppButton(
+                      label: 'Previous',
+                      variant: AppButtonVariant.ghost,
+                      onPressed: state.hasPreviousPage && !state.isPageLoading
+                          ? () =>
+                                context.read<LibraryCubit>().goToPreviousPage()
+                          : null,
+                    ),
+                    SizedBox(width: AppTokens.space.s8),
+                    AppButton(
+                      label: 'Next',
+                      variant: AppButtonVariant.secondary,
+                      onPressed: state.hasNextPage && !state.isPageLoading
+                          ? () => context.read<LibraryCubit>().goToNextPage()
+                          : null,
+                    ),
+                  ],
+                ),
+              ),
             if (state.items.isEmpty)
               AppCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'No items indexed yet',
+                      state.hasIndexed
+                          ? 'No items match current filters'
+                          : 'No items indexed yet',
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     SizedBox(height: AppTokens.space.s6),
                     Text(
-                      'Run a ZIP import or sync to populate your library.',
+                      state.hasIndexed
+                          ? 'Adjust filters or clear search terms.'
+                          : 'Run a ZIP import or sync to populate your library.',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: colors.mutedForeground,
                       ),
@@ -268,6 +349,18 @@ class LibraryPage extends StatelessWidget {
       },
     );
   }
+}
+
+String _pageSummary(LibraryState state) {
+  if (state.totalCount == 0) {
+    return 'No results';
+  }
+  final start = state.pageIndex * state.pageSize + 1;
+  final end = math.min(
+    (state.pageIndex + 1) * state.pageSize,
+    state.totalCount,
+  );
+  return 'Showing $start-$end of ${state.totalCount} • Page ${state.pageIndex + 1}/${state.pageCount}';
 }
 
 class _LibraryItemCard extends StatelessWidget {
