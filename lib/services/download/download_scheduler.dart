@@ -168,11 +168,10 @@ class DownloadScheduler {
     if (available <= 0) {
       return;
     }
-    final queued =
-        _latestQueue
-            .where((record) => record.job.status == 'queued')
-            .take(available)
-            .toList();
+    final queued = _latestQueue
+        .where((record) => record.job.status == 'queued')
+        .take(available)
+        .toList();
     for (final record in queued) {
       _startJob(record);
     }
@@ -294,10 +293,10 @@ class DownloadScheduler {
                 policy: _policyFromSnapshot(record.job.policySnapshot),
                 cancelToken: token,
                 onProgress: updateOverall,
-                onPhase:
-                    (phase) => _queueRepository.updateJobStatus(jobId, phase),
-                log:
-                    (level, message) => _log(jobId, 'download', level, message),
+                onPhase: (phase) =>
+                    _queueRepository.updateJobStatus(jobId, phase),
+                log: (level, message) =>
+                    _log(jobId, 'download', level, message),
               );
             }
             if (asset.type == 'video') {
@@ -308,10 +307,10 @@ class DownloadScheduler {
                 cancelToken: token,
                 onHeaders: _telemetry.updateFromHeaders,
                 onProgress: updateOverall,
-                onPhase:
-                    (phase) => _queueRepository.updateJobStatus(jobId, phase),
-                log:
-                    (level, message) => _log(jobId, 'download', level, message),
+                onPhase: (phase) =>
+                    _queueRepository.updateJobStatus(jobId, phase),
+                log: (level, message) =>
+                    _log(jobId, 'download', level, message),
               );
             }
             return _downloader.download(
@@ -326,8 +325,9 @@ class DownloadScheduler {
         );
         if (result.isCompleted) {
           completed += 1;
-          outputPath =
-              result.outputPath.isNotEmpty ? result.outputPath : outputPath;
+          outputPath = result.outputPath.isNotEmpty
+              ? result.outputPath
+              : outputPath;
         } else if (result.isSkipped) {
           skipped += 1;
           await _log(jobId, 'download', 'info', result.message ?? 'Skipped.');
@@ -363,17 +363,17 @@ class DownloadScheduler {
       }
       try {
         final result = await _exportWithRetry(
-          action:
-              () => _textPostExporter.export(
-                item: item,
-                engine: engine,
-                policy: _policyFromSnapshot(record.job.policySnapshot),
-              ),
+          action: () => _textPostExporter.export(
+            item: item,
+            engine: engine,
+            policy: _policyFromSnapshot(record.job.policySnapshot),
+          ),
         );
         if (result.isCompleted) {
           completed += 1;
-          outputPath =
-              result.outputPath.isNotEmpty ? result.outputPath : outputPath;
+          outputPath = result.outputPath.isNotEmpty
+              ? result.outputPath
+              : outputPath;
         } else if (result.isSkipped) {
           skipped += 1;
           await _log(jobId, 'download', 'info', result.message ?? 'Skipped.');
@@ -404,17 +404,17 @@ class DownloadScheduler {
       }
       try {
         final result = await _exportWithRetry(
-          action:
-              () => _savedCommentExporter.export(
-                item: item,
-                engine: engine,
-                policy: _policyFromSnapshot(record.job.policySnapshot),
-              ),
+          action: () => _savedCommentExporter.export(
+            item: item,
+            engine: engine,
+            policy: _policyFromSnapshot(record.job.policySnapshot),
+          ),
         );
         if (result.isCompleted) {
           completed += 1;
-          outputPath =
-              result.outputPath.isNotEmpty ? result.outputPath : outputPath;
+          outputPath = result.outputPath.isNotEmpty
+              ? result.outputPath
+              : outputPath;
         } else if (result.isSkipped) {
           skipped += 1;
           await _log(jobId, 'download', 'info', result.message ?? 'Skipped.');
@@ -445,21 +445,21 @@ class DownloadScheduler {
       }
       try {
         final result = await _exportWithRetry(
-          action:
-              () => _threadCommentsExporter.export(
-                item: item,
-                engine: engine,
-                policy: _policyFromSnapshot(record.job.policySnapshot),
-                sort: _settings.postCommentsSort,
-                maxCount: _settings.postCommentsMaxCount,
-                timeframeDays: _settings.postCommentsTimeframeDays,
-                cancelToken: token,
-              ),
+          action: () => _threadCommentsExporter.export(
+            item: item,
+            engine: engine,
+            policy: _policyFromSnapshot(record.job.policySnapshot),
+            sort: _settings.postCommentsSort,
+            maxCount: _settings.postCommentsMaxCount,
+            timeframeDays: _settings.postCommentsTimeframeDays,
+            cancelToken: token,
+          ),
         );
         if (result.isCompleted) {
           completed += 1;
-          outputPath =
-              result.outputPath.isNotEmpty ? result.outputPath : outputPath;
+          outputPath = result.outputPath.isNotEmpty
+              ? result.outputPath
+              : outputPath;
         } else if (result.isSkipped) {
           skipped += 1;
           await _log(jobId, 'download', 'info', result.message ?? 'Skipped.');

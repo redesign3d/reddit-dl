@@ -8,10 +8,11 @@ class LibraryRepository {
   final AppDatabase _db;
 
   Stream<List<SavedItem>> watchAll() {
-    final query = _db.select(_db.savedItems)..orderBy([
-      (row) =>
-          OrderingTerm(expression: row.createdUtc, mode: OrderingMode.desc),
-    ]);
+    final query = _db.select(_db.savedItems)
+      ..orderBy([
+        (row) =>
+            OrderingTerm(expression: row.createdUtc, mode: OrderingMode.desc),
+      ]);
     return query.watch();
   }
 
@@ -31,15 +32,12 @@ class LibraryRepository {
   }
 
   Future<SavedItem?> fetchLatest() async {
-    final query =
-        _db.select(_db.savedItems)
-          ..orderBy([
-            (row) => OrderingTerm(
-              expression: row.createdUtc,
-              mode: OrderingMode.desc,
-            ),
-          ])
-          ..limit(1);
+    final query = _db.select(_db.savedItems)
+      ..orderBy([
+        (row) =>
+            OrderingTerm(expression: row.createdUtc, mode: OrderingMode.desc),
+      ])
+      ..limit(1);
     return query.getSingleOrNull();
   }
 

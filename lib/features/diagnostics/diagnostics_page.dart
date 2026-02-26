@@ -50,10 +50,9 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
-    final updated =
-        state.lastUpdated == null
-            ? 'Not checked yet'
-            : 'Updated ${state.lastUpdated!.toLocal()}';
+    final updated = state.lastUpdated == null
+        ? 'Not checked yet'
+        : 'Updated ${state.lastUpdated!.toLocal()}';
     return Row(
       children: [
         Expanded(
@@ -88,10 +87,9 @@ class _Header extends StatelessWidget {
         SizedBox(width: AppTokens.space.s12),
         AppButton(
           label: state.isLoading ? 'Checking...' : 'Refresh checks',
-          onPressed:
-              state.isLoading
-                  ? null
-                  : () => context.read<DiagnosticsCubit>().refresh(),
+          onPressed: state.isLoading
+              ? null
+              : () => context.read<DiagnosticsCubit>().refresh(),
         ),
       ],
     );
@@ -127,9 +125,8 @@ class _SessionCard extends StatelessWidget {
               AppButton(
                 label: 'Open Sync',
                 variant: AppButtonVariant.secondary,
-                onPressed:
-                    () =>
-                        context.read<NavigationCubit>().select(AppSection.sync),
+                onPressed: () =>
+                    context.read<NavigationCubit>().select(AppSection.sync),
               ),
               SizedBox(width: AppTokens.space.s8),
               AppButton(
@@ -161,10 +158,9 @@ class _CookieCard extends StatelessWidget {
         children: [
           _CardHeader(
             title: 'Cookie storage',
-            level:
-                isPersisted && !cookies.storeExists
-                    ? DiagnosticsLevel.warn
-                    : DiagnosticsLevel.ok,
+            level: isPersisted && !cookies.storeExists
+                ? DiagnosticsLevel.warn
+                : DiagnosticsLevel.ok,
             subtitle: subtitle,
           ),
           SizedBox(height: AppTokens.space.s8),
@@ -178,9 +174,8 @@ class _CookieCard extends StatelessWidget {
           AppButton(
             label: 'Open Settings',
             variant: AppButtonVariant.secondary,
-            onPressed:
-                () =>
-                    context.read<NavigationCubit>().select(AppSection.settings),
+            onPressed: () =>
+                context.read<NavigationCubit>().select(AppSection.settings),
           ),
         ],
       ),
@@ -213,15 +208,14 @@ class _ToolsCard extends StatelessWidget {
             )
           else
             Column(
-              children:
-                  tools
-                      .map(
-                        (tool) => Padding(
-                          padding: EdgeInsets.only(bottom: AppTokens.space.s8),
-                          child: _ToolRow(tool: tool),
-                        ),
-                      )
-                      .toList(),
+              children: tools
+                  .map(
+                    (tool) => Padding(
+                      padding: EdgeInsets.only(bottom: AppTokens.space.s8),
+                      child: _ToolRow(tool: tool),
+                    ),
+                  )
+                  .toList(),
             ),
           SizedBox(height: AppTokens.space.s8),
           Row(
@@ -229,10 +223,8 @@ class _ToolsCard extends StatelessWidget {
               AppButton(
                 label: 'Open Settings',
                 variant: AppButtonVariant.secondary,
-                onPressed:
-                    () => context.read<NavigationCubit>().select(
-                      AppSection.settings,
-                    ),
+                onPressed: () =>
+                    context.read<NavigationCubit>().select(AppSection.settings),
               ),
               SizedBox(width: AppTokens.space.s8),
               AppButton(
@@ -265,8 +257,9 @@ class _FfmpegCard extends StatelessWidget {
               _CardHeader(
                 title: 'ffmpeg runtime',
                 level: ffmpeg.level,
-                subtitle:
-                    ffmpeg.isInstalled ? 'Installed' : 'Not installed yet',
+                subtitle: ffmpeg.isInstalled
+                    ? 'Installed'
+                    : 'Not installed yet',
               ),
               SizedBox(height: AppTokens.space.s8),
               Text(
@@ -284,25 +277,23 @@ class _FfmpegCard extends StatelessWidget {
               Row(
                 children: [
                   AppButton(
-                    label:
-                        ffmpegState.isInstalling
-                            ? 'Installing...'
-                            : 'Install runtime',
+                    label: ffmpegState.isInstalling
+                        ? 'Installing...'
+                        : 'Install runtime',
                     variant: AppButtonVariant.secondary,
-                    onPressed:
-                        ffmpegState.isInstalling
-                            ? null
-                            : () async {
-                              await context.read<FfmpegCubit>().install();
-                              if (!context.mounted) {
-                                return;
-                              }
-                              AppToast.show(
-                                context,
-                                'ffmpeg runtime install requested.',
-                              );
-                              context.read<DiagnosticsCubit>().refresh();
-                            },
+                    onPressed: ffmpegState.isInstalling
+                        ? null
+                        : () async {
+                            await context.read<FfmpegCubit>().install();
+                            if (!context.mounted) {
+                              return;
+                            }
+                            AppToast.show(
+                              context,
+                              'ffmpeg runtime install requested.',
+                            );
+                            context.read<DiagnosticsCubit>().refresh();
+                          },
                   ),
                   SizedBox(width: AppTokens.space.s8),
                   AppButton(
@@ -364,9 +355,8 @@ class _TemplateCard extends StatelessWidget {
           AppButton(
             label: 'Open Settings',
             variant: AppButtonVariant.secondary,
-            onPressed:
-                () =>
-                    context.read<NavigationCubit>().select(AppSection.settings),
+            onPressed: () =>
+                context.read<NavigationCubit>().select(AppSection.settings),
           ),
         ],
       ),

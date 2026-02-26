@@ -32,9 +32,9 @@ class ImportRepository {
     }
 
     final permalinks = uniqueMap.keys.toList();
-    final existingRows =
-        await (_db.select(_db.savedItems)
-          ..where((tbl) => tbl.permalink.isIn(permalinks))).get();
+    final existingRows = await (_db.select(
+      _db.savedItems,
+    )..where((tbl) => tbl.permalink.isIn(permalinks))).get();
     final existingSet = existingRows.map((row) => row.permalink).toSet();
 
     var inserted = 0;
@@ -50,10 +50,9 @@ class ImportRepository {
         inserted++;
       }
 
-      final subreddit =
-          entry.subreddit.isNotEmpty
-              ? entry.subreddit
-              : _deriveSubreddit(entry.permalink);
+      final subreddit = entry.subreddit.isNotEmpty
+          ? entry.subreddit
+          : _deriveSubreddit(entry.permalink);
 
       inserts.add(
         SavedItemsCompanion(

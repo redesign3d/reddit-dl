@@ -40,8 +40,9 @@ void main() {
       hint: ListingKindHint.post,
     );
     expect(result, isNotNull);
-    final assets =
-        result!.media.where((asset) => asset.type == 'video').toList();
+    final assets = result!.media
+        .where((asset) => asset.type == 'video')
+        .toList();
     expect(assets.length, 1);
     expect(
       assets.first.metadata?['fallback_url'],
@@ -58,8 +59,9 @@ void main() {
       hint: ListingKindHint.post,
     );
     expect(result, isNotNull);
-    final assets =
-        result!.media.where((asset) => asset.type == 'video').toList();
+    final assets = result!.media
+        .where((asset) => asset.type == 'video')
+        .toList();
     expect(assets.length, 1);
     expect(
       assets.first.metadata?['fallback_url'],

@@ -17,14 +17,12 @@ class ZipImportParser {
       );
     }
 
-    final posts =
-        postsCsv == null
-            ? <ImportItem>[]
-            : _parseCsv(postsCsv, ImportKind.post);
-    final comments =
-        commentsCsv == null
-            ? <ImportItem>[]
-            : _parseCsv(commentsCsv, ImportKind.comment);
+    final posts = postsCsv == null
+        ? <ImportItem>[]
+        : _parseCsv(postsCsv, ImportKind.post);
+    final comments = commentsCsv == null
+        ? <ImportItem>[]
+        : _parseCsv(commentsCsv, ImportKind.comment);
 
     return ImportArchive(posts: posts, comments: comments);
   }
@@ -54,12 +52,11 @@ class ZipImportParser {
       return [];
     }
 
-    final headers =
-        rows.first
-            .map((value) => value.toString().trim())
-            .map((value) => value.replaceFirst('\uFEFF', ''))
-            .map((value) => value.toLowerCase())
-            .toList();
+    final headers = rows.first
+        .map((value) => value.toString().trim())
+        .map((value) => value.replaceFirst('\uFEFF', ''))
+        .map((value) => value.toLowerCase())
+        .toList();
     final indices = <String, int>{};
     for (var i = 0; i < headers.length; i++) {
       indices[headers[i]] = i;

@@ -11,10 +11,9 @@ class SettingsRepository {
   final AppDatabase _db;
 
   Future<AppSettings> load() async {
-    final row =
-        await (_db.select(_db.settings)..where(
-          (tbl) => tbl.id.equals(AppSettings.storageId),
-        )).getSingleOrNull();
+    final row = await (_db.select(
+      _db.settings,
+    )..where((tbl) => tbl.id.equals(AppSettings.storageId))).getSingleOrNull();
     if (row == null) {
       final defaults = AppSettings.defaults();
       await save(defaults);
@@ -39,9 +38,9 @@ class SettingsRepository {
 
   Stream<AppSettings> watch() {
     final query =
-        (_db.select(_db.settings)..where(
-          (tbl) => tbl.id.equals(AppSettings.storageId),
-        )).watchSingleOrNull();
+        (_db.select(_db.settings)
+              ..where((tbl) => tbl.id.equals(AppSettings.storageId)))
+            .watchSingleOrNull();
     return query.map((row) {
       if (row == null) {
         return AppSettings.defaults();

@@ -73,16 +73,14 @@ class DiagnosticsCubit extends Cubit<DiagnosticsState> {
   }
 
   Future<CookieDiagnostics> _checkCookies(AppSettings settings) async {
-    final persistence =
-        settings.rememberSession
-            ? CookiePersistence.persisted
-            : CookiePersistence.ephemeral;
+    final persistence = settings.rememberSession
+        ? CookiePersistence.persisted
+        : CookiePersistence.ephemeral;
     final storagePath = await _sessionRepository.cookieStoragePath();
     final exists = await Directory(storagePath).exists();
-    final detail =
-        settings.rememberSession
-            ? 'Persisted store ${exists ? 'found' : 'missing'} at $storagePath'
-            : 'Ephemeral cookies (cleared on exit).';
+    final detail = settings.rememberSession
+        ? 'Persisted store ${exists ? 'found' : 'missing'} at $storagePath'
+        : 'Ephemeral cookies (cleared on exit).';
     await _log(
       'Cookie storage: ${persistence.name}. $detail',
       level: settings.rememberSession && !exists ? 'warn' : 'info',
@@ -165,14 +163,14 @@ class DiagnosticsCubit extends Cubit<DiagnosticsState> {
 
   Future<FfmpegDiagnostics> _checkFfmpeg() async {
     final status = await _ffmpegRuntime.status();
-    final version =
-        status.ffmpegPath == null
-            ? null
-            : await _ffmpegVersion(status.ffmpegPath!);
+    final version = status.ffmpegPath == null
+        ? null
+        : await _ffmpegVersion(status.ffmpegPath!);
     final isInstalled = status.isInstalled && status.ffmpegPath != null;
     final level = isInstalled ? DiagnosticsLevel.ok : DiagnosticsLevel.warn;
-    final message =
-        isInstalled ? 'ffmpeg runtime installed.' : 'ffmpeg runtime missing.';
+    final message = isInstalled
+        ? 'ffmpeg runtime installed.'
+        : 'ffmpeg runtime missing.';
     await _log(
       'ffmpeg runtime: $message',
       level: isInstalled ? 'info' : 'warn',
@@ -446,10 +444,9 @@ class ToolDiagnostics extends Equatable {
 
   factory ToolDiagnostics.fromToolInfo(ToolInfo info) {
     final available = info.isAvailable;
-    final summary =
-        available
-            ? 'Detected${info.isOverride ? ' (override)' : ''}'
-            : (info.errorMessage ?? 'Not available');
+    final summary = available
+        ? 'Detected${info.isOverride ? ' (override)' : ''}'
+        : (info.errorMessage ?? 'Not available');
     return ToolDiagnostics(
       name: info.name,
       level: available ? DiagnosticsLevel.ok : DiagnosticsLevel.warn,

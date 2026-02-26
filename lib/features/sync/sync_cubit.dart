@@ -240,10 +240,9 @@ class SyncCubit extends Cubit<SyncState> {
       ),
     );
 
-    final cutoff =
-        timeframeDays == null
-            ? null
-            : DateTime.now().toUtc().subtract(Duration(days: timeframeDays));
+    final cutoff = timeframeDays == null
+        ? null
+        : DateTime.now().toUtc().subtract(Duration(days: timeframeDays));
     final seen = <String>{};
     String? nextUrl;
     var shouldStop = false;

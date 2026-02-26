@@ -40,12 +40,11 @@ class _ToolStatusTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
-    final status =
-        info == null
-            ? 'Scanning...'
-            : info!.isAvailable
-            ? '${info!.path}${info!.version == null ? '' : ' • ${info!.version}'}'
-            : info!.errorMessage ?? 'Not detected';
+    final status = info == null
+        ? 'Scanning...'
+        : info!.isAvailable
+        ? '${info!.path}${info!.version == null ? '' : ' • ${info!.version}'}'
+        : info!.errorMessage ?? 'Not detected';
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -210,16 +209,12 @@ class _SettingsPageState extends State<SettingsPage> {
           if (_previewItemId == null && previewItems.isNotEmpty) {
             _previewItemId = previewItems.first.id;
           }
-          final previewItem =
-              _previewItemId == null
-                  ? null
-                  : previewItems.firstWhere(
-                    (item) => item.id == _previewItemId,
-                  );
-          final preview =
-              previewItem == null
-                  ? null
-                  : PathTemplateEngine(settings).previewForItem(previewItem);
+          final previewItem = _previewItemId == null
+              ? null
+              : previewItems.firstWhere((item) => item.id == _previewItemId);
+          final preview = previewItem == null
+              ? null
+              : PathTemplateEngine(settings).previewForItem(previewItem);
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -242,11 +237,10 @@ class _SettingsPageState extends State<SettingsPage> {
                       label: 'Dark mode',
                       description: 'Match Claude-style dark palette.',
                       value: settings.themeMode == AppThemeMode.dark,
-                      onChanged:
-                          (value) =>
-                              context.read<SettingsCubit>().updateThemeMode(
-                                value ? AppThemeMode.dark : AppThemeMode.light,
-                              ),
+                      onChanged: (value) =>
+                          context.read<SettingsCubit>().updateThemeMode(
+                            value ? AppThemeMode.dark : AppThemeMode.light,
+                          ),
                     ),
                   ],
                 ),
@@ -265,10 +259,9 @@ class _SettingsPageState extends State<SettingsPage> {
                       label: 'Export text posts to Markdown',
                       description: 'Save post selftext into the text tree.',
                       value: settings.exportTextPosts,
-                      onChanged:
-                          (value) => context
-                              .read<SettingsCubit>()
-                              .updateExportTextPosts(value),
+                      onChanged: (value) => context
+                          .read<SettingsCubit>()
+                          .updateExportTextPosts(value),
                     ),
                     SizedBox(height: AppTokens.space.s12),
                     AppSwitch(
@@ -276,20 +269,18 @@ class _SettingsPageState extends State<SettingsPage> {
                       description:
                           'Save saved comments into the comments tree.',
                       value: settings.exportSavedComments,
-                      onChanged:
-                          (value) => context
-                              .read<SettingsCubit>()
-                              .updateExportSavedComments(value),
+                      onChanged: (value) => context
+                          .read<SettingsCubit>()
+                          .updateExportSavedComments(value),
                     ),
                     SizedBox(height: AppTokens.space.s12),
                     AppSwitch(
                       label: 'Export comments under saved posts',
                       description: 'Write a comments.md beside post media.',
                       value: settings.exportPostComments,
-                      onChanged:
-                          (value) => context
-                              .read<SettingsCubit>()
-                              .updateExportPostComments(value),
+                      onChanged: (value) => context
+                          .read<SettingsCubit>()
+                          .updateExportPostComments(value),
                     ),
                     if (settings.exportPostComments) ...[
                       SizedBox(height: AppTokens.space.s12),
@@ -301,14 +292,13 @@ class _SettingsPageState extends State<SettingsPage> {
                               hint: 'Leave blank for all',
                               controller: _postCommentsMaxController,
                               keyboardType: TextInputType.number,
-                              onChanged:
-                                  (_) => context
-                                      .read<SettingsCubit>()
-                                      .updatePostCommentsMaxCount(
-                                        _parseOptionalInt(
-                                          _postCommentsMaxController,
-                                        ),
-                                      ),
+                              onChanged: (_) => context
+                                  .read<SettingsCubit>()
+                                  .updatePostCommentsMaxCount(
+                                    _parseOptionalInt(
+                                      _postCommentsMaxController,
+                                    ),
+                                  ),
                             ),
                           ),
                           SizedBox(width: AppTokens.space.s12),
@@ -352,14 +342,13 @@ class _SettingsPageState extends State<SettingsPage> {
                         hint: 'Leave blank for all',
                         controller: _postCommentsTimeframeController,
                         keyboardType: TextInputType.number,
-                        onChanged:
-                            (_) => context
-                                .read<SettingsCubit>()
-                                .updatePostCommentsTimeframeDays(
-                                  _parseOptionalInt(
-                                    _postCommentsTimeframeController,
-                                  ),
-                                ),
+                        onChanged: (_) => context
+                            .read<SettingsCubit>()
+                            .updatePostCommentsTimeframeDays(
+                              _parseOptionalInt(
+                                _postCommentsTimeframeController,
+                              ),
+                            ),
                       ),
                     ],
                   ],
@@ -379,10 +368,9 @@ class _SettingsPageState extends State<SettingsPage> {
                       label: 'Download root',
                       hint: 'Select a folder',
                       controller: _downloadRootController,
-                      onChanged:
-                          (value) => context
-                              .read<SettingsCubit>()
-                              .updateDownloadRoot(value),
+                      onChanged: (value) => context
+                          .read<SettingsCubit>()
+                          .updateDownloadRoot(value),
                       suffixIcon: IconButton(
                         icon: const Icon(Icons.folder_open_outlined),
                         onPressed: () => _pickDownloadRoot(context),
@@ -472,10 +460,9 @@ class _SettingsPageState extends State<SettingsPage> {
                       label: 'Download NSFW',
                       description: 'Enabled only when explicitly allowed.',
                       value: settings.downloadNsfw,
-                      onChanged:
-                          (value) => context
-                              .read<SettingsCubit>()
-                              .updateDownloadNsfw(value),
+                      onChanged: (value) => context
+                          .read<SettingsCubit>()
+                          .updateDownloadNsfw(value),
                     ),
                   ],
                 ),
@@ -517,10 +504,9 @@ class _SettingsPageState extends State<SettingsPage> {
                       label: 'Media path template',
                       hint: '{type}/{subreddit}/{yyyy}/{mm}/{title_slug}-{id}',
                       controller: _templateController,
-                      onChanged:
-                          (value) => context
-                              .read<SettingsCubit>()
-                              .updateMediaPathTemplate(value),
+                      onChanged: (value) => context
+                          .read<SettingsCubit>()
+                          .updateMediaPathTemplate(value),
                     ),
                     SizedBox(height: AppTokens.space.s12),
                     Row(
@@ -530,10 +516,9 @@ class _SettingsPageState extends State<SettingsPage> {
                             label: 'Text root (relative to download root)',
                             hint: 'text',
                             controller: _textRootController,
-                            onChanged:
-                                (value) => context
-                                    .read<SettingsCubit>()
-                                    .updateTextRoot(value),
+                            onChanged: (value) => context
+                                .read<SettingsCubit>()
+                                .updateTextRoot(value),
                           ),
                         ),
                         SizedBox(width: AppTokens.space.s12),
@@ -542,10 +527,9 @@ class _SettingsPageState extends State<SettingsPage> {
                             label: 'Comments root (relative to download root)',
                             hint: 'comments',
                             controller: _commentsRootController,
-                            onChanged:
-                                (value) => context
-                                    .read<SettingsCubit>()
-                                    .updateCommentsRoot(value),
+                            onChanged: (value) => context
+                                .read<SettingsCubit>()
+                                .updateCommentsRoot(value),
                           ),
                         ),
                       ],
@@ -562,16 +546,15 @@ class _SettingsPageState extends State<SettingsPage> {
                       AppSelect<int>(
                         label: 'Preview item',
                         value: previewItem.id,
-                        options:
-                            previewItems
-                                .map(
-                                  (item) => AppSelectOption(
-                                    label:
-                                        '${item.title.isEmpty ? 'Untitled' : item.title} • r/${item.subreddit}',
-                                    value: item.id,
-                                  ),
-                                )
-                                .toList(),
+                        options: previewItems
+                            .map(
+                              (item) => AppSelectOption(
+                                label:
+                                    '${item.title.isEmpty ? 'Untitled' : item.title} • r/${item.subreddit}',
+                                value: item.id,
+                              ),
+                            )
+                            .toList(),
                         onChanged: (value) {
                           setState(() {
                             _previewItemId = value;
@@ -634,10 +617,9 @@ class _SettingsPageState extends State<SettingsPage> {
                       label: 'Remember login session',
                       description: 'Persist cookies in app data (optional).',
                       value: settings.rememberSession,
-                      onChanged:
-                          (value) => context
-                              .read<SettingsCubit>()
-                              .updateRememberSession(value),
+                      onChanged: (value) => context
+                          .read<SettingsCubit>()
+                          .updateRememberSession(value),
                     ),
                     SizedBox(height: AppTokens.space.s12),
                     Row(
@@ -708,20 +690,18 @@ class _SettingsPageState extends State<SettingsPage> {
                           label: 'gallery-dl path override',
                           hint: '/usr/local/bin/gallery-dl',
                           controller: _galleryDlController,
-                          onChanged:
-                              (value) => context
-                                  .read<SettingsCubit>()
-                                  .updateGalleryDlPathOverride(value),
+                          onChanged: (value) => context
+                              .read<SettingsCubit>()
+                              .updateGalleryDlPathOverride(value),
                         ),
                         SizedBox(height: AppTokens.space.s12),
                         AppTextField(
                           label: 'yt-dlp path override',
                           hint: '/usr/local/bin/yt-dlp',
                           controller: _ytDlpController,
-                          onChanged:
-                              (value) => context
-                                  .read<SettingsCubit>()
-                                  .updateYtDlpPathOverride(value),
+                          onChanged: (value) => context
+                              .read<SettingsCubit>()
+                              .updateYtDlpPathOverride(value),
                         ),
                         SizedBox(height: AppTokens.space.s12),
                         Wrap(
@@ -731,40 +711,39 @@ class _SettingsPageState extends State<SettingsPage> {
                             AppButton(
                               label: 'Rescan tools',
                               variant: AppButtonVariant.secondary,
-                              onPressed:
-                                  () => context.read<ToolsCubit>().refresh(),
+                              onPressed: () =>
+                                  context.read<ToolsCubit>().refresh(),
                             ),
                             AppButton(
                               label: 'Test gallery-dl',
                               variant: AppButtonVariant.secondary,
                               onPressed:
                                   toolState.galleryDl?.isAvailable == true
-                                      ? () async {
-                                        final message = await context
-                                            .read<ToolsCubit>()
-                                            .testTool(toolState.galleryDl);
-                                        if (!context.mounted) {
-                                          return;
-                                        }
-                                        AppToast.show(context, message);
+                                  ? () async {
+                                      final message = await context
+                                          .read<ToolsCubit>()
+                                          .testTool(toolState.galleryDl);
+                                      if (!context.mounted) {
+                                        return;
                                       }
-                                      : null,
+                                      AppToast.show(context, message);
+                                    }
+                                  : null,
                             ),
                             AppButton(
                               label: 'Test yt-dlp',
                               variant: AppButtonVariant.secondary,
-                              onPressed:
-                                  toolState.ytDlp?.isAvailable == true
-                                      ? () async {
-                                        final message = await context
-                                            .read<ToolsCubit>()
-                                            .testTool(toolState.ytDlp);
-                                        if (!context.mounted) {
-                                          return;
-                                        }
-                                        AppToast.show(context, message);
+                              onPressed: toolState.ytDlp?.isAvailable == true
+                                  ? () async {
+                                      final message = await context
+                                          .read<ToolsCubit>()
+                                          .testTool(toolState.ytDlp);
+                                      if (!context.mounted) {
+                                        return;
                                       }
-                                      : null,
+                                      AppToast.show(context, message);
+                                    }
+                                  : null,
                             ),
                             AppButton(
                               label: 'Copy install commands',
@@ -797,12 +776,11 @@ class _SettingsPageState extends State<SettingsPage> {
               SizedBox(height: AppTokens.space.s16),
               BlocBuilder<FfmpegCubit, FfmpegState>(
                 builder: (context, ffmpegState) {
-                  final statusText =
-                      ffmpegState.isInstalled
-                          ? 'Installed'
-                          : ffmpegState.isInstalling
-                          ? 'Installing...'
-                          : 'Not installed';
+                  final statusText = ffmpegState.isInstalled
+                      ? 'Installed'
+                      : ffmpegState.isInstalling
+                      ? 'Installing...'
+                      : 'Not installed';
                   return AppCard(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -860,21 +838,18 @@ class _SettingsPageState extends State<SettingsPage> {
                           runSpacing: AppTokens.space.s8,
                           children: [
                             AppButton(
-                              label:
-                                  ffmpegState.isInstalling
-                                      ? 'Installing...'
-                                      : 'Install ffmpeg runtime',
-                              onPressed:
-                                  ffmpegState.isInstalling
-                                      ? null
-                                      : () =>
-                                          context.read<FfmpegCubit>().install(),
+                              label: ffmpegState.isInstalling
+                                  ? 'Installing...'
+                                  : 'Install ffmpeg runtime',
+                              onPressed: ffmpegState.isInstalling
+                                  ? null
+                                  : () => context.read<FfmpegCubit>().install(),
                             ),
                             AppButton(
                               label: 'Refresh status',
                               variant: AppButtonVariant.secondary,
-                              onPressed:
-                                  () => context.read<FfmpegCubit>().refresh(),
+                              onPressed: () =>
+                                  context.read<FfmpegCubit>().refresh(),
                             ),
                           ],
                         ),

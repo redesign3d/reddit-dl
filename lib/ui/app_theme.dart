@@ -8,47 +8,48 @@ class AppTheme {
   static ThemeData dark() => _buildTheme(AppTokens.dark, Brightness.dark);
 
   static ThemeData _buildTheme(AppColorScheme colors, Brightness brightness) {
-    final textTheme = TextTheme(
-      displayLarge: TextStyle(
-        fontSize: AppTokens.text.x2l,
-        fontWeight: AppTokens.fontWeights.medium,
-        height: 1.5,
-      ),
-      headlineMedium: TextStyle(
-        fontSize: AppTokens.text.xl,
-        fontWeight: AppTokens.fontWeights.medium,
-        height: 1.5,
-      ),
-      titleLarge: TextStyle(
-        fontSize: AppTokens.text.lg,
-        fontWeight: AppTokens.fontWeights.medium,
-        height: 1.5,
-      ),
-      bodyLarge: TextStyle(
-        fontSize: AppTokens.text.base,
-        fontWeight: AppTokens.fontWeights.normal,
-        height: 1.5,
-      ),
-      bodyMedium: TextStyle(
-        fontSize: AppTokens.text.base,
-        fontWeight: AppTokens.fontWeights.normal,
-        height: 1.5,
-      ),
-      bodySmall: TextStyle(
-        fontSize: AppTokens.text.sm,
-        fontWeight: AppTokens.fontWeights.normal,
-        height: 1.5,
-      ),
-      labelLarge: TextStyle(
-        fontSize: AppTokens.text.base,
-        fontWeight: AppTokens.fontWeights.medium,
-        height: 1.5,
-      ),
-    ).apply(
-      fontFamily: AppTokens.fontFamilySans,
-      displayColor: colors.foreground,
-      bodyColor: colors.foreground,
-    );
+    final textTheme =
+        TextTheme(
+          displayLarge: TextStyle(
+            fontSize: AppTokens.text.x2l,
+            fontWeight: AppTokens.fontWeights.medium,
+            height: 1.5,
+          ),
+          headlineMedium: TextStyle(
+            fontSize: AppTokens.text.xl,
+            fontWeight: AppTokens.fontWeights.medium,
+            height: 1.5,
+          ),
+          titleLarge: TextStyle(
+            fontSize: AppTokens.text.lg,
+            fontWeight: AppTokens.fontWeights.medium,
+            height: 1.5,
+          ),
+          bodyLarge: TextStyle(
+            fontSize: AppTokens.text.base,
+            fontWeight: AppTokens.fontWeights.normal,
+            height: 1.5,
+          ),
+          bodyMedium: TextStyle(
+            fontSize: AppTokens.text.base,
+            fontWeight: AppTokens.fontWeights.normal,
+            height: 1.5,
+          ),
+          bodySmall: TextStyle(
+            fontSize: AppTokens.text.sm,
+            fontWeight: AppTokens.fontWeights.normal,
+            height: 1.5,
+          ),
+          labelLarge: TextStyle(
+            fontSize: AppTokens.text.base,
+            fontWeight: AppTokens.fontWeights.medium,
+            height: 1.5,
+          ),
+        ).apply(
+          fontFamily: AppTokens.fontFamilySans,
+          displayColor: colors.foreground,
+          bodyColor: colors.foreground,
+        );
 
     final colorScheme = ColorScheme(
       brightness: brightness,

@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as p;
 
 import 'package:reddit_dl/data/app_database.dart';
 import 'package:reddit_dl/data/settings_repository.dart';
@@ -20,10 +21,14 @@ void main() {
 
     final result = engine.resolve(item: item, asset: asset);
     expect(result.isValid, isTrue);
-    expect(
-      result.directoryPath,
-      contains('/downloads/post/test/2023/11/hello-world-abc'),
+    final expectedSuffix = p.join(
+      'post',
+      'test',
+      '2023',
+      '11',
+      'hello-world-abc',
     );
+    expect(result.directoryPath, endsWith(expectedSuffix));
   });
 
   test('sanitizes unsafe segments and warns on traversal', () {
@@ -60,7 +65,8 @@ void main() {
 
     final result = engine.resolve(item: item, asset: asset);
     expect(result.isValid, isTrue);
-    expect(result.filePath, contains('/image/image.png'));
+    final expectedSuffix = p.join('image', 'image.png');
+    expect(result.filePath, endsWith(expectedSuffix));
   });
 
   test('truncates long title slugs', () {
@@ -75,7 +81,7 @@ void main() {
 
     final result = engine.resolve(item: item, asset: asset);
     expect(result.isValid, isTrue);
-    final segment = result.directoryPath.split('/').last;
+    final segment = p.basename(result.directoryPath);
     expect(segment.length, lessThanOrEqualTo(80));
     expect(
       result.warnings.any((warning) => warning.contains('title_slug')),

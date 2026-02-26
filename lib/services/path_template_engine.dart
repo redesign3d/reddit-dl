@@ -231,12 +231,11 @@ class PathTemplateEngine {
     if (override != null && override.trim().isNotEmpty) {
       return override.trim();
     }
-    final url =
-        asset.filenameSuggested?.trim().isNotEmpty == true
-            ? asset.filenameSuggested!
-            : asset.normalizedUrl.isNotEmpty
-            ? asset.normalizedUrl
-            : asset.sourceUrl;
+    final url = asset.filenameSuggested?.trim().isNotEmpty == true
+        ? asset.filenameSuggested!
+        : asset.normalizedUrl.isNotEmpty
+        ? asset.normalizedUrl
+        : asset.sourceUrl;
     final parsed = Uri.tryParse(url);
     final path = parsed?.path ?? url;
     final base = p.basename(path);
@@ -251,11 +250,10 @@ class PathTemplateEngine {
     List<String> warnings, {
     String? label,
   }) {
-    var sanitized =
-        value
-            .replaceAll(RegExp(r'[<>:"/\\\\|?*]'), '_')
-            .replaceAll(RegExp(r'[\x00-\x1F]'), '')
-            .trim();
+    var sanitized = value
+        .replaceAll(RegExp(r'[<>:"/\\\\|?*]'), '_')
+        .replaceAll(RegExp(r'[\x00-\x1F]'), '')
+        .trim();
     sanitized = sanitized.replaceAll(RegExp(r'\s+'), ' ');
     sanitized = sanitized.replaceAll('..', '_');
     if (sanitized.length > _maxSegmentLength) {

@@ -54,10 +54,9 @@ class _SyncPageState extends State<SyncPage> {
             final summary = syncState.summary;
             final maxItems = _parseMaxItems();
             final processed = progress.resolved + progress.failures;
-            final progressValue =
-                maxItems != null && maxItems > 0
-                    ? (processed / maxItems).clamp(0, 1).toDouble()
-                    : 0.0;
+            final progressValue = maxItems != null && maxItems > 0
+                ? (processed / maxItems).clamp(0, 1).toDouble()
+                : 0.0;
 
             if (_usernameController.text.isEmpty &&
                 syncState.username != null) {
@@ -117,25 +116,21 @@ class _SyncPageState extends State<SyncPage> {
                         runSpacing: AppTokens.space.s8,
                         children: [
                           AppButton(
-                            label:
-                                syncState.loginVisible
-                                    ? 'Login open'
-                                    : 'Start login',
-                            onPressed:
-                                syncState.loginVisible
-                                    ? null
-                                    : () =>
-                                        context.read<SyncCubit>().prepareLogin(
-                                          rememberSession: rememberSession,
-                                        ),
+                            label: syncState.loginVisible
+                                ? 'Login open'
+                                : 'Start login',
+                            onPressed: syncState.loginVisible
+                                ? null
+                                : () => context.read<SyncCubit>().prepareLogin(
+                                    rememberSession: rememberSession,
+                                  ),
                           ),
                           AppButton(
                             label: 'Check session',
                             variant: AppButtonVariant.secondary,
-                            onPressed:
-                                () => context.read<SyncCubit>().checkSession(
-                                  rememberSession: rememberSession,
-                                ),
+                            onPressed: () => context
+                                .read<SyncCubit>()
+                                .checkSession(rememberSession: rememberSession),
                           ),
                           AppButton(
                             label: 'Clear session',
@@ -171,8 +166,8 @@ class _SyncPageState extends State<SyncPage> {
                             AppButton(
                               label: 'Close',
                               variant: AppButtonVariant.ghost,
-                              onPressed:
-                                  () => context.read<SyncCubit>().hideLogin(),
+                              onPressed: () =>
+                                  context.read<SyncCubit>().hideLogin(),
                             ),
                           ],
                         ),
@@ -194,10 +189,9 @@ class _SyncPageState extends State<SyncPage> {
                         AppButton(
                           label: 'Finish login',
                           variant: AppButtonVariant.secondary,
-                          onPressed:
-                              () => context.read<SyncCubit>().checkSession(
-                                rememberSession: rememberSession,
-                              ),
+                          onPressed: () => context
+                              .read<SyncCubit>()
+                              .checkSession(rememberSession: rememberSession),
                         ),
                       ],
                     ),
@@ -220,10 +214,9 @@ class _SyncPageState extends State<SyncPage> {
                               label: 'Username',
                               hint: 'u/username',
                               controller: _usernameController,
-                              onChanged:
-                                  (value) => context
-                                      .read<SyncCubit>()
-                                      .updateManualUsername(value),
+                              onChanged: (value) => context
+                                  .read<SyncCubit>()
+                                  .updateManualUsername(value),
                             ),
                           ),
                           SizedBox(width: AppTokens.space.s12),
@@ -259,45 +252,39 @@ class _SyncPageState extends State<SyncPage> {
                         runSpacing: AppTokens.space.s8,
                         children: [
                           AppButton(
-                            label:
-                                syncState.phase == SyncPhase.syncing
-                                    ? 'Syncing...'
-                                    : 'Start sync',
-                            onPressed:
-                                syncState.phase == SyncPhase.syncing
-                                    ? null
-                                    : () => context.read<SyncCubit>().startSync(
-                                      rememberSession: rememberSession,
-                                      rateLimitPerMinute:
-                                          settingsState
-                                              .settings
-                                              .rateLimitPerMinute,
-                                      maxItems: _parseMaxItems(),
-                                      timeframeDays: _timeframeDays,
-                                    ),
+                            label: syncState.phase == SyncPhase.syncing
+                                ? 'Syncing...'
+                                : 'Start sync',
+                            onPressed: syncState.phase == SyncPhase.syncing
+                                ? null
+                                : () => context.read<SyncCubit>().startSync(
+                                    rememberSession: rememberSession,
+                                    rateLimitPerMinute: settingsState
+                                        .settings
+                                        .rateLimitPerMinute,
+                                    maxItems: _parseMaxItems(),
+                                    timeframeDays: _timeframeDays,
+                                  ),
                           ),
                           AppButton(
-                            label:
-                                syncState.isCancelling
-                                    ? 'Stopping...'
-                                    : 'Stop sync',
+                            label: syncState.isCancelling
+                                ? 'Stopping...'
+                                : 'Stop sync',
                             variant: AppButtonVariant.secondary,
                             onPressed:
                                 syncState.phase == SyncPhase.syncing &&
-                                        !syncState.isCancelling
-                                    ? () =>
-                                        context.read<SyncCubit>().cancelSync()
-                                    : null,
+                                    !syncState.isCancelling
+                                ? () => context.read<SyncCubit>().cancelSync()
+                                : null,
                           ),
                           if (syncState.phase == SyncPhase.completed &&
                               summary != null)
                             AppButton(
                               label: 'Open library',
                               variant: AppButtonVariant.ghost,
-                              onPressed:
-                                  () => context.read<NavigationCubit>().select(
-                                    AppSection.library,
-                                  ),
+                              onPressed: () => context
+                                  .read<NavigationCubit>()
+                                  .select(AppSection.library),
                             ),
                         ],
                       ),
@@ -324,10 +311,9 @@ class _SyncPageState extends State<SyncPage> {
                       SizedBox(height: AppTokens.space.s12),
                       AppProgress(
                         progress: progressValue,
-                        label:
-                            syncState.phase == SyncPhase.syncing
-                                ? 'Sync in progress'
-                                : 'Idle',
+                        label: syncState.phase == SyncPhase.syncing
+                            ? 'Sync in progress'
+                            : 'Idle',
                       ),
                       SizedBox(height: AppTokens.space.s12),
                       Wrap(
