@@ -228,6 +228,18 @@ class QueueRepository implements DownloadResumeStateStore {
     );
   }
 
+  Future<void> cancelJob(int jobId) async {
+    await (_db.update(
+      _db.downloadJobs,
+    )..where((tbl) => tbl.id.equals(jobId))).write(
+      DownloadJobsCompanion(
+        status: const Value('skipped'),
+        lastError: const Value('Canceled by user.'),
+        completedAt: Value(DateTime.now()),
+      ),
+    );
+  }
+
   Future<int> retryFailedForSavedItemIds(Iterable<int> savedItemIds) {
     final uniqueIds = savedItemIds.toSet().toList(growable: false);
     if (uniqueIds.isEmpty) {
@@ -375,6 +387,18 @@ class QueueRepository implements DownloadResumeStateStore {
               ..limit(1))
             .getSingleOrNull();
     return row?.path;
+  }
+
+  Stream<List<DownloadOutput>> watchOutputsForJob(int jobId, {int limit = 20}) {
+    final query = _db.select(_db.downloadOutputs)
+      ..where((tbl) => tbl.jobId.equals(jobId))
+      ..orderBy([
+        (tbl) =>
+            OrderingTerm(expression: tbl.createdAt, mode: OrderingMode.desc),
+        (tbl) => OrderingTerm(expression: tbl.id, mode: OrderingMode.desc),
+      ])
+      ..limit(limit);
+    return query.watch();
   }
 
   @override
